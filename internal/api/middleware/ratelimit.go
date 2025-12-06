@@ -40,7 +40,11 @@ func (l *LocalLimiter) Allow(key string) bool {
 	return true
 }
 
-func RateLimitMiddleware(l *LocalLimiter, keyFn func(*http.Request) string) func(http.Handler) http.Handler {
+type Limiter interface {
+	Allow(key string) bool
+}
+
+func RateLimitMiddleware(l Limiter, keyFn func(*http.Request) string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			key := keyFn(r)
@@ -53,5 +57,3 @@ func RateLimitMiddleware(l *LocalLimiter, keyFn func(*http.Request) string) func
 		})
 	}
 }
-
-

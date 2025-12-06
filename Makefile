@@ -1,4 +1,4 @@
-# TypoSentinel Makefile
+# Falcn Makefile
 
 # Go build parameters
 GOCMD=go
@@ -9,7 +9,7 @@ GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 GOVET=$(GOCMD) vet
 GOFMT=gofmt
-BINARY_NAME=typosentinel
+BINARY_NAME=falcn
 BINARY_UNIX=$(BINARY_NAME)_unix
 BINARY_WINDOWS=$(BINARY_NAME).exe
 BINARY_DARWIN=$(BINARY_NAME)_darwin
@@ -428,19 +428,6 @@ health-check:
 .PHONY: docker-build
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t typosentinel:$(VERSION) .
-
-# Docker run
-.PHONY: docker-run
-docker-run: docker-build
-	@echo "Running Docker container..."
-	docker run --rm -it typosentinel:$(VERSION)
-
-# Security scan
-.PHONY: security
-security:
-	@echo "Running security scan..."
-	@if command -v gosec >/dev/null 2>&1; then \
 		gosec ./...; \
 	else \
 		echo "gosec not installed, install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \

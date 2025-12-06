@@ -26,6 +26,16 @@ RUN apk --no-cache add \
     ca-certificates \
     tzdata \
     curl \
+    -o falcn ./main.go
+
+# Stage 2: Final runtime image
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk --no-cache add \
+    ca-certificates \
+    tzdata \
+    curl \
     && update-ca-certificates
 
 # Create app user for security
@@ -36,16 +46,6 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /app
 
 # Copy API server binary from builder
-COPY --from=go-builder /app/typosentinel-api ./
-COPY --from=go-builder /app/typosentinel ./
-
-# Copy configuration files
-COPY config/ ./config/
-COPY dictionaries/ ./dictionaries/
-
-# Create necessary directories
-RUN mkdir -p /app/data /app/logs && \
-    chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser

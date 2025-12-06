@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# TypoSentinel Project Health Check Script
+# Falcn Project Health Check Script
 # This script validates the project structure, dependencies, and configuration
 
 # Don't exit on errors - we want to collect all issues
@@ -137,27 +137,6 @@ check_dependencies() {
         print_warning "go.sum is missing"
     fi
 }
-
-# Check build status
-check_build() {
-    print_status "Checking build status..."
-    
-    # Try to build the project
-    if go build -o /tmp/typosentinel-test ./cmd/typosentinel &> /dev/null; then
-        print_pass "Project builds successfully"
-        rm -f /tmp/typosentinel-test
-    else
-        print_fail "Project build failed"
-    fi
-    
-    # Check for build artifacts
-    if [ -f "typosentinel" ]; then
-        print_info "Build artifact 'typosentinel' exists"
-    fi
-}
-
-# Check tests
-check_tests() {
     print_status "Checking tests..."
     
     # Count test files
@@ -380,7 +359,7 @@ generate_summary() {
 
 # Main execution
 main() {
-    echo "TypoSentinel Project Health Check"
+    echo "Falcn Project Health Check"
     echo "=================================="
     echo ""
     

@@ -53,6 +53,8 @@ func (f *FuturisticFormatter) PrintScanStart(path string) {
 		return
 	}
 	fmt.Printf("Scanning: %s\n", path)
+	fmt.Println()
+	fmt.Println("  Analyzing dependencies... ━━━━━━━━━━━━━━━━━━━━ 100%")
 }
 
 func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
@@ -61,7 +63,62 @@ func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
 		fmt.Println(string(b))
 		return
 	}
-	fmt.Printf("Threats: %d, Warnings: %d\n", len(result.Threats), len(result.Warnings))
+
+	// ANSI Colors
+	// colorReset := "\033[0m"
+	// colorRed := "\033[31m"
+	// colorGreen := "\033[32m"
+	// colorYellow := "\033[33m"
+	// colorBlue := "\033[34m"
+	// colorCyan := "\033[36m"
+	// colorWhite := "\033[37m"
+	// colorGray := "\033[90m"
+
+	fmt.Println()
+	fmt.Println("\033[90m┌─────────────────────────────────────────────────────────┐\033[0m")
+	fmt.Println("\033[90m│\033[0m  SCAN RESULTS                                           \033[90m│\033[0m")
+	fmt.Println("\033[90m├─────────────────────────────────────────────────────────┤\033[0m")
+	fmt.Printf("\033[90m│\033[0m  Packages scanned:    %-33d \033[90m│\033[0m\n", result.TotalPackages)
+	fmt.Printf("\033[90m│\033[0m  Scan time:           %-33v \033[90m│\033[0m\n", result.Duration)
+	fmt.Printf("\033[90m│\033[0m  Threats detected:    %-33d \033[90m│\033[0m\n", len(result.Threats))
+	fmt.Println("\033[90m└─────────────────────────────────────────────────────────┘\033[0m")
+	fmt.Println()
+
+	if len(result.Threats) > 0 {
+		fmt.Println("\033[33m⚠  THREATS DETECTED\033[0m")
+		fmt.Println()
+
+		for _, threat := range result.Threats {
+			severityColor := "\033[34m" // Default/Low
+			switch strings.ToUpper(threat.Severity.String()) {
+			case "CRITICAL":
+				severityColor = "\033[31m"
+			case "HIGH":
+				severityColor = "\033[38;5;208m"
+			case "MEDIUM":
+				severityColor = "\033[33m"
+			}
+
+			fmt.Printf("  %s%s  %s\033[0m\n", severityColor, strings.ToUpper(threat.Severity.String()), threat.Package)
+			fmt.Printf("  \033[90m│\033[0m Type: %s\n", threat.Type)
+			if threat.SimilarTo != "" {
+				fmt.Printf("  \033[90m│\033[0m Target: %s (similarity: %.2f)\n", threat.SimilarTo, threat.Confidence)
+			}
+			fmt.Printf("  \033[90m│\033[0m Risk Score: %.2f\n", threat.Confidence)
+			fmt.Printf("  \033[90m│\033[0m Action: %s\n", threat.Recommendation)
+			fmt.Println("  \033[90m│\033[0m")
+			fmt.Printf("  \033[90m└─\033[0m Evidence: %s\n", threat.Description)
+			fmt.Println()
+		}
+
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+		fmt.Printf("  \033[31m✖ %d threats found\033[0m • Run `falcn report` for full details\n", len(result.Threats))
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+	} else {
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+		fmt.Printf("  \033[32m✔ No threats detected\033[0m • %d packages scanned in %v\n", result.TotalPackages, result.Duration)
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+	}
 }
 
 func (f *FuturisticFormatter) PrintAnalysisResults(result *detector.CheckPackageResult) {
@@ -70,6 +127,39 @@ func (f *FuturisticFormatter) PrintAnalysisResults(result *detector.CheckPackage
 		fmt.Println(string(b))
 		return
 	}
-	fmt.Printf("Findings: %d, Warnings: %d\n", len(result.Threats), len(result.Warnings))
-}
 
+	if len(result.Threats) > 0 {
+		fmt.Println("\033[33m⚠  THREATS DETECTED\033[0m")
+		fmt.Println()
+
+		for _, threat := range result.Threats {
+			severityColor := "\033[34m" // Default/Low
+			switch strings.ToUpper(threat.Severity.String()) {
+			case "CRITICAL":
+				severityColor = "\033[31m"
+			case "HIGH":
+				severityColor = "\033[38;5;208m"
+			case "MEDIUM":
+				severityColor = "\033[33m"
+			}
+
+			fmt.Printf("  %s%s  %s\033[0m\n", severityColor, strings.ToUpper(threat.Severity.String()), result.Name)
+			fmt.Printf("  \033[90m│\033[0m Type: %s\n", threat.Type)
+			if threat.SimilarTo != "" {
+				fmt.Printf("  \033[90m│\033[0m Target: %s (similarity: %.2f)\n", threat.SimilarTo, threat.Confidence)
+			}
+			fmt.Printf("  \033[90m│\033[0m Risk Score: %.2f\n", threat.Confidence)
+			fmt.Println("  \033[90m│\033[0m")
+			fmt.Printf("  \033[90m└─\033[0m Evidence: %s\n", threat.Description)
+			fmt.Println()
+		}
+
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+		fmt.Printf("  \033[31m✖ %d threats found\033[0m\n", len(result.Threats))
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+	} else {
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+		fmt.Printf("  \033[32m✔ Package appears safe\033[0m • %s\n", result.Name)
+		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
+	}
+}

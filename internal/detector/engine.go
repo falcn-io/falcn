@@ -75,6 +75,7 @@ func New(cfg *config.Config) *Engine {
 func (e *Engine) Version() string { return "1.0.0" }
 
 type CheckPackageResult struct {
+	Name     string
 	Threats  []types.Threat
 	Warnings []types.Warning
 }
@@ -112,7 +113,7 @@ func (e *Engine) CheckPackage(ctx context.Context, name, registry string) (*Chec
 			SimilarityThreshold: 0.75,
 			DeepAnalysis:        true,
 		})
-		return &CheckPackageResult{Threats: threats, Warnings: warnings}, nil
+		return &CheckPackageResult{Name: name, Threats: threats, Warnings: warnings}, nil
 	}
 	popularPackages := getPopularByRegistry(registry)
 
@@ -129,6 +130,7 @@ func (e *Engine) CheckPackage(ctx context.Context, name, registry string) (*Chec
 	})
 
 	return &CheckPackageResult{
+		Name:     name,
 		Threats:  threats,
 		Warnings: warnings,
 	}, nil
@@ -267,5 +269,3 @@ type EnhancedSupplyChainResult struct {
 func (d *EnhancedSupplyChainDetector) DetectThreats(ctx context.Context, pkgs []types.Package) ([]EnhancedSupplyChainResult, error) {
 	return nil, nil
 }
-
-

@@ -1,4 +1,4 @@
-package typosentinel.policy
+package falcn.policy
 
 default violations := []
 

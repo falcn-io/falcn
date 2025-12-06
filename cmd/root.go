@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +26,16 @@ It provides:
 - SBOM generation (SPDX, CycloneDX)
 - Graph visualization (DOT, SVG, Mermaid)
 - CI/CD integration`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if verbose {
+			logger.SetGlobalLevel(logger.DEBUG)
+			logrus.SetLevel(logrus.DebugLevel)
+		} else {
+			// Suppress info/warn logs to keep CLI output clean
+			logger.SetGlobalLevel(logger.ERROR)
+			logrus.SetLevel(logrus.ErrorLevel)
+		}
+	},
 }
 
 func init() {

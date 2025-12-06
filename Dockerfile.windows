@@ -4,17 +4,23 @@ WORKDIR /app
 
 # Copy go mod files
 COPY go.mod go.sum ./
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy source code
 COPY . .
 
 # Build Windows binary
-RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o typosentinel.exe main.go
+RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o falcn.exe main.go
 
 # Use alpine as final image to have shell access
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
-COPY --from=builder /app/typosentinel.exe /app/typosentinel.exe
+COPY --from=builder /app/falcn.exe /app/falcn.exe
 CMD ["/bin/sh"]

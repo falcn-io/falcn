@@ -16,7 +16,6 @@ import (
 	"net/smtp"
 
 	"io"
-	"os"
 
 	apimetrics "github.com/falcn-io/falcn/internal/api/metrics"
 	apilm "github.com/falcn-io/falcn/internal/api/middleware"
@@ -750,5 +749,3 @@ func dashboardPerformanceHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "not_implemented",
 	})
 }
-
-

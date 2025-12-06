@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,41 +11,41 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Times New Roman', serif;
             line-height: 1.6;
             color: #333;
             background-color: #f8f9fa;
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-        
+
         .header {
             text-align: center;
             padding: 40px 0;
             border-bottom: 3px solid #6f42c1;
             margin-bottom: 40px;
         }
-        
+
         .header h1 {
             font-size: 2.5em;
             color: #6f42c1;
             margin-bottom: 10px;
         }
-        
+
         .header .subtitle {
             font-size: 1.2em;
             color: #666;
             margin-bottom: 20px;
         }
-        
+
         .report-meta {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -56,7 +57,7 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
-        
+
         .compliance-summary {
             background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%);
             color: white;
@@ -64,16 +65,16 @@
             border-radius: 10px;
             margin-bottom: 40px;
         }
-        
+
         .compliance-summary h2 {
             font-size: 1.8em;
             margin-bottom: 20px;
         }
-        
+
         .section {
             margin-bottom: 40px;
         }
-        
+
         .section h2 {
             font-size: 1.8em;
             color: #6f42c1;
@@ -81,65 +82,65 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #e9ecef;
         }
-        
+
         .section h3 {
             font-size: 1.4em;
             color: #495057;
             margin-bottom: 15px;
         }
-        
+
         .compliance-standards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .standard-card {
             background: white;
             border: 1px solid #e9ecef;
             border-radius: 10px;
             padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .standard-card h4 {
             color: #6f42c1;
             margin-bottom: 15px;
             font-size: 1.3em;
         }
-        
+
         .compliance-score {
             font-size: 3em;
             font-weight: bold;
             text-align: center;
             margin: 20px 0;
         }
-        
+
         .score-excellent {
             color: #28a745;
         }
-        
+
         .score-good {
             color: #17a2b8;
         }
-        
+
         .score-fair {
             color: #ffc107;
         }
-        
+
         .score-poor {
             color: #dc3545;
         }
-        
+
         .compliance-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .compliance-table th {
             background: #6f42c1;
             color: white;
@@ -147,17 +148,17 @@
             text-align: left;
             font-weight: 600;
         }
-        
+
         .compliance-table td {
             padding: 15px;
             border-bottom: 1px solid #e9ecef;
             vertical-align: top;
         }
-        
+
         .compliance-table tr:hover {
             background: #f8f9fa;
         }
-        
+
         .status-badge {
             display: inline-block;
             padding: 6px 12px;
@@ -166,27 +167,27 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-        
+
         .status-compliant {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .status-partial {
             background: #fff3cd;
             color: #856404;
         }
-        
+
         .status-non-compliant {
             background: #f8d7da;
             color: #721c24;
         }
-        
+
         .status-not-applicable {
             background: #e2e3e5;
             color: #383d41;
         }
-        
+
         .requirement-details {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -194,12 +195,12 @@
             padding: 15px;
             margin: 10px 0;
         }
-        
+
         .requirement-details h5 {
             color: #6f42c1;
             margin-bottom: 10px;
         }
-        
+
         .evidence-list {
             background: #e8f5e8;
             border: 1px solid #c3e6cb;
@@ -207,16 +208,16 @@
             padding: 15px;
             margin: 10px 0;
         }
-        
+
         .evidence-list h5 {
             color: #155724;
             margin-bottom: 10px;
         }
-        
+
         .evidence-list ul {
             margin-left: 20px;
         }
-        
+
         .gap-analysis {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -224,12 +225,12 @@
             padding: 15px;
             margin: 15px 0;
         }
-        
+
         .gap-analysis h5 {
             color: #856404;
             margin-bottom: 10px;
         }
-        
+
         .remediation-plan {
             background: #d1ecf1;
             border: 1px solid #bee5eb;
@@ -237,12 +238,12 @@
             padding: 15px;
             margin: 15px 0;
         }
-        
+
         .remediation-plan h5 {
             color: #0c5460;
             margin-bottom: 10px;
         }
-        
+
         .audit-trail {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -250,55 +251,55 @@
             padding: 20px;
             margin: 20px 0;
         }
-        
+
         .audit-trail h4 {
             color: #6f42c1;
             margin-bottom: 15px;
         }
-        
+
         .audit-entry {
             border-bottom: 1px solid #e9ecef;
             padding: 10px 0;
         }
-        
+
         .audit-entry:last-child {
             border-bottom: none;
         }
-        
+
         .audit-timestamp {
             font-size: 0.9em;
             color: #666;
             margin-bottom: 5px;
         }
-        
+
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .metric-card {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
             border-left: 4px solid #6f42c1;
         }
-        
+
         .metric-value {
             font-size: 2.5em;
             font-weight: bold;
             color: #6f42c1;
             margin-bottom: 10px;
         }
-        
+
         .metric-label {
             color: #666;
             font-size: 1em;
         }
-        
+
         .signature-section {
             margin-top: 50px;
             padding: 30px;
@@ -306,14 +307,14 @@
             border-radius: 10px;
             background: #f8f9fa;
         }
-        
+
         .signature-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 30px;
             margin-top: 30px;
         }
-        
+
         .signature-box {
             text-align: center;
             padding: 20px;
@@ -321,12 +322,12 @@
             border-radius: 5px;
             background: white;
         }
-        
+
         .signature-line {
             border-top: 1px solid #333;
             margin: 30px 0 10px 0;
         }
-        
+
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -334,27 +335,28 @@
             margin-top: 40px;
             color: #666;
         }
-        
+
         .page-break {
             page-break-before: always;
         }
-        
+
         @media print {
             body {
                 background: white;
             }
-            
+
             .container {
                 box-shadow: none;
                 max-width: none;
             }
-            
+
             .page-break {
                 page-break-before: always;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -369,7 +371,7 @@
                 <div><strong>Assessment Scope:</strong> {{.AssessmentScope}}</div>
             </div>
         </div>
-        
+
         <div class="compliance-summary">
             <h2>Executive Summary</h2>
             <p>{{.ExecutiveSummary}}</p>
@@ -377,7 +379,7 @@
                 <strong>Overall Compliance Score: {{.OverallScore}}%</strong>
             </div>
         </div>
-        
+
         <div class="section">
             <h2>Compliance Overview</h2>
             <div class="metrics-grid">
@@ -399,7 +401,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="section">
             <h2>Compliance Standards Assessment</h2>
             <div class="compliance-standards">
@@ -424,7 +426,7 @@
                 {{end}}
             </div>
         </div>
-        
+
         <div class="section">
             <h2>Detailed Compliance Assessment</h2>
             {{range .DetailedAssessment}}
@@ -432,7 +434,7 @@
                 <h5>{{.Standard}} - {{.RequirementID}}: {{.Title}}</h5>
                 <p><strong>Description:</strong> {{.Description}}</p>
                 <p><strong>Status:</strong> <span class="status-badge {{.StatusClass}}">{{.Status}}</span></p>
-                
+
                 {{if .Evidence}}
                 <div class="evidence-list">
                     <h5>Evidence of Compliance:</h5>
@@ -443,7 +445,7 @@
                     </ul>
                 </div>
                 {{end}}
-                
+
                 {{if .Gaps}}
                 <div class="gap-analysis">
                     <h5>Identified Gaps:</h5>
@@ -454,7 +456,7 @@
                     </ul>
                 </div>
                 {{end}}
-                
+
                 {{if .RemediationSteps}}
                 <div class="remediation-plan">
                     <h5>Remediation Plan:</h5>
@@ -468,7 +470,7 @@
             </div>
             {{end}}
         </div>
-        
+
         <div class="section">
             <h2>Security Controls Assessment</h2>
             <table class="compliance-table">
@@ -496,7 +498,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <div class="section">
             <h2>Risk Assessment</h2>
             <div class="metrics-grid">
@@ -518,7 +520,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="section">
             <h2>Remediation Roadmap</h2>
             {{range .RemediationRoadmap}}
@@ -532,7 +534,7 @@
             </div>
             {{end}}
         </div>
-        
+
         <div class="audit-trail">
             <h4>Audit Trail</h4>
             {{range .AuditTrail}}
@@ -543,11 +545,12 @@
             </div>
             {{end}}
         </div>
-        
+
         <div class="signature-section">
             <h3>Approval and Sign-off</h3>
-            <p>This compliance assessment report has been reviewed and approved by the following authorized personnel:</p>
-            
+            <p>This compliance assessment report has been reviewed and approved by the following authorized personnel:
+            </p>
+
             <div class="signature-grid">
                 <div class="signature-box">
                     <div><strong>Chief Information Security Officer</strong></div>
@@ -555,21 +558,21 @@
                     <div>Signature</div>
                     <div style="margin-top: 10px;">Date: ___________</div>
                 </div>
-                
+
                 <div class="signature-box">
                     <div><strong>Compliance Officer</strong></div>
                     <div class="signature-line"></div>
                     <div>Signature</div>
                     <div style="margin-top: 10px;">Date: ___________</div>
                 </div>
-                
+
                 <div class="signature-box">
                     <div><strong>Chief Technology Officer</strong></div>
                     <div class="signature-line"></div>
                     <div>Signature</div>
                     <div style="margin-top: 10px;">Date: ___________</div>
                 </div>
-                
+
                 <div class="signature-box">
                     <div><strong>External Auditor</strong></div>
                     <div class="signature-line"></div>
@@ -578,12 +581,14 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="footer">
-            <p>This compliance report was generated by TypoSentinel Enterprise Security Platform</p>
+            <p>This compliance report was generated by Falcn Enterprise Security Platform</p>
             <p>Report ID: {{.ReportID}} | Generated: {{.ReportDate}} | Version: {{.ReportVersion}}</p>
-            <p><strong>Confidential:</strong> This document contains sensitive compliance information and should be handled according to organizational data classification policies.</p>
+            <p><strong>Confidential:</strong> This document contains sensitive compliance information and should be
+                handled according to organizational data classification policies.</p>
         </div>
     </div>
 </body>
+
 </html>

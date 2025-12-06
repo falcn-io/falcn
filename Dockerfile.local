@@ -11,11 +11,10 @@ COPY . .
 ENV CGO_ENABLED=1
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=cache,target=/root/.cache/go-build go build -o /out/typosentinel .
+RUN --mount=type=cache,target=/root/.cache/go-build go build -o /out/falcn .
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /out/typosentinel /usr/local/bin/typosentinel
-ENTRYPOINT ["/usr/local/bin/typosentinel"]
+COPY --from=builder /out/falcn /usr/local/bin/falcn
+ENTRYPOINT ["/usr/local/bin/falcn"]
 CMD ["version"]
-
