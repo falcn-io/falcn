@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/falcn-io/falcn/main/assets/falcn-logo.svg" alt="Falcn" width="200">
+  <img src="docs/assets/logo.png" alt="Falcn" width="200">
   <h1>Falcn</h1>
   <p><strong>Precision Supply Chain Security</strong></p>
   <p>
