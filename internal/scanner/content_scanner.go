@@ -481,6 +481,24 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 		}
 	}
 
+	// Phase 2: Supply Chain Attack Vectors (XZ-like)
+	// 1. Detect Payload Extraction Chains (eval + pipes + text processing)
+	// Pattern used in XZ: eval $gl_path_map | tr ...
+	if strings.Contains(content, "eval") && (strings.Contains(content, "|") || strings.Contains(content, "$")) {
+		// Check for de-obfuscation tools commonly used in build script attacks
+		if strings.Contains(content, "tr ") || strings.Contains(content, "sed ") || strings.Contains(content, "head ") || strings.Contains(content, "tail ") || strings.Contains(content, "cut ") {
+			patterns = append(patterns, "Suspicious execution chain (eval + text processing)")
+		}
+	}
+
+	// 2. Detect Suspicious Binary Extraction
+	// Checking for indicators of trying to extract or decode binary blobs within text files
+	if (strings.Contains(content, "cat") || strings.Contains(content, "dd")) &&
+		(strings.Contains(content, ".xz") || strings.Contains(content, ".gz")) &&
+		(strings.Contains(content, "decode") || strings.Contains(content, "-d")) {
+		patterns = append(patterns, "Potential binary payload extraction")
+	}
+
 	return patterns
 }
 
@@ -787,5 +805,3 @@ func min(a, b int) int {
 	}
 	return b
 }
-
-
