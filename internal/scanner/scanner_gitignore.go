@@ -61,3 +61,5 @@ func (s *Scanner) shouldSkipPath(path string) bool {
 
 	return false
 }
+
+

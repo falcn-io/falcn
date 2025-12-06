@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/repository"
+	"github.com/falcn-io/falcn/internal/repository"
 )
 
 // GitHubConnector implements the Connector interface for GitHub
@@ -132,7 +132,7 @@ func NewGitHubConnector(config repository.PlatformConfig) (*GitHubConnector, err
 		client:    client,
 		baseURL:   config.BaseURL,
 		apiToken:  config.Auth.Token,
-		userAgent: "TypoSentinel/2.0",
+		userAgent: "Falcn/2.0",
 		config:    config,
 	}, nil
 }
@@ -1011,3 +1011,5 @@ func (g *GitHubConnector) decodeBase64Content(content string) ([]byte, error) {
 	// Decode base64
 	return base64.StdEncoding.DecodeString(content)
 }
+
+

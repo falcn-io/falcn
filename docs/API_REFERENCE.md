@@ -1,8 +1,8 @@
-# TypoSentinel API Reference
+# Falcn API Reference
 
 ## Overview
 
-The TypoSentinel API provides RESTful endpoints for package threat analysis. The API server is a lightweight, standalone service located in the [`api/`](../api/) directory.
+The Falcn API provides RESTful endpoints for package threat analysis. The API server is a lightweight, standalone service located in the [`api/`](../api/) directory.
 
 ## Starting the API Server
 
@@ -15,7 +15,7 @@ go run main.go
 ### Docker
 ```bash
 docker build -t typo sentinel-api ./api
-docker run -p 8080:8080 typosentinel-api
+docker run -p 8080:8080 Falcn-api
 ```
 
 ### Environment Variables
@@ -65,7 +65,7 @@ Service status and feature flags.
 **Response:**
 ```json
 {
-  "service": "TypoSentinel API",
+  "service": "Falcn API",
   "version": "1.0.0",
   "status": "operational",
   "features": {
@@ -217,3 +217,5 @@ curl -X POST http://localhost:8080/v1/analyze \
 - `pypi` (Python)
 - `go` (Go modules)
 - `maven` (Java)
+
+

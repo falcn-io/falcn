@@ -23,8 +23,10 @@ Paste relevant logs or output.
 **Environment**
 - OS:
 - Go version:
-- Typosentinel version:
+- Falcn version:
 
 **Additional context**
 Add any other context about the problem here.
+
+
 

@@ -357,14 +357,14 @@ func UsageError(code, message string) *ErrorBuilder {
 func ErrConfigFileNotFound(path string) *EnhancedError {
 	return ConfigurationError("CONFIG_FILE_NOT_FOUND", "Configuration file not found").
 		UserMessage("Configuration file not found").
-		Explanation(fmt.Sprintf("TypoSentinel couldn't find a configuration file at '%s'. This file contains important settings for how TypoSentinel should scan your project.", path)).
+		Explanation(fmt.Sprintf("Falcn couldn't find a configuration file at '%s'. This file contains important settings for how Falcn should scan your project.", path)).
 		Suggestions(
-			"Run 'typosentinel init' to create a configuration file with smart defaults",
-			"Create a .typosentinel.yaml file manually in your project root",
+			"Run 'Falcn init' to create a configuration file with smart defaults",
+			"Create a .Falcn.yaml file manually in your project root",
 			"Use command-line flags to specify configuration options",
 		).
-		Example("typosentinel init").
-		Documentation("https://docs.typosentinel.com/configuration").
+		Example("Falcn init").
+		Documentation("https://docs.Falcn.com/configuration").
 		Context("path", path).
 		Build()
 }
@@ -373,13 +373,13 @@ func ErrConfigFileNotFound(path string) *EnhancedError {
 func ErrInvalidConfiguration(field string, value interface{}) *EnhancedError {
 	return ConfigurationError("INVALID_CONFIGURATION", "Invalid configuration").
 		UserMessage("Configuration validation failed").
-		Explanation(fmt.Sprintf("The configuration field '%s' has an invalid value '%v'. This prevents TypoSentinel from starting properly.", field, value)).
+		Explanation(fmt.Sprintf("The configuration field '%s' has an invalid value '%v'. This prevents Falcn from starting properly.", field, value)).
 		Suggestions(
 			"Check the configuration file syntax and field values",
-			"Run 'typosentinel validate-config' to check your configuration",
+			"Run 'Falcn validate-config' to check your configuration",
 			"Refer to the documentation for valid configuration options",
 		).
-		Documentation("https://docs.typosentinel.com/configuration/validation").
+		Documentation("https://docs.Falcn.com/configuration/validation").
 		Context("field", field).
 		Context("value", value).
 		Build()
@@ -389,14 +389,14 @@ func ErrInvalidConfiguration(field string, value interface{}) *EnhancedError {
 func ErrNetworkTimeout(url string) *EnhancedError {
 	return NetworkError("NETWORK_TIMEOUT", "Network request timed out").
 		UserMessage("Network connection timed out").
-		Explanation(fmt.Sprintf("TypoSentinel couldn't connect to '%s' within the timeout period. This might be due to network issues or the service being unavailable.", url)).
+		Explanation(fmt.Sprintf("Falcn couldn't connect to '%s' within the timeout period. This might be due to network issues or the service being unavailable.", url)).
 		Suggestions(
 			"Check your internet connection",
 			"Verify that the URL is correct and accessible",
 			"Try increasing the timeout value in configuration",
 			"Check if you're behind a proxy or firewall",
 		).
-		Documentation("https://docs.typosentinel.com/troubleshooting/network").
+		Documentation("https://docs.Falcn.com/troubleshooting/network").
 		Context("url", url).
 		Build()
 }
@@ -405,10 +405,10 @@ func ErrNetworkTimeout(url string) *EnhancedError {
 func ErrPermissionDenied(path string) *EnhancedError {
 	return PermissionError("PERMISSION_DENIED", "Permission denied").
 		UserMessage("Permission denied").
-		Explanation(fmt.Sprintf("TypoSentinel doesn't have permission to access '%s'. This is required for scanning your project.", path)).
+		Explanation(fmt.Sprintf("Falcn doesn't have permission to access '%s'. This is required for scanning your project.", path)).
 		Suggestions(
 			"Check file and directory permissions",
-			"Run TypoSentinel with appropriate user privileges",
+			"Run Falcn with appropriate user privileges",
 			"Ensure the path exists and is accessible",
 		).
 		Context("path", path).
@@ -419,13 +419,15 @@ func ErrPermissionDenied(path string) *EnhancedError {
 func ErrDependencyNotFound(dependency string) *EnhancedError {
 	return DependencyError("DEPENDENCY_NOT_FOUND", "Required dependency not found").
 		UserMessage("Required dependency not found").
-		Explanation(fmt.Sprintf("TypoSentinel requires '%s' to function properly, but it's not installed or not in the system PATH.", dependency)).
+		Explanation(fmt.Sprintf("Falcn requires '%s' to function properly, but it's not installed or not in the system PATH.", dependency)).
 		Suggestions(
 			fmt.Sprintf("Install %s using your system package manager", dependency),
 			"Ensure the dependency is in your system PATH",
 			"Check the installation documentation for your operating system",
 		).
-		Documentation("https://docs.typosentinel.com/installation/dependencies").
+		Documentation("https://docs.Falcn.com/installation/dependencies").
 		Context("dependency", dependency).
 		Build()
 }
+
+

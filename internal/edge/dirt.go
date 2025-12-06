@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // AssetCriticality defines the business value of the target application/repository
@@ -473,3 +473,5 @@ func (d *DIRTAlgorithm) Reset() error {
 	d.cache = sync.Map{}
 	return nil
 }
+
+

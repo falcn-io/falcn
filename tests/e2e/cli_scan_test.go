@@ -53,3 +53,5 @@ func TestCLI_ScanNpmProject(t *testing.T) {
 	}
 	assert.GreaterOrEqual(t, threatsLen, 1)
 }
+
+

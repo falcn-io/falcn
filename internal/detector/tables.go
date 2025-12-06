@@ -115,3 +115,5 @@ func (etd *EnhancedTyposquattingDetector) initializeSubstitutions() {
 		{'c', []rune{'x', 'v'}, "keyboard", 0.8},
 	}
 }
+
+

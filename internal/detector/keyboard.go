@@ -95,3 +95,5 @@ func (etd *EnhancedTyposquattingDetector) getProximityCost(c1, c2 rune, layout K
 
 	return 1.0 // Full cost for non-adjacent keys
 }
+
+

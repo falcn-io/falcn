@@ -19,10 +19,10 @@ func TestAlgorithmCLI(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	root := filepath.Dir(filepath.Dir(filepath.Dir(wd))) // Adjust based on location: tests/e2e/testrealworld -> root
-	binary := filepath.Join(root, "build", "typosentinel.exe")
+	binary := filepath.Join(root, "build", "Falcn.exe")
 
 	if _, err := os.Stat(binary); os.IsNotExist(err) {
-		t.Skip("typosentinel.exe not found, skipping CLI tests")
+		t.Skip("Falcn.exe not found, skipping CLI tests")
 	}
 
 	t.Log("=== Scenario: RUNT Algorithm Edge Cases (CLI) ===")
@@ -126,3 +126,5 @@ func TestAlgorithmCLI(t *testing.T) {
 		assert.Contains(t, []string{"LOW", "MEDIUM"}, riskLevel)
 	})
 }
+
+

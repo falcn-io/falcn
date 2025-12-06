@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/registry"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/registry"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -715,3 +715,5 @@ func (g *GTRAlgorithm) getDependencies(ctx context.Context, name string) []strin
 	logrus.Debugf("GTR: Fetched and cached %d dependencies for package %s", len(info.Dependencies), name)
 	return info.Dependencies
 }
+
+

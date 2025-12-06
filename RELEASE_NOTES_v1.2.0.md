@@ -4,7 +4,7 @@
 
 ## 🎯 Overview
 
-This release transforms Typosentinel into the **only open-source tool** capable of detecting advanced supply chain attacks like SolarWinds and Shai-Hulud. We've implemented comprehensive build integrity monitoring and CI/CD infrastructure security analysis.
+This release transforms Falcn into the **only open-source tool** capable of detecting advanced supply chain attacks like SolarWinds and Shai-Hulud. We've implemented comprehensive build integrity monitoring and CI/CD infrastructure security analysis.
 
 ## 🆕 Major Features
 
@@ -58,7 +58,7 @@ This release transforms Typosentinel into the **only open-source tool** capable 
 ✅ CI/CD C2 channels  
 
 ### Competitive Advantage
-Typosentinel is now the **only open-source tool** that can detect:
+Falcn is now the **only open-source tool** that can detect:
 - GitHub Actions as a command-and-control channel
 - Self-hosted runner backdoor registration
 - Workflow injection vulnerabilities
@@ -108,4 +108,6 @@ This release is based on research into:
 
 ---
 
-**Full Changelog**: https://github.com/Alivanroy/Typosentinel/compare/v1.1.0...v1.2.0
+**Full Changelog**: https://github.com/falcn-io/Falcn/compare/v1.1.0...v1.2.0
+
+

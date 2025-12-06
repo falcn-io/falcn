@@ -1,13 +1,13 @@
 # Policies Guide
 
 ## Overview
-Typosentinel supports OPA/Rego policies to customize severity and gating. Policies are loaded from `policies.path` and can hot‑reload with `policies.hot_reload=true`.
+Falcn supports OPA/Rego policies to customize severity and gating. Policies are loaded from `policies.path` and can hot‑reload with `policies.hot_reload=true`.
 
 ## Ecosystem Examples
 
 ### NPM: Install Script Escalation
 ```rego
-package typosentinel.policy
+package Falcn.policy
 
 default violations := []
 
@@ -20,7 +20,7 @@ violations[{"message": sprintf("install scripts present in %s", [input.package.n
 
 ### PyPI: Obfuscation Limits
 ```rego
-package typosentinel.policy
+package Falcn.policy
 
 default violations := []
 
@@ -39,7 +39,7 @@ violations[{"message": sprintf("suspicious patterns in %s", [input.package.name]
 
 ### RubyGems: Eval‑Chain Thresholds
 ```rego
-package typosentinel.policy
+package Falcn.policy
 
 default violations := []
 
@@ -52,7 +52,7 @@ violations[{"message": sprintf("multiple eval chains in %s", [input.package.name
 
 ## Binary Placement Severity
 ```rego
-package typosentinel.policy
+package Falcn.policy
 
 default violations := []
 
@@ -81,7 +81,7 @@ violations[{"message": sprintf("binary in non-legitimate path for %s", [input.pa
 
 ## Typosquat Severity Downgrade
 ```rego
-package typosentinel.policy
+package Falcn.policy
 
 default violations := []
 
@@ -111,3 +111,5 @@ exists_signal(evs, name) {
 
 ## Docker Examples
 See DOCKER.md for examples using environment variables to set these configurations.
+
+

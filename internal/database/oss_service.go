@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/config"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -536,3 +536,5 @@ func (s *OSSService) GetDB() *sql.DB {
 func (s *OSSService) Close() error {
 	return s.db.Close()
 }
+
+

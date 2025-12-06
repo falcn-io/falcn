@@ -363,7 +363,7 @@ func TestE2EEnterpriseMultiTeamScanning(t *testing.T) {
 // TestE2EFileBasedProjectScanning tests scanning actual project files
 func TestE2EFileBasedProjectScanning(t *testing.T) {
 	// Create temporary project structure
-	tempDir, err := os.MkdirTemp("", "typosentinel-e2e-*")
+	tempDir, err := os.MkdirTemp("", "Falcn-e2e-*")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
@@ -540,3 +540,5 @@ func parseRequirementsTxt(content string) []string {
 
 	return packages
 }
+
+

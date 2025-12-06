@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 func TestNewReputationEngine(t *testing.T) {
@@ -697,3 +697,5 @@ func TestReputationEngine_detectEnterpriseSecurityViolations(t *testing.T) {
 		})
 	}
 }
+
+

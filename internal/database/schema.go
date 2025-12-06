@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 //go:embed migrations/*.sql
@@ -314,3 +314,5 @@ func (sm *SchemaManager) tableExists(ctx context.Context, tableName string) (boo
 	err := sm.db.QueryRowContext(ctx, query, tableName).Scan(&exists)
 	return exists, err
 }
+
+

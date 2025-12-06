@@ -1,4 +1,4 @@
-// Package main implements the TypoSentinel demo API server and endpoints.
+// Package main implements the Falcn demo API server and endpoints.
 package main
 
 import (
@@ -18,11 +18,11 @@ import (
 	"io"
 	"os"
 
-	apimetrics "github.com/Alivanroy/Typosentinel/internal/api/metrics"
-	apilm "github.com/Alivanroy/Typosentinel/internal/api/middleware"
-	whloader "github.com/Alivanroy/Typosentinel/internal/api/webhook"
-	appcfg "github.com/Alivanroy/Typosentinel/internal/config"
-	pkgmetrics "github.com/Alivanroy/Typosentinel/pkg/metrics"
+	apimetrics "github.com/falcn-io/falcn/internal/api/metrics"
+	apilm "github.com/falcn-io/falcn/internal/api/middleware"
+	whloader "github.com/falcn-io/falcn/internal/api/webhook"
+	appcfg "github.com/falcn-io/falcn/internal/config"
+	pkgmetrics "github.com/falcn-io/falcn/pkg/metrics"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	redis "github.com/redis/go-redis/v9"
@@ -349,7 +349,7 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 		to := os.Getenv("EMAIL_TO")
 		from := os.Getenv("EMAIL_FROM")
 		if host != "" && user != "" && pass != "" && to != "" && from != "" {
-			msg := []byte("Subject: TypoSentinel Alert\r\n\r\n" + fmt.Sprintf("High risk detected: %s (%s) risk=%d", result.PackageName, result.Registry, result.RiskLevel))
+			msg := []byte("Subject: Falcn Alert\r\n\r\n" + fmt.Sprintf("High risk detected: %s (%s) risk=%d", result.PackageName, result.Registry, result.RiskLevel))
 			_ = smtp.SendMail(host+":587", smtp.PlainAuth("", user, pass, host), from, []string{to}, msg)
 		}
 	}
@@ -675,7 +675,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("TypoSentinel API server starting on port %s", port)
+	log.Printf("Falcn API server starting on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
 
@@ -683,7 +683,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Demo-Mode", "true")
 	status := map[string]interface{}{
-		"service":   "TypoSentinel API",
+		"service":   "Falcn API",
 		"version":   "1.0.0",
 		"status":    "operational",
 		"timestamp": time.Now(),
@@ -750,3 +750,5 @@ func dashboardPerformanceHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "not_implemented",
 	})
 }
+
+

@@ -1,6 +1,6 @@
 # Embedded Secrets Detection
 
-TypoSentinel detects credentials embedded in package contents (e.g., API keys, tokens). Embedded secrets pose a high risk.
+Falcn detects credentials embedded in package contents (e.g., API keys, tokens). Embedded secrets pose a high risk.
 
 ## Examples
 - AWS access keys and secret keys
@@ -23,3 +23,5 @@ API_KEY=${API_KEY}
 # Bad: hardcoded secret
 API_KEY=AKIA1234567890ABCD
 ```
+
+

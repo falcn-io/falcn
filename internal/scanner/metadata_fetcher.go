@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -222,3 +222,5 @@ func (f *RegistryMetadataFetcher) AnalyzeDownloadCount(pkg *types.Package, metad
 
 	return threats
 }
+
+

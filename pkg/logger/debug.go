@@ -309,3 +309,5 @@ func IsVerboseEnabled() bool {
 func IsTraceEnabled() bool {
 	return getOrCreateGlobalDebugLogger().IsEnabled(TRACE)
 }
+
+

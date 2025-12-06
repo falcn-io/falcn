@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // LanguageAnalyzer defines the interface that all language analyzers must implement
@@ -317,3 +317,5 @@ func (b *BaseAnalyzer) ValidateProject(projectInfo *ProjectInfo) error {
 
 	return nil
 }
+
+

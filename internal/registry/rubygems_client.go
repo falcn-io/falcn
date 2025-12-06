@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/spf13/viper"
 )
 
@@ -369,3 +369,5 @@ func (c *RubyGemsClient) ClearCache() {
 func (c *RubyGemsClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
+
+

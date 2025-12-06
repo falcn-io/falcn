@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 func TestNewEnhancedTyposquattingDetector(t *testing.T) {
@@ -532,3 +532,5 @@ func TestEnhancedTyposquattingDetector_EmptyStrings(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && (s[0:len(substr)] == substr || contains(s[1:], substr)))
 }
+
+

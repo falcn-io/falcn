@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/repository"
+	"github.com/falcn-io/falcn/internal/repository"
 )
 
 // Factory implements the ConnectorFactory interface
@@ -268,3 +268,5 @@ func (f *Factory) GetPlatformDefaults(platform string) repository.PlatformConfig
 		return repository.PlatformConfig{}
 	}
 }
+
+

@@ -20,8 +20,10 @@
 NewSyslogAuditWriter(map[string]interface{}{
   "protocol": "udp",
   "address": "127.0.0.1:514",
-  "app_name": "typosentinel",
+  "app_name": "Falcn",
   "facility": "local0",
 })
 ```
+
+
 

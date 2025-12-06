@@ -1,6 +1,6 @@
 # Supply Chain Firewall GitHub Actions Integration
 
-This document provides examples of how to integrate the Typosentinel Supply Chain Firewall into your CI/CD pipelines using GitHub Actions.
+This document provides examples of how to integrate the Falcn Supply Chain Firewall into your CI/CD pipelines using GitHub Actions.
 
 ## Quick Start
 
@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Supply Chain Firewall Check
-        uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+        uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
         with:
           asset-criticality: 'INTERNAL'
           policy-threshold: 'block'
@@ -58,7 +58,7 @@ You can also specify a specific file:
 
 ```yaml
 - name: Supply Chain Firewall Check
-  uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+  uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
   with:
     package-file: 'package.json'
     asset-criticality: 'CRITICAL'
@@ -80,7 +80,7 @@ jobs:
       
       - name: Supply Chain Firewall Check
         id: firewall
-        uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+        uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
         with:
           asset-criticality: 'CRITICAL'
           
@@ -101,7 +101,7 @@ jobs:
       
       - name: Supply Chain Firewall Check
         id: firewall
-        uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+        uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
         with:
           fail-on-violation: false  # Don't fail immediately
           
@@ -129,7 +129,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Supply Chain Firewall Check (Staging)
-        uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+        uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
         with:
           asset-criticality: 'INTERNAL'
           policy-threshold: 'alert'
@@ -142,7 +142,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Supply Chain Firewall Check (Production)
-        uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+        uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
         with:
           asset-criticality: 'CRITICAL'
           policy-threshold: 'block'
@@ -164,7 +164,7 @@ on:
 
 jobs:
   supply-chain-security:
-    uses: typosentinel/typosentinel/.github/workflows/supply-chain-firewall.yml@main
+    uses: falcn-io/falcn/.github/workflows/supply-chain-firewall.yml@main
     with:
       asset-criticality: 'INTERNAL'
       policy-threshold: 'block'
@@ -185,7 +185,7 @@ jobs:
         
       - name: Supply Chain Firewall Check
         id: firewall
-        uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+        uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
         with:
           asset-criticality: 'CRITICAL'
           
@@ -203,7 +203,7 @@ jobs:
 ### Strict Policy (Financial Services)
 ```yaml
 - name: Supply Chain Firewall Check
-  uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+  uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
   with:
     asset-criticality: 'CRITICAL'
     policy-threshold: 'block'
@@ -213,7 +213,7 @@ jobs:
 ### Moderate Policy (SaaS Applications)
 ```yaml
 - name: Supply Chain Firewall Check
-  uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+  uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
   with:
     asset-criticality: 'INTERNAL'
     policy-threshold: 'alert'
@@ -223,7 +223,7 @@ jobs:
 ### Permissive Policy (Development)
 ```yaml
 - name: Supply Chain Firewall Check
-  uses: typosentinel/typosentinel/.github/actions/supply-chain-firewall@main
+  uses: falcn-io/falcn/.github/actions/supply-chain-firewall@main
   with:
     asset-criticality: 'PUBLIC'
     policy-threshold: 'review'
@@ -246,7 +246,7 @@ jobs:
 ### Workflow Performance
 - The analysis typically takes 30-60 seconds
 - For faster builds, consider running in parallel with other checks
-- Use caching strategies for the Typosentinel binary
+- Use caching strategies for the Falcn binary
 
 ## Security Considerations
 
@@ -255,3 +255,4 @@ jobs:
 - Risk scores and policy decisions are logged
 - Consider using environment-specific policies
 - Review the analysis artifacts for sensitive information
+

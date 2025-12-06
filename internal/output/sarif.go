@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/analyzer"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/analyzer"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // SARIF represents the Static Analysis Results Interchange Format
@@ -254,10 +254,10 @@ func (f *SARIFFormatter) Format(results *analyzer.ScanResult) ([]byte, error) {
 			{
 				Tool: Tool{
 					Driver: Driver{
-						Name:            "TypoSentinel",
+						Name:            "Falcn",
 						Version:         "2.0.0",
-						InformationUri:  "https://github.com/Alivanroy/Typosentinel",
-						Organization:    "TypoSentinel Security",
+						InformationUri:  "https://github.com/falcn-io/falcn",
+						Organization:    "Falcn Security",
 						SemanticVersion: "2.0.0",
 						Rules:           f.generateRules(),
 					},
@@ -270,7 +270,7 @@ func (f *SARIFFormatter) Format(results *analyzer.ScanResult) ([]byte, error) {
 						StartTimeUtc:        startTime.Format(time.RFC3339),
 						EndTimeUtc:          time.Now().UTC().Format(time.RFC3339),
 						ExitCode:            0,
-						CommandLine:         "typosentinel scan",
+						CommandLine:         "Falcn scan",
 					},
 				},
 				Properties: &Properties{
@@ -304,7 +304,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription: &Message{Text: "Potential typosquatting package detected"},
 			FullDescription:  &Message{Text: "This package name is similar to a popular package and may be a typosquatting attempt"},
 			Help:             &Message{Text: "Verify the package name and publisher before using. Consider using the official package instead."},
-			HelpUri:          "https://github.com/Alivanroy/Typosentinel/blob/main/docs/typosquatting.md",
+			HelpUri:          "https://github.com/falcn-io/falcn/blob/main/docs/typosquatting.md",
 			Properties: &RuleProperties{
 				Severity:    "high",
 				Category:    "security",
@@ -320,7 +320,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription: &Message{Text: "Potentially malicious package detected"},
 			FullDescription:  &Message{Text: "This package has been identified as potentially malicious based on various indicators"},
 			Help:             &Message{Text: "Remove this package immediately and scan your system for potential compromise."},
-			HelpUri:          "https://github.com/Alivanroy/Typosentinel/blob/main/docs/malicious-packages.md",
+			HelpUri:          "https://github.com/falcn-io/falcn/blob/main/docs/malicious-packages.md",
 			Properties: &RuleProperties{
 				Severity:    "critical",
 				Category:    "security",
@@ -336,7 +336,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription: &Message{Text: "Package contains known vulnerabilities"},
 			FullDescription:  &Message{Text: "This package version contains known security vulnerabilities"},
 			Help:             &Message{Text: "Update to a patched version or find an alternative package."},
-			HelpUri:          "https://github.com/Alivanroy/Typosentinel/blob/main/docs/vulnerabilities.md",
+			HelpUri:          "https://github.com/falcn-io/falcn/blob/main/docs/vulnerabilities.md",
 			Properties: &RuleProperties{
 				Severity:    "high",
 				Category:    "security",
@@ -352,7 +352,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription: &Message{Text: "Package exhibits suspicious behavior"},
 			FullDescription:  &Message{Text: "This package exhibits behavior patterns that may indicate malicious intent"},
 			Help:             &Message{Text: "Review the package source code and consider alternatives."},
-			HelpUri:          "https://github.com/Alivanroy/Typosentinel/blob/main/docs/suspicious-behavior.md",
+			HelpUri:          "https://github.com/falcn-io/falcn/blob/main/docs/suspicious-behavior.md",
 			Properties: &RuleProperties{
 				Severity:    "medium",
 				Category:    "security",
@@ -368,7 +368,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription:     &Message{Text: "Obfuscated or high-entropy code detected"},
 			FullDescription:      &Message{Text: "Detected high-entropy or obfuscated code which may indicate malicious payloads"},
 			Help:                 &Message{Text: "Inspect obfuscated segments; encoded payloads often hide malicious behavior."},
-			HelpUri:              "https://github.com/Alivanroy/Typosentinel/blob/main/docs/obfuscated-code.md",
+			HelpUri:              "https://github.com/falcn-io/falcn/blob/main/docs/obfuscated-code.md",
 			Properties:           &RuleProperties{Severity: "error", Category: "security", Tags: []string{"security", "obfuscation"}, Precision: "medium", ProblemKind: "problem"},
 			DefaultConfiguration: &Configuration{Level: "error"},
 		},
@@ -378,7 +378,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription:     &Message{Text: "Embedded secrets or credentials detected"},
 			FullDescription:      &Message{Text: "Secrets or credentials found embedded within package contents"},
 			Help:                 &Message{Text: "Remove secrets and rotate credentials immediately."},
-			HelpUri:              "https://github.com/Alivanroy/Typosentinel/blob/main/docs/embedded-secrets.md",
+			HelpUri:              "https://github.com/falcn-io/falcn/blob/main/docs/embedded-secrets.md",
 			Properties:           &RuleProperties{Severity: "error", Category: "security", Tags: []string{"security", "secrets"}, Precision: "high", ProblemKind: "problem"},
 			DefaultConfiguration: &Configuration{Level: "error"},
 		},
@@ -388,7 +388,7 @@ func (f *SARIFFormatter) generateRules() []Rule {
 			ShortDescription:     &Message{Text: "Suspicious code pattern detected"},
 			FullDescription:      &Message{Text: "Detected suspicious code patterns such as eval chains or encoded payloads"},
 			Help:                 &Message{Text: "Review patterns and ensure they are not used for malicious intent."},
-			HelpUri:              "https://github.com/Alivanroy/Typosentinel/blob/main/docs/suspicious-behavior.md",
+			HelpUri:              "https://github.com/falcn-io/falcn/blob/main/docs/suspicious-behavior.md",
 			Properties:           &RuleProperties{Severity: "warning", Category: "security", Tags: []string{"security", "pattern"}, Precision: "medium", ProblemKind: "problem"},
 			DefaultConfiguration: &Configuration{Level: "warning"},
 		},
@@ -675,3 +675,5 @@ func (f *SARIFFormatter) calculateRiskScore(threat types.Threat) float64 {
 
 	return baseScore
 }
+
+

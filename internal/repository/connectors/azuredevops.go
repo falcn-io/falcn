@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/repository"
+	"github.com/falcn-io/falcn/internal/repository"
 )
 
 // AzureDevOpsConnector implements the Connector interface for Azure DevOps
@@ -140,7 +140,7 @@ func NewAzureDevOpsConnector(config repository.PlatformConfig) (*AzureDevOpsConn
 		baseURL:      baseURL,
 		organization: organization,
 		apiToken:     config.Auth.Token,
-		userAgent:    "TypoSentinel/1.0",
+		userAgent:    "Falcn/1.0",
 		config:       config,
 		retryConfig: &AzureRetryConfig{
 			MaxRetries:    3,
@@ -1002,3 +1002,5 @@ func (a *AzureDevOpsConnector) parseFullName(fullName string) (project, repo str
 	}
 	return "", fullName
 }
+
+

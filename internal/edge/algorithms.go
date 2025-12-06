@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // Note: AlgorithmTier and Algorithm interface are defined in registry.go
@@ -267,3 +267,5 @@ func (e *EdgeEngine) GetAlgorithmNames() []string {
 func (e *EdgeEngine) GetMetrics() *EngineMetrics {
 	return e.metrics
 }
+
+

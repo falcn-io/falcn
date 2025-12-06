@@ -7,9 +7,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // DependencyDepthAnalyzer provides comprehensive dependency depth analysis
@@ -695,3 +695,5 @@ func (dda *DependencyDepthAnalyzer) generateDepthRecommendations(result *DepthAn
 
 	return recommendations
 }
+
+

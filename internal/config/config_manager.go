@@ -14,8 +14,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
-	"github.com/Alivanroy/Typosentinel/pkg/metrics"
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/metrics"
 )
 
 // ConfigSource defines where configuration comes from
@@ -247,7 +247,7 @@ func NewConfigManager(options ConfigManagerOptions, redis *redis.Client) *Config
 
 	// Set default values
 	if options.RedisKeyPrefix == "" {
-		options.RedisKeyPrefix = "typosentinel:config:"
+		options.RedisKeyPrefix = "Falcn:config:"
 	}
 	if options.WatchInterval == 0 {
 		options.WatchInterval = 30 * time.Second
@@ -380,7 +380,7 @@ func (cm *ConfigManager) loadFromRedis() error {
 
 // loadFromEnvironment loads configuration from environment variables
 func (cm *ConfigManager) loadFromEnvironment() {
-	envPrefix := "TYPOSENTINEL_"
+	envPrefix := "Falcn_"
 	for _, env := range os.Environ() {
 		parts := strings.SplitN(env, "=", 2)
 		if len(parts) != 2 {
@@ -859,3 +859,5 @@ func (cm *ConfigManager) Shutdown() error {
 	logger.Info("Configuration manager shutdown complete")
 	return nil
 }
+
+

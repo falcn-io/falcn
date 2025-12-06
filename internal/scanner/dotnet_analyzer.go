@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // DotNetPackageAnalyzer analyzes .NET projects
@@ -545,3 +545,5 @@ func (a *DotNetPackageAnalyzer) extractProjectInfo(projectPath string) (string, 
 
 	return name, version
 }
+
+

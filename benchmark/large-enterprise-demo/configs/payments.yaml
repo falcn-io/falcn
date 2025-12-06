@@ -6,3 +6,5 @@ scanner:
   content:
     entropy_threshold: 6.0 # Stricter entropy
     max_file_size: 524288
+
+

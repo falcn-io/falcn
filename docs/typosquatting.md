@@ -1,6 +1,6 @@
 # Typosquatting Detection
 
-TypoSentinel flags packages with names similar to popular libraries that may be deceptive.
+Falcn flags packages with names similar to popular libraries that may be deceptive.
 
 ## What to Check
 - Publisher reputation and package history
@@ -11,4 +11,6 @@ TypoSentinel flags packages with names similar to popular libraries that may be 
 - Replace with the official package
 - Add safeguards (lockfiles, strict version ranges)
 - Monitor for similar names in dependency updates
+
+
 

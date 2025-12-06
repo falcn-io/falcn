@@ -159,19 +159,19 @@ func (v *SecureConfigValidator) ValidateProductionConfig() error {
 	var errors []string
 
 	// Validate JWT secret
-	jwtSecret := os.Getenv("TYPOSENTINEL_JWT_SECRET")
+	jwtSecret := os.Getenv("Falcn_JWT_SECRET")
 	if err := v.ValidateJWTSecret(jwtSecret); err != nil {
 		errors = append(errors, fmt.Sprintf("JWT Secret: %v", err))
 	}
 
 	// Validate admin password
-	adminPassword := os.Getenv("TYPOSENTINEL_ADMIN_PASSWORD")
+	adminPassword := os.Getenv("Falcn_ADMIN_PASSWORD")
 	if err := v.ValidateAdminPassword(adminPassword); err != nil {
 		errors = append(errors, fmt.Sprintf("Admin Password: %v", err))
 	}
 
 	// Validate encryption key
-	encryptionKey := os.Getenv("TYPOSENTINEL_ENCRYPTION_KEY")
+	encryptionKey := os.Getenv("Falcn_ENCRYPTION_KEY")
 	if encryptionKey != "" {
 		if err := v.ValidateEncryptionKey(encryptionKey); err != nil {
 			errors = append(errors, fmt.Sprintf("Encryption Key: %v", err))
@@ -179,7 +179,7 @@ func (v *SecureConfigValidator) ValidateProductionConfig() error {
 	}
 
 	// Validate API keys
-	apiKeysEnv := os.Getenv("TYPOSENTINEL_API_KEYS")
+	apiKeysEnv := os.Getenv("Falcn_API_KEYS")
 	if apiKeysEnv != "" {
 		apiKeys := strings.Split(apiKeysEnv, ",")
 		if err := v.ValidateAPIKeys(apiKeys); err != nil {
@@ -188,17 +188,17 @@ func (v *SecureConfigValidator) ValidateProductionConfig() error {
 	}
 
 	// Check for development/test environment variables in production
-	environment := os.Getenv("TYPOSENTINEL_ENVIRONMENT")
+	environment := os.Getenv("Falcn_ENVIRONMENT")
 	if environment == "production" {
-		if os.Getenv("TYPOSENTINEL_ENABLE_TEST_TOKENS") == "true" {
+		if os.Getenv("Falcn_ENABLE_TEST_TOKENS") == "true" {
 			errors = append(errors, "Test tokens are enabled in production environment")
 		}
 
-		if os.Getenv("TYPOSENTINEL_DISABLE_AUTH") == "true" {
+		if os.Getenv("Falcn_DISABLE_AUTH") == "true" {
 			errors = append(errors, "Authentication is disabled in production environment")
 		}
 
-		if os.Getenv("TYPOSENTINEL_DEBUG") == "true" {
+		if os.Getenv("Falcn_DEBUG") == "true" {
 			errors = append(errors, "Debug mode is enabled in production environment")
 		}
 	}
@@ -232,3 +232,5 @@ func (v *SecureConfigValidator) GetSecurityRecommendations() []string {
 
 	return recommendations
 }
+
+

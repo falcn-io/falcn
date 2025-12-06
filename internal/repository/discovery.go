@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/config"
 )
 
 // DiscoveryService handles automatic repository discovery across platforms
@@ -601,3 +601,5 @@ func (ds *DiscoveryService) getEnabledPlatforms() []string {
 	}
 	return platforms
 }
+
+

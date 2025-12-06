@@ -5,3 +5,5 @@ policies:
 scanner:
   content:
     entropy_threshold: 7.5 # Looser entropy for internal tools
+
+

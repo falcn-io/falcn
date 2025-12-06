@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // SlackConnector sends events to Slack via webhooks
@@ -87,7 +87,7 @@ func NewSlackConnector(name string, settings map[string]interface{}, logger logg
 // parseSlackConfig parses and validates Slack configuration
 func parseSlackConfig(settings map[string]interface{}) (SlackConfig, error) {
 	config := SlackConfig{
-		Username:  "TypoSentinel",
+		Username:  "Falcn",
 		IconEmoji: ":shield:",
 		Timeout:   30,
 	}
@@ -129,7 +129,7 @@ func (s *SlackConnector) Connect(ctx context.Context) error {
 		Channel:   s.config.Channel,
 		Username:  s.config.Username,
 		IconEmoji: s.config.IconEmoji,
-		Text:      "🔗 TypoSentinel connected successfully",
+		Text:      "🔗 Falcn connected successfully",
 	}
 
 	if err := s.sendMessage(ctx, testMessage); err != nil {
@@ -330,3 +330,5 @@ func (s *SlackConnector) GetName() string {
 func (s *SlackConnector) GetType() string {
 	return "slack"
 }
+
+

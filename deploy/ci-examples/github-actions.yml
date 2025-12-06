@@ -1,4 +1,4 @@
-name: Typosentinel Security Scan
+name: Falcn Security Scan
 
 on:
   pull_request:
@@ -16,14 +16,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Run Typosentinel
-        uses: alivanroy/typosentinel-action@v1
+      - name: Run Falcn
+        uses: falcn-io/Falcn-action@v1
         with:
-          config: .typosentinel.yaml
+          config: .Falcn.yaml
           fail-on-severity: high
           output-format: json
         env:
-          TYPOSENTINEL_API_KEY: ${{ secrets.TYPOSENTINEL_API_KEY }}
+          Falcn_API_KEY: ${{ secrets.Falcn_API_KEY }}
 
       - name: Upload Scan Results
         if: always()
@@ -41,7 +41,7 @@ jobs:
             const results = JSON.parse(fs.readFileSync('scan-results.json', 'utf8'));
             const threats = results.threats.filter(t => t.severity === 'critical' || t.severity === 'high');
             
-            let body = `### 🚨 Typosentinel Security Alert\n\nFound **${threats.length}** high-severity threats:\n\n`;
+            let body = `### 🚨 Falcn Security Alert\n\nFound **${threats.length}** high-severity threats:\n\n`;
             threats.forEach(t => {
               body += `- **${t.type}** in \`${t.package}\`: ${t.description}\n`;
             });
@@ -53,3 +53,5 @@ jobs:
               repo: context.repo.repo,
               body: body
             });
+
+

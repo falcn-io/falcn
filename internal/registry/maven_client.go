@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/spf13/viper"
 )
 
@@ -299,3 +299,5 @@ func (c *MavenClient) ClearCache() {
 func (c *MavenClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
+
+

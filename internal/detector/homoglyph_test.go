@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 func TestNewHomoglyphDetector(t *testing.T) {
@@ -535,3 +535,5 @@ func TestHomoglyphDetector_detectMixedScripts(t *testing.T) {
 		})
 	}
 }
+
+

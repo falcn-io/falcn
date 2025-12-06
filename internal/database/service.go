@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/config"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
@@ -980,3 +980,5 @@ func (ds *DatabaseService) GetComplianceTrends(ctx context.Context, days int) ([
 	}
 	return trends, nil
 }
+
+

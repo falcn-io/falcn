@@ -2,50 +2,50 @@ version: '3.8'
 
 services:
   # Web Frontend
-  typosentinel-web:
+  Falcn-web:
     build:
       context: ./web
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=/api
-    container_name: typosentinel-web
+    container_name: Falcn-web
     ports:
       - "3000:80"
     restart: unless-stopped
     depends_on:
       - postgres
-      - typosentinel-api
+      - Falcn-api
     networks:
-      - typosentinel-network
+      - Falcn-network
 
   # API Backend
-  typosentinel-api:
+  Falcn-api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: typosentinel-api
+    container_name: Falcn-api
     ports:
       - "8082:8080"
     restart: unless-stopped
     environment:
       - PORT=8080
       - ENV=production
-      - TYPOSENTINEL_JWT_SECRET=${TYPOSENTINEL_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
-      - TYPOSENTINEL_DB_TYPE=${TYPOSENTINEL_DB_TYPE:-sqlite}
-      - TYPOSENTINEL_DB_HOST=${TYPOSENTINEL_DB_HOST:-postgres}
-      - TYPOSENTINEL_DB_PORT=${TYPOSENTINEL_DB_PORT:-5432}
-      - TYPOSENTINEL_DB_NAME=${TYPOSENTINEL_DB_NAME:-/app/data/typosentinel.db}
-      - TYPOSENTINEL_DB_USER=${TYPOSENTINEL_DB_USER:-typosentinel}
-      - TYPOSENTINEL_DB_PASSWORD=${TYPOSENTINEL_DB_PASSWORD:-typosentinel123}
-      - TYPOSENTINEL_DB_SSLMODE=${TYPOSENTINEL_DB_SSLMODE:-disable}
-      - TYPOSENTINEL_LOG_LEVEL=${TYPOSENTINEL_LOG_LEVEL:-info}
-      - TYPOSENTINEL_CORS_ORIGINS=${TYPOSENTINEL_CORS_ORIGINS:-http://localhost:3000}
-      - TYPOSENTINEL_DISABLE_AUTH=${TYPOSENTINEL_DISABLE_AUTH:-true}
+      - Falcn_JWT_SECRET=${Falcn_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - Falcn_DB_TYPE=${Falcn_DB_TYPE:-sqlite}
+      - Falcn_DB_HOST=${Falcn_DB_HOST:-postgres}
+      - Falcn_DB_PORT=${Falcn_DB_PORT:-5432}
+      - Falcn_DB_NAME=${Falcn_DB_NAME:-/app/data/Falcn.db}
+      - Falcn_DB_USER=${Falcn_DB_USER:-Falcn}
+      - Falcn_DB_PASSWORD=${Falcn_DB_PASSWORD:-Falcn123}
+      - Falcn_DB_SSLMODE=${Falcn_DB_SSLMODE:-disable}
+      - Falcn_LOG_LEVEL=${Falcn_LOG_LEVEL:-info}
+      - Falcn_CORS_ORIGINS=${Falcn_CORS_ORIGINS:-http://localhost:3000}
+      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-true}
     volumes:
-      - typosentinel_data:/app/data
-      - typosentinel_logs:/app/logs
+      - Falcn_data:/app/data
+      - Falcn_logs:/app/logs
     networks:
-      - typosentinel-network
+      - Falcn-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -56,28 +56,28 @@ services:
       postgres:
         condition: service_healthy
 
-  typosentinel-seed:
+  Falcn-seed:
     image: curlimages/curl:8.10.1
-    container_name: typosentinel-seed
+    container_name: Falcn-seed
     profiles:
       - default
     environment:
-      - API_URL=http://typosentinel-api:8080
+      - API_URL=http://Falcn-api:8080
     volumes:
       - ./deploy/seed.sh:/seed.sh:ro
     entrypoint: ["sh", "/seed.sh"]
     depends_on:
-      typosentinel-api:
+      Falcn-api:
         condition: service_healthy
     networks:
-      - typosentinel-network
+      - Falcn-network
 
   # API Backend (SQLite profile)
-  typosentinel-api-sqlite:
+  Falcn-api-sqlite:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: typosentinel-api-sqlite
+    container_name: Falcn-api-sqlite
     profiles:
       - sqlite
     ports:
@@ -86,17 +86,17 @@ services:
     environment:
       - PORT=8080
       - ENV=production
-      - TYPOSENTINEL_DB_TYPE=sqlite
-      - TYPOSENTINEL_DB_NAME=/app/data/typosentinel.db
-      - TYPOSENTINEL_JWT_SECRET=${TYPOSENTINEL_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
-      - TYPOSENTINEL_LOG_LEVEL=${TYPOSENTINEL_LOG_LEVEL:-info}
-      - TYPOSENTINEL_CORS_ORIGINS=${TYPOSENTINEL_CORS_ORIGINS:-http://localhost:3000}
-      - TYPOSENTINEL_DISABLE_AUTH=${TYPOSENTINEL_DISABLE_AUTH:-true}
+      - Falcn_DB_TYPE=sqlite
+      - Falcn_DB_NAME=/app/data/Falcn.db
+      - Falcn_JWT_SECRET=${Falcn_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - Falcn_LOG_LEVEL=${Falcn_LOG_LEVEL:-info}
+      - Falcn_CORS_ORIGINS=${Falcn_CORS_ORIGINS:-http://localhost:3000}
+      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-true}
     volumes:
-      - typosentinel_data:/app/data
-      - typosentinel_logs:/app/logs
+      - Falcn_data:/app/data
+      - Falcn_logs:/app/logs
     networks:
-      - typosentinel-network
+      - Falcn-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -104,28 +104,28 @@ services:
       retries: 3
       start_period: 40s
 
-  typosentinel-seed-sqlite:
+  Falcn-seed-sqlite:
     image: curlimages/curl:8.10.1
-    container_name: typosentinel-seed-sqlite
+    container_name: Falcn-seed-sqlite
     profiles:
       - sqlite
     environment:
-      - API_URL=http://typosentinel-api-sqlite:8080
+      - API_URL=http://Falcn-api-sqlite:8080
     volumes:
       - ./deploy/seed.sh:/seed.sh:ro
     entrypoint: ["sh", "/seed.sh"]
     depends_on:
-      typosentinel-api-sqlite:
+      Falcn-api-sqlite:
         condition: service_healthy
     networks:
-      - typosentinel-network
+      - Falcn-network
 
   # API Backend (Postgres profile)
-  typosentinel-api-postgres:
+  Falcn-api-postgres:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: typosentinel-api-postgres
+    container_name: Falcn-api-postgres
     profiles:
       - postgres
     ports:
@@ -134,22 +134,22 @@ services:
     environment:
       - PORT=8080
       - ENV=production
-      - TYPOSENTINEL_DB_TYPE=postgres
-      - TYPOSENTINEL_DB_HOST=postgres
-      - TYPOSENTINEL_DB_PORT=5432
-      - TYPOSENTINEL_DB_NAME=typosentinel
-      - TYPOSENTINEL_DB_USER=typosentinel
-      - TYPOSENTINEL_DB_PASSWORD=typosentinel123
-      - TYPOSENTINEL_DB_SSLMODE=disable
-      - TYPOSENTINEL_JWT_SECRET=${TYPOSENTINEL_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
-      - TYPOSENTINEL_LOG_LEVEL=${TYPOSENTINEL_LOG_LEVEL:-info}
-      - TYPOSENTINEL_CORS_ORIGINS=${TYPOSENTINEL_CORS_ORIGINS:-http://localhost:3000}
-      - TYPOSENTINEL_DISABLE_AUTH=${TYPOSENTINEL_DISABLE_AUTH:-true}
+      - Falcn_DB_TYPE=postgres
+      - Falcn_DB_HOST=postgres
+      - Falcn_DB_PORT=5432
+      - Falcn_DB_NAME=Falcn
+      - Falcn_DB_USER=Falcn
+      - Falcn_DB_PASSWORD=Falcn123
+      - Falcn_DB_SSLMODE=disable
+      - Falcn_JWT_SECRET=${Falcn_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - Falcn_LOG_LEVEL=${Falcn_LOG_LEVEL:-info}
+      - Falcn_CORS_ORIGINS=${Falcn_CORS_ORIGINS:-http://localhost:3000}
+      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-true}
     volumes:
-      - typosentinel_data:/app/data
-      - typosentinel_logs:/app/logs
+      - Falcn_data:/app/data
+      - Falcn_logs:/app/logs
     networks:
-      - typosentinel-network
+      - Falcn-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -160,39 +160,39 @@ services:
       retries: 3
       start_period: 40s
 
-  typosentinel-seed-postgres:
+  Falcn-seed-postgres:
     image: curlimages/curl:8.10.1
-    container_name: typosentinel-seed-postgres
+    container_name: Falcn-seed-postgres
     profiles:
       - postgres
     environment:
-      - API_URL=http://typosentinel-api-postgres:8080
+      - API_URL=http://Falcn-api-postgres:8080
     volumes:
       - ./deploy/seed.sh:/seed.sh:ro
     entrypoint: ["sh", "/seed.sh"]
     depends_on:
-      typosentinel-api-postgres:
+      Falcn-api-postgres:
         condition: service_healthy
     networks:
-      - typosentinel-network
+      - Falcn-network
 
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: typosentinel-postgres
+    container_name: Falcn-postgres
     environment:
-      - POSTGRES_DB=typosentinel
-      - POSTGRES_USER=typosentinel
-      - POSTGRES_PASSWORD=typosentinel123
+      - POSTGRES_DB=Falcn
+      - POSTGRES_USER=Falcn
+      - POSTGRES_PASSWORD=Falcn123
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
     networks:
-      - typosentinel-network
+      - Falcn-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U typosentinel -d typosentinel"]
+      test: ["CMD-SHELL", "pg_isready -U Falcn -d Falcn"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -200,7 +200,7 @@ services:
   # Prometheus for metrics collection (optional)
   prometheus:
     image: prom/prometheus:latest
-    container_name: typosentinel-prometheus
+    container_name: Falcn-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -215,14 +215,14 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
-      - typosentinel-network
+      - Falcn-network
     profiles:
       - monitoring
 
   # Grafana for monitoring dashboards (optional)
   grafana:
     image: grafana/grafana:latest
-    container_name: typosentinel-grafana
+    container_name: Falcn-grafana
     ports:
       - "3001:3000"
     environment:
@@ -234,14 +234,14 @@ services:
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     restart: unless-stopped
     networks:
-      - typosentinel-network
+      - Falcn-network
     profiles:
       - monitoring
 
   # Node Exporter for system metrics (optional)
   node-exporter:
     image: prom/node-exporter:latest
-    container_name: typosentinel-node-exporter
+    container_name: Falcn-node-exporter
     ports:
       - "9100:9100"
     volumes:
@@ -255,14 +255,14 @@ services:
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     restart: unless-stopped
     networks:
-      - typosentinel-network
+      - Falcn-network
     profiles:
       - monitoring
 
 volumes:
-  typosentinel_data:
+  Falcn_data:
     driver: local
-  typosentinel_logs:
+  Falcn_logs:
     driver: local
   postgres_data:
     driver: local
@@ -272,5 +272,7 @@ volumes:
     driver: local
 
 networks:
-  typosentinel-network:
+  Falcn-network:
     driver: bridge
+
+

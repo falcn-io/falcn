@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // EnhancedScanner provides advanced supply chain security scanning capabilities
@@ -629,3 +629,5 @@ type SupplyChainRiskAnalysis struct {
 	Recommendations []string               `json:"recommendations"`
 	Metadata        map[string]interface{} `json:"metadata"`
 }
+
+

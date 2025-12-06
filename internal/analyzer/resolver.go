@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -286,3 +286,5 @@ func (r *DependencyResolver) getSourceList(deps []types.Dependency) []string {
 	sort.Strings(result)
 	return result
 }
+
+

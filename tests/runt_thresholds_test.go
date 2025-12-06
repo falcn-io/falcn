@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/Alivanroy/Typosentinel/internal/edge"
+	"github.com/falcn-io/falcn/internal/edge"
 	"testing"
 )
 
@@ -21,3 +21,5 @@ func TestUnicodeThresholdConfigAffectsClassification(t *testing.T) {
 		t.Fatalf("expected classification to change when unicode threshold raised, still %s", atk2)
 	}
 }
+
+

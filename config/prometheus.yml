@@ -12,8 +12,8 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # TypoSentinel API monitoring
-  - job_name: 'typosentinel-api'
+  # Falcn API monitoring
+  - job_name: 'Falcn-api'
     static_configs:
       - targets: ['api:8080']
     metrics_path: '/metrics'
@@ -25,8 +25,9 @@ scrape_configs:
       - targets: ['node-exporter:9100']
 
   # Web application monitoring (if metrics endpoint exists)
-  - job_name: 'typosentinel-web'
+  - job_name: 'Falcn-web'
     static_configs:
       - targets: ['web:80']
     metrics_path: '/metrics'
     scrape_interval: 30s
+

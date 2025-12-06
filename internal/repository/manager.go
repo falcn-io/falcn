@@ -15,8 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/scanner"
 )
 
 // Manager implements the RepositoryManager interface
@@ -462,7 +462,7 @@ func (m *Manager) createTempAnalysisDir(ctx context.Context, connector Connector
 	// This is a simplified implementation
 	// In a real implementation, you would create a temporary directory
 	// and download the dependency files to it
-	return "/tmp/typosentinel-analysis", nil
+	return "/tmp/Falcn-analysis", nil
 }
 
 func (m *Manager) downloadDependencyFiles(ctx context.Context, connector Connector, repo *Repository, files []string, tempDir string) error {
@@ -770,3 +770,5 @@ func (m *Manager) InitializeDefaultConnectors() error {
 	m.logger.Info("Default connectors should be registered externally to avoid import cycles")
 	return nil
 }
+
+

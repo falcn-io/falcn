@@ -21,7 +21,7 @@ jobs:
           mkdir -p dist
           echo Building ${{ matrix.goos }} ${{ matrix.goarch }}
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
-            go build -ldflags='-w -s' -o dist/typosentinel-${{ matrix.goos }}-${{ matrix.goarch }} .
+            go build -ldflags='-w -s' -o dist/Falcn-${{ matrix.goos }}-${{ matrix.goarch }} .
       - name: Checksums
         run: |
           cd dist
@@ -29,7 +29,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: typosentinel-binaries
+          name: Falcn-binaries
           path: dist/*
 
   publish-release:
@@ -43,11 +43,11 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: typosentinel-binaries
+          name: Falcn-binaries
           path: dist
       - name: Generate SARIF from sample project
         run: |
-          go run . scan ./tests/e2e/test-projects/npm-vulnerable --output sarif > dist/typosentinel.sarif.json
+          go run . scan ./tests/e2e/test-projects/npm-vulnerable --output sarif > dist/Falcn.sarif.json
       - name: Generate SARIF for temp Go project
         run: |
           mkdir -p /tmp/typo-go
@@ -60,7 +60,7 @@ require (
     github.com/sirupsen/logrus v1.9.0 // indirect
 )
 EOF
-          go run . scan /tmp/typo-go --output sarif > dist/typosentinel-go.sarif.json
+          go run . scan /tmp/typo-go --output sarif > dist/Falcn-go.sarif.json
       - name: Generate SARIF for temp Maven project
         run: |
           mkdir -p /tmp/typo-maven
@@ -82,7 +82,7 @@ EOF
   </dependencies>
 </project>
 EOF
-          go run . scan /tmp/typo-maven --output sarif > dist/typosentinel-maven.sarif.json
+          go run . scan /tmp/typo-maven --output sarif > dist/Falcn-maven.sarif.json
       - name: Generate SARIF for temp PyPI project
         run: |
           mkdir -p /tmp/typo-pypi
@@ -90,7 +90,7 @@ EOF
 requests==2.32.0
 numpy>=1.24.0
 EOF
-          go run . scan /tmp/typo-pypi --output sarif > dist/typosentinel-pypi.sarif.json
+          go run . scan /tmp/typo-pypi --output sarif > dist/Falcn-pypi.sarif.json
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -115,5 +115,7 @@ EOF
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/typosentinel-api:latest
-            ghcr.io/${{ github.repository_owner }}/typosentinel-api:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/Falcn-api:latest
+            ghcr.io/${{ github.repository_owner }}/Falcn-api:${{ github.ref_name }}
+
+

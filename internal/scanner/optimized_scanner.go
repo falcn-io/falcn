@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // OptimizedScanner provides high-performance scanning with parallel processing
@@ -83,7 +83,7 @@ func NewOptimizedScanner(scanner *Scanner, cfg *config.Config) *OptimizedScanner
 		FSTTL:         24 * time.Hour,
 		MaxMemorySize: 100 * 1024 * 1024,  // 100MB
 		MaxFSSize:     1024 * 1024 * 1024, // 1GB
-		CacheDir:      "/tmp/typosentinel-cache",
+		CacheDir:      "/tmp/Falcn-cache",
 	}
 
 	if cfg.Cache != nil {
@@ -409,3 +409,5 @@ func estimateSize(value interface{}) int64 {
 	// Simple estimation - in a real implementation, this would be more sophisticated
 	return 1024 // 1KB estimate
 }
+
+

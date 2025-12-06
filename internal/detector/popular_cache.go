@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	reg "github.com/Alivanroy/Typosentinel/internal/registry"
+	reg "github.com/falcn-io/falcn/internal/registry"
 	redis "github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
@@ -188,3 +188,5 @@ func (c *PopularCache) fetchPopularDynamic(registry string, limit int) []string 
 	}
 	return nil
 }
+
+

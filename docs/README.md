@@ -1,4 +1,4 @@
-# TypoSentinel
+# Falcn
 
 [![Go Version](https://img.shields.io/badge/go-1.23+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -21,37 +21,37 @@ A comprehensive typosquatting detection tool that helps identify malicious packa
 
 ### Binary Releases
 
-Download the latest release from [GitHub Releases](https://github.com/Alivanroy/Typosentinel/releases):
+Download the latest release from [GitHub Releases](https://github.com/falcn-io/Falcn/releases):
 
 ```bash
 # Linux
-wget https://github.com/Alivanroy/Typosentinel/releases/latest/download/typosentinel-linux-amd64
-chmod +x typosentinel-linux-amd64
-sudo mv typosentinel-linux-amd64 /usr/local/bin/typosentinel
+wget https://github.com/falcn-io/Falcn/releases/latest/download/Falcn-linux-amd64
+chmod +x Falcn-linux-amd64
+sudo mv Falcn-linux-amd64 /usr/local/bin/Falcn
 
 # macOS
-wget https://github.com/Alivanroy/Typosentinel/releases/latest/download/typosentinel-darwin-amd64
-chmod +x typosentinel-darwin-amd64
-sudo mv typosentinel-darwin-amd64 /usr/local/bin/typosentinel
+wget https://github.com/falcn-io/Falcn/releases/latest/download/Falcn-darwin-amd64
+chmod +x Falcn-darwin-amd64
+sudo mv Falcn-darwin-amd64 /usr/local/bin/Falcn
 
 # Windows
-# Download typosentinel-windows-amd64.exe and add to PATH
+# Download Falcn-windows-amd64.exe and add to PATH
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/Alivanroy/Typosentinel.git
-cd Typosentinel
+git clone https://github.com/falcn-io/Falcn.git
+cd Falcn
 make build
-# Binary will be created as ./typosentinel
+# Binary will be created as ./Falcn
 ```
 
 ### Docker
 
 ```bash
-docker pull typosentinel:latest
-docker run --rm -v $(pwd):/workspace typosentinel:latest scan /workspace
+docker pull Falcn:latest
+docker run --rm -v $(pwd):/workspace Falcn:latest scan /workspace
 ```
 
 ## 🔧 Quick Start
@@ -60,17 +60,17 @@ docker run --rm -v $(pwd):/workspace typosentinel:latest scan /workspace
 
 ```bash
 # Scan a project directory
-typosentinel scan /path/to/project
+Falcn scan /path/to/project
 
 # Scan specific package managers
-typosentinel scan --package-manager npm /path/to/project
-typosentinel scan --package-manager pypi /path/to/project
+Falcn scan --package-manager npm /path/to/project
+Falcn scan --package-manager pypi /path/to/project
 
 # Output results to file
-typosentinel scan --output report.json /path/to/project
+Falcn scan --output report.json /path/to/project
 
 # Enable verbose logging
-typosentinel scan --verbose /path/to/project
+Falcn scan --verbose /path/to/project
 ```
 
 ### Real-World Examples
@@ -88,16 +88,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download TypoSentinel
+      - name: Download Falcn
         run: |
-          wget https://github.com/Alivanroy/Typosentinel/releases/latest/download/typosentinel-linux-amd64
-          chmod +x typosentinel-linux-amd64
-          sudo mv typosentinel-linux-amd64 /usr/local/bin/typosentinel
+          wget https://github.com/falcn-io/Falcn/releases/latest/download/Falcn-linux-amd64
+          chmod +x Falcn-linux-amd64
+          sudo mv Falcn-linux-amd64 /usr/local/bin/Falcn
       - name: Scan for typosquatting
         run: |
-          typosentinel scan --output sarif --output-file results.sarif .
+          Falcn scan --output sarif --output-file results.sarif .
           # Fail build only on high-confidence detections
-          typosentinel scan --fail-on malicious --format json .
+          Falcn scan --fail-on malicious --format json .
       - name: Upload results to GitHub Security
         uses: github/codeql-action/upload-sarif@v2
         if: always()
@@ -113,10 +113,10 @@ typo_scan:
   image: alpine:latest
   before_script:
     - apk add --no-cache wget
-    - wget -O typosentinel https://github.com/Alivanroy/Typosentinel/releases/latest/download/typosentinel-linux-amd64
-    - chmod +x typosentinel
+    - wget -O Falcn https://github.com/falcn-io/Falcn/releases/latest/download/Falcn-linux-amd64
+    - chmod +x Falcn
   script:
-    - ./typosentinel scan --output gitlab-sast --output-file gl-sast-report.json .
+    - ./Falcn scan --output gitlab-sast --output-file gl-sast-report.json .
   artifacts:
     reports:
       sast: gl-sast-report.json
@@ -132,7 +132,7 @@ typo_scan:
 ```bash
 # Install pre-commit hook
 echo '#!/bin/bash
-typosentinel scan --fast --fail-on suspicious .' > .git/hooks/pre-commit
+Falcn scan --fast --fail-on suspicious .' > .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 
 # Or use with pre-commit framework
@@ -140,9 +140,9 @@ chmod +x .git/hooks/pre-commit
 repos:
   - repo: local
     hooks:
-      - id: typosentinel
-        name: TypoSentinel Security Scan
-        entry: typosentinel scan --fail-on malicious
+      - id: Falcn
+        name: Falcn Security Scan
+        entry: Falcn scan --fail-on malicious
         language: system
         pass_filenames: false
         always_run: true
@@ -155,7 +155,7 @@ export HTTPS_PROXY=http://proxy.company.com:8080
 export HTTP_PROXY=http://proxy.company.com:8080
 
 # Scan with custom registry mirrors
-typosentinel scan \
+Falcn scan \
   --npm-registry https://npm.company.com \
   --pypi-index https://pypi.company.com/simple \
   --timeout 60s \
@@ -167,7 +167,7 @@ typosentinel scan \
 **Comprehensive Security Audit:**
 ```bash
 # Full audit with all detection methods
-typosentinel scan \
+Falcn scan \
   --enable-all-detectors \
   --similarity-threshold 0.6 \
   --include-dev-dependencies \
@@ -176,7 +176,7 @@ typosentinel scan \
   /path/to/project
 
 # Generate executive summary
-typosentinel report \
+Falcn report \
   --input detailed-report.json \
   --template executive \
   --output audit-summary.pdf
@@ -185,7 +185,7 @@ typosentinel report \
 **Supply Chain Risk Assessment:**
 ```bash
 # Analyze dependency tree for risks
-typosentinel analyze \
+Falcn analyze \
   --depth 5 \
   --check-maintainers \
   --verify-signatures \
@@ -193,7 +193,7 @@ typosentinel analyze \
   /path/to/project
 
 # Check for abandoned packages
-typosentinel scan \
+Falcn scan \
   --check-maintenance \
   --min-download-threshold 1000 \
   --max-age 365d \
@@ -206,7 +206,7 @@ typosentinel scan \
 ```bash
 # Scan Django project with virtual environment
 source venv/bin/activate
-typosentinel scan \
+Falcn scan \
   --package-manager pypi \
   --requirements requirements.txt \
   --requirements requirements-dev.txt \
@@ -214,7 +214,7 @@ typosentinel scan \
   .
 
 # Check for malicious packages in production requirements
-typosentinel scan \
+Falcn scan \
   --package-manager pypi \
   --requirements requirements.txt \
   --fail-on suspicious \
@@ -225,7 +225,7 @@ typosentinel scan \
 **Data Science Project:**
 ```bash
 # Scan Jupyter notebook dependencies
-typosentinel scan \
+Falcn scan \
   --package-manager pypi \
   --include-notebooks \
   --check-imports \
@@ -233,7 +233,7 @@ typosentinel scan \
   /path/to/notebooks
 
 # Scan conda environment
-typosentinel scan \
+Falcn scan \
   --package-manager conda \
   --environment-file environment.yml \
   --check-channels \
@@ -245,7 +245,7 @@ typosentinel scan \
 **React Application:**
 ```bash
 # Scan React app with comprehensive checks
-typosentinel scan \
+Falcn scan \
   --package-manager npm \
   --include-dev-deps \
   --check-scripts \
@@ -254,7 +254,7 @@ typosentinel scan \
   .
 
 # Pre-deployment security check
-typosentinel scan \
+Falcn scan \
   --package-manager npm \
   --production-only \
   --fail-on malicious \
@@ -265,7 +265,7 @@ typosentinel scan \
 **Monorepo Scanning:**
 ```bash
 # Scan multiple packages in monorepo
-typosentinel scan \
+Falcn scan \
   --recursive \
   --package-manager npm \
   --workspace-aware \
@@ -274,7 +274,7 @@ typosentinel scan \
   .
 
 # Scan specific workspace
-typosentinel scan \
+Falcn scan \
   --package-manager npm \
   --workspace packages/frontend \
   .
@@ -285,7 +285,7 @@ typosentinel scan \
 **Microservice Application:**
 ```bash
 # Scan Go microservice
-typosentinel scan \
+Falcn scan \
   --package-manager go \
   --check-go-sum \
   --verify-checksums \
@@ -293,7 +293,7 @@ typosentinel scan \
   /path/to/microservice
 
 # Check for malicious modules in go.mod
-typosentinel scan \
+Falcn scan \
   --package-manager go \
   --go-mod-file go.mod \
   --fail-on suspicious \
@@ -307,16 +307,16 @@ typosentinel scan \
 # Scan dependencies in Docker build
 docker run --rm \
   -v $(pwd):/workspace \
-  -v ~/.typosentinel:/root/.typosentinel \
-  typosentinel:latest scan \
+  -v ~/.Falcn:/root/.Falcn \
+  Falcn:latest scan \
   --output /workspace/container-scan.json \
   /workspace
 
 # Multi-stage build with security scanning
 # Dockerfile
-FROM typosentinel:latest as security-scanner
+FROM Falcn:latest as security-scanner
 COPY package.json requirements.txt ./
-RUN typosentinel scan --fail-on malicious .
+RUN Falcn scan --fail-on malicious .
 
 FROM node:18-alpine as production
 COPY --from=security-scanner /app .
@@ -328,13 +328,13 @@ COPY --from=security-scanner /app .
 **Scheduled Security Scans:**
 ```bash
 # Daily security scan (crontab)
-0 2 * * * /usr/local/bin/typosentinel scan \
-  --config /etc/typosentinel/config.yaml \
-  --output /var/log/typosentinel/daily-$(date +\%Y\%m\%d).json \
+0 2 * * * /usr/local/bin/Falcn scan \
+  --config /etc/Falcn/config.yaml \
+  --output /var/log/Falcn/daily-$(date +\%Y\%m\%d).json \
   /path/to/projects
 
 # Weekly comprehensive audit
-0 1 * * 0 /usr/local/bin/typosentinel audit \
+0 1 * * 0 /usr/local/bin/Falcn audit \
   --comprehensive \
   --email-report security@company.com \
   /path/to/projects
@@ -343,13 +343,13 @@ COPY --from=security-scanner /app .
 **Integration with Security Tools:**
 ```bash
 # Send results to SIEM
-typosentinel scan \
+Falcn scan \
   --output json \
   --webhook https://siem.company.com/api/security-events \
   /path/to/project
 
 # Integration with Slack notifications
-typosentinel scan \
+Falcn scan \
   --output json \
   --on-suspicious "slack-notify #security-alerts" \
   --on-malicious "slack-notify #critical-security" \
@@ -391,7 +391,7 @@ logging:
 Start the API server:
 
 ```bash
-typosentinel serve --config config.yaml
+Falcn serve --config config.yaml
 ```
 
 API endpoints:
@@ -428,8 +428,8 @@ curl http://localhost:8080/api/v1/results/{scan_id}
 ### Setup Development Environment
 
 ```bash
-git clone https://github.com/Alivanroy/Typosentinel.git
-cd Typosentinel
+git clone https://github.com/falcn-io/Falcn.git
+cd Falcn
 make dev-setup
 ```
 
@@ -520,7 +520,7 @@ make perf-test
 - **Supported Formats**: 15+ package managers
 
 ### Detection Capabilities
-TypoSentinel effectively detects various types of typosquatting attacks including:
+Falcn effectively detects various types of typosquatting attacks including:
 - Character substitution (e.g., `expresss` vs `express`)
 - Character omission (e.g., `lodahs` vs `lodash`)
 - Character insertion (e.g., `recat` vs `react`)
@@ -551,8 +551,8 @@ For security vulnerabilities, please see our [Security Policy](SECURITY.md).
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/Alivanroy/Typosentinel/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Alivanroy/Typosentinel/discussions)
+- **Issues**: [GitHub Issues](https://github.com/falcn-io/Falcn/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/falcn-io/Falcn/discussions)
 - **Documentation**: [Project Documentation](PROJECT_DOCUMENTATION.md)
 
 ## 🙏 Acknowledgments
@@ -571,4 +571,6 @@ For security vulnerabilities, please see our [Security Policy](SECURITY.md).
 
 ---
 
-**Made with ❤️ by [Alivanroy](https://github.com/Alivanroy)**
+**Made with ❤️ by [falcn-io](https://github.com/falcn-io)**
+
+

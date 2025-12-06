@@ -3,9 +3,9 @@ package hub
 import (
 	"fmt"
 
-	"github.com/Alivanroy/Typosentinel/internal/integrations/connectors"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/internal/integrations/connectors"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // ConnectorFactory implements the integrations.ConnectorFactory interface
@@ -57,3 +57,5 @@ func (cf *ConnectorFactory) GetSupportedTypes() []string {
 		"email",
 	}
 }
+
+

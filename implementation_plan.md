@@ -47,3 +47,5 @@ Rename `internal/ml` to `internal/heuristics` to accurately reflect its current 
 
 ### Manual Verification
 - Run a scan on a sample Go project (e.g. the project itself) to verify `go.mod` parsing.
+
+

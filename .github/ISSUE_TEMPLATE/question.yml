@@ -1,5 +1,5 @@
 name: Question or Support
-description: Ask a question or get help with TypoSentinel
+description: Ask a question or get help with Falcn
 title: "[Question]: "
 labels: ["question", "support"]
 assignees: []
@@ -10,10 +10,10 @@ body:
         Thanks for reaching out! Please provide as much detail as possible to help us assist you effectively.
         
         Before submitting, please check:
-        - [Documentation](https://github.com/Alivanroy/Typosentinel/tree/main/docs)
-        - [User Guide](https://github.com/Alivanroy/Typosentinel/blob/main/docs/USER_GUIDE.md)
-        - [FAQ section in README](https://github.com/Alivanroy/Typosentinel/blob/main/README.md)
-        - [Existing issues](https://github.com/Alivanroy/Typosentinel/issues)
+        - [Documentation](https://github.com/falcn-io/Falcn/tree/main/docs)
+        - [User Guide](https://github.com/falcn-io/Falcn/blob/main/docs/USER_GUIDE.md)
+        - [FAQ section in README](https://github.com/falcn-io/Falcn/blob/main/README.md)
+        - [Existing issues](https://github.com/falcn-io/Falcn/issues)
 
   - type: dropdown
     id: question-type
@@ -59,8 +59,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: TypoSentinel Version
-      description: What version of TypoSentinel are you using?
+      label: Falcn Version
+      description: What version of Falcn are you using?
       placeholder: e.g., v1.2.3 or latest
     validations:
       required: false
@@ -143,7 +143,8 @@ body:
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Alivanroy/Typosentinel/blob/main/CODE_OF_CONDUCT.md)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/falcn-io/Falcn/blob/main/CODE_OF_CONDUCT.md)
       options:
         - label: I agree to follow this project's Code of Conduct
           required: true
+

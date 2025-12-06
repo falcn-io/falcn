@@ -1,11 +1,11 @@
 stages:
   - security
 
-typosentinel_scan:
+Falcn_scan:
   stage: security
-  image: alivanroy/typosentinel:latest
+  image: falcn-io/Falcn:latest
   script:
-    - typosentinel scan . --format json --output report.json --fail-on-severity high
+    - Falcn scan . --format json --output report.json --fail-on-severity high
   artifacts:
     reports:
       # Integrate with GitLab Security Dashboard
@@ -17,3 +17,5 @@ typosentinel_scan:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   allow_failure: false # Block pipeline on threat detection
+
+

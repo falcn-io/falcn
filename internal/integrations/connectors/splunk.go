@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // SplunkConnector sends events to Splunk via HTTP Event Collector
@@ -74,9 +74,9 @@ func NewSplunkConnector(name string, settings map[string]interface{}, logger log
 // parseSplunkConfig parses and validates Splunk configuration
 func parseSplunkConfig(settings map[string]interface{}) (SplunkConfig, error) {
 	config := SplunkConfig{
-		Source:     "typosentinel",
+		Source:     "Falcn",
 		SourceType: "json",
-		Host:       "typosentinel",
+		Host:       "Falcn",
 		Timeout:    30,
 	}
 
@@ -133,7 +133,7 @@ func (s *SplunkConnector) Connect(ctx context.Context) error {
 		SourceType: s.config.SourceType,
 		Index:      s.config.Index,
 		Event: map[string]interface{}{
-			"message":    "TypoSentinel Splunk connector test",
+			"message":    "Falcn Splunk connector test",
 			"event_type": "connection_test",
 			"timestamp":  time.Now().Format(time.RFC3339),
 		},
@@ -287,3 +287,5 @@ func (s *SplunkConnector) GetName() string {
 func (s *SplunkConnector) GetType() string {
 	return "splunk"
 }
+
+

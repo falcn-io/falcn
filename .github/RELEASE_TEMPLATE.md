@@ -1,4 +1,4 @@
-# TypoSentinel vX.Y.Z
+# Falcn vX.Y.Z
 
 ## Highlights
 - ...
@@ -8,9 +8,11 @@
 
 ## Installation
 - Binaries attached under Assets
-- Docker image: `ghcr.io/<owner>/typosentinel-api:X.Y.Z`
+- Docker image: `ghcr.io/<owner>/Falcn-api:X.Y.Z`
 
 ## Notes
 - Security fixes:
 - Known limitations:
+
+
 

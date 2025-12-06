@@ -5,17 +5,17 @@ import (
 	"log"
 	"os"
 
-	"github.com/Alivanroy/Typosentinel/internal/security"
+	"github.com/falcn-io/falcn/internal/security"
 )
 
 func main() {
-	fmt.Println("Typosentinel Security Configuration Checker")
+	fmt.Println("Falcn Security Configuration Checker")
 	fmt.Println("==========================================")
 
 	validator := security.NewSecureConfigValidator()
 
 	// Check if this is a production environment
-	environment := os.Getenv("TYPOSENTINEL_ENVIRONMENT")
+	environment := os.Getenv("Falcn_ENVIRONMENT")
 	if environment == "" {
 		environment = "development"
 	}
@@ -34,7 +34,7 @@ func main() {
 		fmt.Println("⚠️  Development environment detected - running basic checks...")
 
 		// Basic checks for development
-		jwtSecret := os.Getenv("TYPOSENTINEL_JWT_SECRET")
+		jwtSecret := os.Getenv("Falcn_JWT_SECRET")
 		if jwtSecret != "" {
 			if err := validator.ValidateJWTSecret(jwtSecret); err != nil {
 				fmt.Printf("⚠️  JWT Secret issue: %v\n", err)
@@ -45,7 +45,7 @@ func main() {
 			fmt.Println("⚠️  JWT Secret not configured (will use development default)")
 		}
 
-		adminPassword := os.Getenv("TYPOSENTINEL_ADMIN_PASSWORD")
+		adminPassword := os.Getenv("Falcn_ADMIN_PASSWORD")
 		if adminPassword != "" {
 			if err := validator.ValidateAdminPassword(adminPassword); err != nil {
 				fmt.Printf("⚠️  Admin Password issue: %v\n", err)
@@ -73,27 +73,29 @@ func main() {
 	if err != nil {
 		log.Printf("Failed to generate JWT secret: %v", err)
 	} else {
-		fmt.Printf("export TYPOSENTINEL_JWT_SECRET=\"%s\"\n", jwtSecret)
+		fmt.Printf("export Falcn_JWT_SECRET=\"%s\"\n", jwtSecret)
 	}
 
 	encryptionKey, err := validator.GenerateSecureSecret(16) // 32 hex chars = 16 bytes
 	if err != nil {
 		log.Printf("Failed to generate encryption key: %v", err)
 	} else {
-		fmt.Printf("export TYPOSENTINEL_ENCRYPTION_KEY=\"%s\"\n", encryptionKey)
+		fmt.Printf("export Falcn_ENCRYPTION_KEY=\"%s\"\n", encryptionKey)
 	}
 
 	apiKey, err := validator.GenerateSecureSecret(16) // 32 hex chars
 	if err != nil {
 		log.Printf("Failed to generate API key: %v", err)
 	} else {
-		fmt.Printf("export TYPOSENTINEL_API_KEYS=\"%s\"\n", apiKey)
+		fmt.Printf("export Falcn_API_KEYS=\"%s\"\n", apiKey)
 	}
 
-	fmt.Println("export TYPOSENTINEL_ADMIN_PASSWORD=\"YourSecurePassword123!\"")
-	fmt.Println("export TYPOSENTINEL_ENVIRONMENT=\"production\"")
-	fmt.Println("export TYPOSENTINEL_ENABLE_TEST_TOKENS=\"false\"")
-	fmt.Println("export TYPOSENTINEL_DISABLE_AUTH=\"false\"")
+	fmt.Println("export Falcn_ADMIN_PASSWORD=\"YourSecurePassword123!\"")
+	fmt.Println("export Falcn_ENVIRONMENT=\"production\"")
+	fmt.Println("export Falcn_ENABLE_TEST_TOKENS=\"false\"")
+	fmt.Println("export Falcn_DISABLE_AUTH=\"false\"")
 
 	fmt.Println("\n✅ Security check completed!")
 }
+
+

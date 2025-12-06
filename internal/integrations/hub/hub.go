@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/events"
-	pkgevents "github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/events"
+	pkgevents "github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // IntegrationHub manages all security tool integrations
@@ -388,3 +388,5 @@ func (ih *IntegrationHub) shouldSendToConnector(event *pkgevents.SecurityEvent, 
 		return true
 	}
 }
+
+

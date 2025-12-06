@@ -395,7 +395,7 @@ func TestStatusEndpoint(t *testing.T) {
 	err = json.NewDecoder(resp.Body).Decode(&status)
 	require.NoError(t, err)
 
-	assert.Equal(t, "TypoSentinel API", status.Service)
+	assert.Equal(t, "Falcn API", status.Service)
 	assert.Equal(t, "1.0.0", status.Version)
 	assert.Equal(t, "operational", status.Status)
 	assert.NotNil(t, status.Features)
@@ -665,3 +665,5 @@ func TestConcurrentRequests(t *testing.T) {
 
 	assert.True(t, successCount > 0, "At least some concurrent requests should succeed")
 }
+
+

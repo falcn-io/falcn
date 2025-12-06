@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // MetadataEnricher enriches package metadata by fetching information from registries
@@ -257,3 +257,5 @@ func (e *MetadataEnricher) enrichPyPIPackage(ctx context.Context, pkg *types.Pac
 
 	return nil
 }
+
+

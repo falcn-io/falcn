@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/edge"
-	"github.com/Alivanroy/Typosentinel/internal/security"
-	"github.com/Alivanroy/Typosentinel/internal/supplychain"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/edge"
+	"github.com/falcn-io/falcn/internal/security"
+	"github.com/falcn-io/falcn/internal/supplychain"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // TestGitHubActionsIntegration tests the GitHub Actions webhook integration
@@ -288,7 +288,7 @@ func TestSupplyChainPolicyEnforcement(t *testing.T) {
 
 // TestCICDPackageInterception tests CI/CD package interception
 func TestCICDPackageInterception(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "typosentinel-test-*")
+	tempDir, err := os.MkdirTemp("", "Falcn-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -772,3 +772,5 @@ type AlertPackage struct {
 	Reason  string `json:"reason"`
 	Policy  string `json:"policy"`
 }
+
+

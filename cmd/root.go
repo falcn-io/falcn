@@ -12,9 +12,9 @@ var (
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "typosentinel",
-	Short: "TypoSentinel - Intelligent supply chain security scanner",
-	Long: `TypoSentinel is an intelligent supply chain firewall that actively blocks 
+	Use:   "falcn",
+	Short: "Falcn - Precision Supply Chain Security",
+	Long: `Falcn is an intelligent supply chain firewall that actively blocks 
 malicious packages, typosquatting attacks, and supply chain threats in real-time.
 
 It provides:
@@ -28,7 +28,7 @@ It provides:
 
 func init() {
 	// Global flags
-	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config file (default is $HOME/.planfinale.yaml)")
+	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config file (default is $HOME/.falcn.yaml)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "futuristic", "output format (json, yaml, table, futuristic)")
 }

@@ -285,7 +285,7 @@ func (ed *EnvironmentDetector) DetectEnvironment() *EnvironmentInfo {
 func (s *SmartDefaultsEngine) generateBaseConfig(projectInfo *ProjectInfo, envInfo *EnvironmentInfo, preset SecurityPreset) *Config {
 	config := &Config{
 		App: AppConfig{
-			Name:        "typosentinel",
+			Name:        "Falcn",
 			Version:     "1.2.0",
 			Environment: EnvDevelopment,
 			Debug:       false,
@@ -559,3 +559,5 @@ func GetProjectTypeDescription(projectType ProjectType) string {
 		return "Unknown project type"
 	}
 }
+
+

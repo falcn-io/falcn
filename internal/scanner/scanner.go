@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/cache"
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/events"
-	"github.com/Alivanroy/Typosentinel/internal/integrations/hub"
-	"github.com/Alivanroy/Typosentinel/internal/heuristics"
-	"github.com/Alivanroy/Typosentinel/internal/policy"
-	pkgevents "github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/cache"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/events"
+	"github.com/falcn-io/falcn/internal/integrations/hub"
+	"github.com/falcn-io/falcn/internal/heuristics"
+	"github.com/falcn-io/falcn/internal/policy"
+	pkgevents "github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -1177,3 +1177,5 @@ func (s *Scanner) getSeverityFromSimilarity(similarity float64) types.Severity {
 	}
 	return types.SeverityLow
 }
+
+

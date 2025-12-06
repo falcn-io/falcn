@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // PHPPackageAnalyzer analyzes PHP projects
@@ -381,3 +381,5 @@ func (a *PHPPackageAnalyzer) extractProjectInfo(composerJSONPath string) (string
 
 	return composerData.Name, composerData.Version
 }
+
+

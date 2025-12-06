@@ -96,3 +96,5 @@ func TestBuildArtifactBinaryDetection(t *testing.T) {
 		})
 	}
 }
+
+

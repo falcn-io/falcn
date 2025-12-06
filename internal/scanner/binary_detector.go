@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // BinaryDetector detects executable binaries in packages
@@ -178,3 +178,5 @@ func (bd *BinaryDetector) calculateSeverity(packagePath string, binaries []strin
 
 	return types.SeverityMedium
 }
+
+

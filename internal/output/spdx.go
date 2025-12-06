@@ -2,7 +2,7 @@ package output
 
 import (
 	"encoding/json"
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
+	"github.com/falcn-io/falcn/internal/scanner"
 )
 
 type SPDXDocument struct {
@@ -25,7 +25,7 @@ type SPDXFormatter struct{}
 func NewSPDXFormatter() *SPDXFormatter { return &SPDXFormatter{} }
 
 func (f *SPDXFormatter) Format(res *scanner.ScanResults, opts FormatterOptions) ([]byte, error) {
-	doc := SPDXDocument{SPDXVersion: "SPDX-2.3", DataLicense: "CC0-1.0", SPDXID: "SPDXRef-DOCUMENT", DocumentName: "typosentinel-sbom"}
+	doc := SPDXDocument{SPDXVersion: "SPDX-2.3", DataLicense: "CC0-1.0", SPDXID: "SPDXRef-DOCUMENT", DocumentName: "Falcn-sbom"}
 	seen := make(map[string]bool)
 	for _, r := range res.Results {
 		if r.Package == nil {
@@ -40,3 +40,5 @@ func (f *SPDXFormatter) Format(res *scanner.ScanResults, opts FormatterOptions) 
 	}
 	return json.MarshalIndent(doc, "", opts.Indent)
 }
+
+

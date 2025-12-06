@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v3"
 )
@@ -1293,3 +1293,5 @@ func (a *GenericAnalyzer) AnalyzeDependencies(projectInfo *ProjectInfo) (*types.
 		CreatedAt:    time.Now(),
 	}, nil
 }
+
+

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/logger"
 	_ "github.com/lib/pq"
 )
 
@@ -15,7 +15,7 @@ import (
 type InitConfig struct {
 	Host            string        `yaml:"host" env:"DB_HOST" default:"localhost"`
 	Port            int           `yaml:"port" env:"DB_PORT" default:"5432"`
-	Database        string        `yaml:"database" env:"DB_NAME" default:"typosentinel"`
+	Database        string        `yaml:"database" env:"DB_NAME" default:"Falcn"`
 	Username        string        `yaml:"username" env:"DB_USER" default:"postgres"`
 	Password        string        `yaml:"password" env:"DB_PASSWORD" default:""`
 	SSLMode         string        `yaml:"ssl_mode" env:"DB_SSL_MODE" default:"disable"`
@@ -168,3 +168,5 @@ func (dm *DatabaseManager) ValidateSchema(ctx context.Context) error {
 	}
 	return dm.schemaManager.ValidateSchema(ctx)
 }
+
+

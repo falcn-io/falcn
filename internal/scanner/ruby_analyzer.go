@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,7 +31,7 @@ func NewRubyPackageAnalyzer(cfg *config.Config) *RubyPackageAnalyzer {
 		Name:         "ruby",
 		Version:      "1.0.0",
 		Description:  "Analyzes Ruby projects using Gemfile, Gemfile.lock, and .gemspec files with RubyGems API integration",
-		Author:       "TypoSentinel",
+		Author:       "Falcn",
 		Languages:    []string{"ruby"},
 		Capabilities: []string{"dependency_extraction", "bundler_integration", "rubygems_api", "gemspec_parsing", "lock_file_parsing"},
 		Requirements: []string{"Gemfile"},
@@ -710,3 +710,5 @@ func (a *RubyPackageAnalyzer) extractProjectInfo(gemspecPath string) (string, st
 
 	return name, version
 }
+
+

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // ElasticsearchConnector sends events to Elasticsearch
@@ -292,3 +292,5 @@ func (e *ElasticsearchConnector) GetName() string {
 func (e *ElasticsearchConnector) GetType() string {
 	return "elasticsearch"
 }
+
+

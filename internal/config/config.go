@@ -1,4 +1,4 @@
-// Package config provides configuration management for Typosentinel
+// Package config provides configuration management for Falcn
 // This package implements structured configuration with validation and environment support
 package config
 
@@ -12,7 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 
-	"github.com/Alivanroy/Typosentinel/internal/errors"
+	"github.com/falcn-io/falcn/internal/errors"
 )
 
 // Environment represents the application environment
@@ -618,10 +618,10 @@ func (m *Manager) Load(configDir string) error {
 	viper.AddConfigPath(configDir)
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./config")
-	viper.AddConfigPath("/etc/typosentinel")
+	viper.AddConfigPath("/etc/Falcn")
 
 	// Environment variable configuration
-	viper.SetEnvPrefix("TYPOSENTINEL")
+	viper.SetEnvPrefix("Falcn")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
@@ -637,7 +637,7 @@ func (m *Manager) Load(configDir string) error {
 
 	// Load environment-specific configuration
 	// Check environment variable first, then fall back to config
-	envStr := os.Getenv("TYPOSENTINEL_APP_ENVIRONMENT")
+	envStr := os.Getenv("Falcn_APP_ENVIRONMENT")
 	if envStr == "" {
 		envStr = viper.GetString("app.environment")
 	}
@@ -706,7 +706,7 @@ func (m *Manager) Reload() error {
 // setDefaults sets default configuration values
 func (m *Manager) setDefaults() {
 	// App defaults
-	viper.SetDefault("app.name", "Typosentinel")
+	viper.SetDefault("app.name", "Falcn")
 	viper.SetDefault("app.version", "1.0.0")
 	viper.SetDefault("app.environment", "development")
 	viper.SetDefault("app.debug", false)
@@ -731,7 +731,7 @@ func (m *Manager) setDefaults() {
 
 	// Database defaults
 	viper.SetDefault("database.type", "sqlite")
-	viper.SetDefault("database.database", "./data/typosentinel.db")
+	viper.SetDefault("database.database", "./data/Falcn.db")
 	viper.SetDefault("database.max_open_conns", 25)
 	viper.SetDefault("database.max_idle_conns", 5)
 	viper.SetDefault("database.conn_max_lifetime", "5m")
@@ -762,7 +762,7 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("metrics.enabled", false)
 	viper.SetDefault("metrics.provider", "prometheus")
 	viper.SetDefault("metrics.address", ":9090")
-	viper.SetDefault("metrics.namespace", "typosentinel")
+	viper.SetDefault("metrics.namespace", "Falcn")
 	viper.SetDefault("metrics.interval", "15s")
 	viper.SetDefault("metrics.buckets", []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10})
 
@@ -797,7 +797,7 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("scanner.timeout", "30s")
 	viper.SetDefault("scanner.retry_attempts", 3)
 	viper.SetDefault("scanner.retry_delay", "1s")
-	viper.SetDefault("scanner.user_agent", "Typosentinel/1.0")
+	viper.SetDefault("scanner.user_agent", "Falcn/1.0")
 	viper.SetDefault("scanner.respect_gitignore", true)
 	viper.SetDefault("scanner.max_depth", 10)
 	viper.SetDefault("scanner.skip_patterns", []string{"node_modules", ".git", "vendor", ".venv", "__pycache__", "real-actions-", "custom_test_workspace", "docker-test-"})
@@ -816,7 +816,7 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("api.version", "v1")
 	viper.SetDefault("api.documentation.enabled", true)
 	viper.SetDefault("api.documentation.path", "/docs")
-	viper.SetDefault("api.documentation.title", "Typosentinel API")
+	viper.SetDefault("api.documentation.title", "Falcn API")
 	viper.SetDefault("api.documentation.version", "1.0.0")
 	viper.SetDefault("api.rest.versioning.strategy", "path")
 	viper.SetDefault("api.rest.versioning.default_version", "v1")
@@ -1305,3 +1305,5 @@ func NewDefaultConfig() *Config {
 
 	return config
 }
+
+

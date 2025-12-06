@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🎉 Initial Production Release
 
-**TypoSentinel v1.0.0** - A comprehensive typosquatting detection tool for modern software supply chain security.
+**Falcn v1.0.0** - A comprehensive typosquatting detection tool for modern software supply chain security.
 
 #### ✨ Core Features
 - **Multi-Language Support**: Detects typosquatting across npm, PyPI, Go modules, Maven, NuGet, and more
@@ -21,9 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Comprehensive Reporting**: Detailed analysis reports with risk scoring
 
 #### 🔧 CLI Commands
-- `typosentinel scan` - Scan project directories for typosquatting threats
-- `typosentinel analyze` - Analyze individual packages for threats
-- `typosentinel version` - Display version information
+- `Falcn scan` - Scan project directories for typosquatting threats
+- `Falcn analyze` - Analyze individual packages for threats
+- `Falcn version` - Display version information
 - Multiple output formats: JSON, SARIF, futuristic, and standard text
 
 #### 🏗️ Architecture
@@ -125,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected function naming consistency in benchmark suite
 - Resolved build compilation errors in `internal/benchmark` package
 - Updated benchmark function references from old names to new standardized names
-- **Major**: Fixed all import paths throughout the codebase from `typosentinel/` to `github.com/Alivanroy/Typosentinel/`
+- **Major**: Fixed all import paths throughout the codebase from `Falcn/` to `github.com/falcn-io/Falcn/`
 - Resolved build failures caused by incorrect module import paths
 - Updated all Go files to use the correct GitHub repository import paths
 - **Critical**: Fixed configuration loading issue in ML service (`internal/config/structs.go`)
@@ -181,3 +181,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Previous Versions]
 
 *Previous changelog entries would be documented here as the project evolves.*
+
+

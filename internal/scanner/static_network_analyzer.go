@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -272,3 +272,5 @@ func (sna *StaticNetworkAnalyzer) extractSuspiciousDomains(content string) []str
 
 	return suspicious
 }
+
+

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -827,3 +827,5 @@ func (h *WebhookHandler) extractGitLabChangedPaths(commits []struct {
 func (h *WebhookHandler) generateScanID() string {
 	return fmt.Sprintf("webhook_%d", time.Now().UnixNano())
 }
+
+

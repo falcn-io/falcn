@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 	redis "github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
@@ -193,7 +193,7 @@ func loadPopularPackages() {
 	paths := []string{
 		"data/popular_packages.json",
 		"../../data/popular_packages.json",
-		"/etc/typosentinel/popular_packages.json",
+		"/etc/Falcn/popular_packages.json",
 	}
 
 	for _, path := range paths {
@@ -267,3 +267,5 @@ type EnhancedSupplyChainResult struct {
 func (d *EnhancedSupplyChainDetector) DetectThreats(ctx context.Context, pkgs []types.Package) ([]EnhancedSupplyChainResult, error) {
 	return nil, nil
 }
+
+

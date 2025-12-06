@@ -89,3 +89,5 @@ func TestAPI_MetricsAndStreamAndRateLimit(t *testing.T) {
 		t.Fatalf("expected at least one 429 response under rate limit")
 	}
 }
+
+

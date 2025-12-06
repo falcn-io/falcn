@@ -114,7 +114,7 @@ func (c *NPMClient) GetPackageInfo(ctx context.Context, packageName string) (*NP
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "TypoSentinel/1.0")
+	req.Header.Set("User-Agent", "Falcn/1.0")
 
 	logrus.Debugf("Fetching package info for: %s", packageName)
 	resp, err := c.httpClient.Do(req)
@@ -192,7 +192,7 @@ func (c *NPMClient) GetDownloadStats(ctx context.Context, packageName string, pe
 	}
 
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "TypoSentinel/1.0")
+	req.Header.Set("User-Agent", "Falcn/1.0")
 
 	logrus.Debugf("Fetching download stats for: %s (%s)", packageName, period)
 	resp, err := c.httpClient.Do(req)
@@ -272,7 +272,7 @@ func (c *NPMClient) GetPopularPackageNames(ctx context.Context, limit int) ([]st
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "TypoSentinel/1.0")
+	req.Header.Set("User-Agent", "Falcn/1.0")
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search NPM: %w", err)
@@ -299,3 +299,5 @@ func (c *NPMClient) GetPopularPackageNames(ctx context.Context, limit int) ([]st
 	}
 	return names, nil
 }
+
+

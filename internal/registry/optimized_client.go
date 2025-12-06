@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // OptimizedRegistryClient provides high-performance registry operations
@@ -56,7 +56,7 @@ func NewOptimizedRegistryClient(config *ClientConfig) *OptimizedRegistryClient {
 			IdleConnTimeout:   90 * time.Second,
 			RetryAttempts:     3,
 			RetryDelay:        1 * time.Second,
-			UserAgent:         "Typosentinel/1.0",
+			UserAgent:         "Falcn/1.0",
 			EnableCompression: true,
 			EnableKeepAlive:   true,
 		}
@@ -345,3 +345,5 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+

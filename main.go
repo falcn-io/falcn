@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Alivanroy/Typosentinel/cmd"
+	"github.com/falcn-io/falcn/cmd"
 )
 
 func main() {
@@ -11,3 +11,5 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+

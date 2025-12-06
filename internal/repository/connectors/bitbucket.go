@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/repository"
+	"github.com/falcn-io/falcn/internal/repository"
 )
 
 // BitbucketConnector implements the Connector interface for Bitbucket
@@ -168,7 +168,7 @@ func NewBitbucketConnector(config repository.PlatformConfig) (*BitbucketConnecto
 		client:    &http.Client{Timeout: config.Timeout},
 		baseURL:   baseURL,
 		apiToken:  config.Auth.Token,
-		userAgent: "TypoSentinel/1.0",
+		userAgent: "Falcn/1.0",
 		config:    config,
 		retryConfig: &RetryConfig{
 			MaxRetries:    3,
@@ -545,7 +545,7 @@ func (wm *WebhookManager) CreateWebhook(ctx context.Context, repo *repository.Re
 	endpoint := fmt.Sprintf("/repositories/%s/%s/hooks", owner, name)
 
 	webhookData := map[string]interface{}{
-		"description": "TypoSentinel Security Webhook",
+		"description": "Falcn Security Webhook",
 		"url":         webhookURL,
 		"active":      true,
 		"events":      events,
@@ -999,3 +999,5 @@ func (b *BitbucketConnector) parseFullName(fullName string) (owner, name string)
 	}
 	return "", url.QueryEscape(fullName)
 }
+
+

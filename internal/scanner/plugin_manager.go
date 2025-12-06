@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/config"
 )
 
 // PluginManager manages the plugin lifecycle and provides advanced plugin management
@@ -384,3 +384,5 @@ func (pm *PluginManager) Shutdown() error {
 	pm.loadedPlugins = make(map[string]*PluginInfo)
 	return nil
 }
+
+

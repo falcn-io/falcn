@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/detector"
-	"github.com/Alivanroy/Typosentinel/internal/registry"
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
-	"github.com/Alivanroy/Typosentinel/internal/vulnerability"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/detector"
+	"github.com/falcn-io/falcn/internal/registry"
+	"github.com/falcn-io/falcn/internal/scanner"
+	"github.com/falcn-io/falcn/internal/vulnerability"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -1873,7 +1873,7 @@ func (r *ScanResult) OutputJSON(w io.Writer) error {
 
 // OutputConsole outputs scan results in human-readable console format
 func (r *ScanResult) OutputConsole(w io.Writer) error {
-	fmt.Fprintf(w, "\n🔍 TypoSentinel Security Scan Results\n")
+	fmt.Fprintf(w, "\n🔍 Falcn Security Scan Results\n")
 	fmt.Fprintf(w, "═══════════════════════════════════════\n\n")
 	fmt.Fprintf(w, "📊 Scan Summary:\n")
 	fmt.Fprintf(w, "   • Scan ID: %s\n", r.ScanID)
@@ -1925,7 +1925,7 @@ func (r *ScanResult) OutputHTML(w io.Writer) error {
 	html := `<!DOCTYPE html>
 <html>
 <head>
-	<title>Typosentinel Scan Results</title>
+	<title>Falcn Scan Results</title>
 	<style>
 		body { font-family: Arial, sans-serif; margin: 20px; }
 		.header { background: #f4f4f4; padding: 15px; border-radius: 5px; }
@@ -1938,7 +1938,7 @@ func (r *ScanResult) OutputHTML(w io.Writer) error {
 </head>
 <body>
 	<div class="header">
-		<h1>Typosentinel Security Scan Report</h1>
+		<h1>Falcn Security Scan Report</h1>
 		<p>Generated: %s</p>
 		<p>Duration: %v</p>
 	</div>
@@ -2006,3 +2006,5 @@ func (r *ScanResult) OutputHTML(w io.Writer) error {
 </html>`)
 	return err
 }
+
+

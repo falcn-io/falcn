@@ -1,9 +1,9 @@
 package analyzer
 
 import (
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/detector"
-	"github.com/Alivanroy/Typosentinel/internal/registry"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/detector"
+	"github.com/falcn-io/falcn/internal/registry"
 )
 
 // NewStub creates a minimal analyzer wired to a default detector engine
@@ -19,3 +19,5 @@ func NewStub() *Analyzer {
 		stubRepo:   NewStubRepo(),
 	}
 }
+
+

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/repository"
+	"github.com/falcn-io/falcn/internal/repository"
 )
 
 // GenericGitConnector implements the Connector interface for generic Git repositories
@@ -49,7 +49,7 @@ func NewGenericGitConnector(config repository.PlatformConfig) (*GenericGitConnec
 	}
 
 	// Create temporary work directory
-	workDir, err := os.MkdirTemp("", "typosentinel-git-*")
+	workDir, err := os.MkdirTemp("", "Falcn-git-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create work directory: %w", err)
 	}
@@ -58,7 +58,7 @@ func NewGenericGitConnector(config repository.PlatformConfig) (*GenericGitConnec
 		client:    &http.Client{Timeout: config.Timeout},
 		baseURL:   baseURL,
 		apiToken:  config.Auth.Token,
-		userAgent: "TypoSentinel/1.0",
+		userAgent: "Falcn/1.0",
 		config:    config,
 		workDir:   workDir,
 		retryConfig: &GenericRetryConfig{
@@ -531,3 +531,5 @@ func (g *GenericGitConnector) matchesFilter(repo *repository.Repository, filter 
 
 	return true
 }
+
+

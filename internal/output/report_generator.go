@@ -362,3 +362,5 @@ func (rg *ReportGenerator) GetReportStats() (map[string]interface{}, error) {
 
 	return stats, nil
 }
+
+

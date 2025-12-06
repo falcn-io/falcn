@@ -1,8 +1,8 @@
 package scanner_test
 
 import (
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
@@ -23,3 +23,5 @@ func TestScannerHandlesMultipleLockfiles(t *testing.T) {
 	_, err = s.ScanProject(dir)
 	require.NoError(t, err)
 }
+
+

@@ -85,7 +85,7 @@ func DefaultConfig() *Config {
 		Output:    os.Stdout,
 		Timestamp: true,
 		Caller:    true,
-		Prefix:    "[TYPOSENTINEL]",
+		Prefix:    "[Falcn]",
 	}
 }
 
@@ -457,3 +457,5 @@ func NewTestLogger() *Logger {
 	}
 	return NewWithConfig(config)
 }
+
+

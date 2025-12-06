@@ -2,7 +2,7 @@ package tests
 
 import (
 	"context"
-	"github.com/Alivanroy/Typosentinel/internal/edge"
+	"github.com/falcn-io/falcn/internal/edge"
 	"testing"
 )
 
@@ -152,3 +152,5 @@ func TestRUNTMetadataIncludesThresholds(t *testing.T) {
 	}
 	// runt_overall_score and runt_risk_level are present only when findings exist
 }
+
+

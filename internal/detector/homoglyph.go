@@ -6,7 +6,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // HomoglyphDetector detects homoglyph-based typosquatting attacks
@@ -354,3 +354,5 @@ func (hd *HomoglyphDetector) normalizeForComparison(s string) string {
 
 	return normalized
 }
+
+

@@ -1,7 +1,7 @@
-# Typosentinel Project Review
+# Falcn Project Review
 
 ## 1. Executive Summary
-**Typosentinel** is a comprehensive supply chain security tool written in Go. it aims to detect typosquatting, dependency confusion, and malicious packages across multiple ecosystems (npm, PyPI, Go, Maven, etc.). The project features a CLI, an API server, and a modular architecture for detection engines.
+**Falcn** is a comprehensive supply chain security tool written in Go. it aims to detect typosquatting, dependency confusion, and malicious packages across multiple ecosystems (npm, PyPI, Go, Maven, etc.). The project features a CLI, an API server, and a modular architecture for detection engines.
 
 **Overall Assessment**: The project is ambitious and well-structured, with a strong focus on "enhanced" detection techniques (heuristics, visual similarity). However, there is some structural redundancy between `internal/scanner` and `internal/analyzer`, and the "ML" component is currently a placeholder for simple heuristics.
 
@@ -59,3 +59,5 @@ The parsing logic in `internal/analyzer` is **hand-rolled** for many formats:
 2.  **Improve Parsing**: Considerations for using official parsing libraries for complex formats like `go.mod` or `pom.xml` where possible, to handle edge cases better.
 3.  **ML Implementation**: If actual ML is desired, integrate a real model (e.g., TFLite or ONNX runtime). If mostly heuristics are needed, rename `ml` to `heuristics` or `scoring` to be more accurate.
 4.  **Refactor Detector**: `enhanced_typosquatting.go` is very large. Splitting the substitution tables and specific algorithms (keyboard, visual) into separate files would improve maintainability.
+
+

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // QRadarConnector sends events to IBM QRadar SIEM
@@ -97,13 +97,13 @@ func parseQRadarConfig(settings map[string]interface{}) (QRadarConfig, error) {
 	if eventSource, ok := settings["event_source"].(string); ok && eventSource != "" {
 		config.EventSource = eventSource
 	} else {
-		config.EventSource = "TypoSentinel"
+		config.EventSource = "Falcn"
 	}
 
 	if logSource, ok := settings["log_source"].(string); ok && logSource != "" {
 		config.LogSource = logSource
 	} else {
-		config.LogSource = "TypoSentinel Security Scanner"
+		config.LogSource = "Falcn Security Scanner"
 	}
 
 	if timeout, ok := settings["timeout"].(float64); ok && timeout > 0 {
@@ -209,7 +209,7 @@ func (q *QRadarConnector) transformEvent(event *events.SecurityEvent) *QRadarEve
 	severity := q.mapSeverity(string(event.Severity))
 
 	// Create detailed message
-	message := fmt.Sprintf("TypoSentinel detected %s threat in package %s@%s: %s",
+	message := fmt.Sprintf("Falcn detected %s threat in package %s@%s: %s",
 		event.Threat.Type, event.Package.Name, event.Package.Version, event.Threat.Description)
 
 	// Convert context from map[string]string to map[string]interface{}
@@ -257,7 +257,7 @@ func (q *QRadarConnector) transformEvent(event *events.SecurityEvent) *QRadarEve
 	}
 }
 
-// mapSeverity maps TypoSentinel severity to QRadar severity (1-10)
+// mapSeverity maps Falcn severity to QRadar severity (1-10)
 func (q *QRadarConnector) mapSeverity(severity string) int {
 	switch strings.ToLower(severity) {
 	case "critical":
@@ -314,3 +314,5 @@ func (q *QRadarConnector) GetName() string {
 func (q *QRadarConnector) GetType() string {
 	return "qradar"
 }
+
+

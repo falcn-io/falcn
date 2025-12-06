@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/repository"
+	"github.com/falcn-io/falcn/internal/repository"
 )
 
 // GitLabConnector implements the Connector interface for GitLab
@@ -153,7 +153,7 @@ func NewGitLabConnector(config repository.PlatformConfig) (*GitLabConnector, err
 		client:    client,
 		baseURL:   config.BaseURL,
 		apiToken:  config.Auth.Token,
-		userAgent: "TypoSentinel/2.0",
+		userAgent: "Falcn/2.0",
 		config:    config,
 	}, nil
 }
@@ -985,3 +985,5 @@ func (g *GitLabConnector) decodeBase64Content(content string) ([]byte, error) {
 	// Decode base64
 	return json.RawMessage(content), nil
 }
+
+

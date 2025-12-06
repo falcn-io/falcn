@@ -1,4 +1,4 @@
-# TypoSentinel Security Configuration
+# Falcn Security Configuration
 # This file contains security-focused configuration settings
 # All sensitive values should be set via environment variables
 
@@ -10,7 +10,7 @@ security:
       secret_key: "${JWT_SECRET}"  # REQUIRED: Set via environment variable
       expiration: "24h"
       refresh_expiration: "168h"  # 7 days
-      issuer: "typosentinel"
+      issuer: "Falcn"
       algorithm: "HS256"
     
     # API Key Configuration
@@ -136,7 +136,7 @@ security:
       mount_path: "secret"
     aws:
       region: "${AWS_REGION}"
-      secret_name: "typosentinel/secrets"
+      secret_name: "Falcn/secrets"
     azure:
       vault_url: "${AZURE_VAULT_URL}"
       tenant_id: "${AZURE_TENANT_ID}"
@@ -233,3 +233,4 @@ backup:
     weekly: 4
     monthly: 12
     yearly: 7
+

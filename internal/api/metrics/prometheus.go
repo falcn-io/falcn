@@ -10,43 +10,43 @@ import (
 
 var (
 	httpRequestsTotal = prom.NewCounterVec(prom.CounterOpts{
-		Name: "typosentinel_http_requests_total",
+		Name: "Falcn_http_requests_total",
 		Help: "Total HTTP requests",
 	}, []string{"path", "method", "status"})
 
 	httpRequestDuration = prom.NewHistogramVec(prom.HistogramOpts{
-		Name:    "typosentinel_http_request_duration_seconds",
+		Name:    "Falcn_http_request_duration_seconds",
 		Help:    "HTTP request durations",
 		Buckets: prom.DefBuckets,
 	}, []string{"path"})
 
 	rateLimitHitsTotal = prom.NewCounterVec(prom.CounterOpts{
-		Name: "typosentinel_rate_limit_hits_total",
+		Name: "Falcn_rate_limit_hits_total",
 		Help: "Rate limit hits",
 	}, []string{"path"})
 
 	webhookSigFailuresTotal = prom.NewCounterVec(prom.CounterOpts{
-		Name: "typosentinel_webhook_signature_failures_total",
+		Name: "Falcn_webhook_signature_failures_total",
 		Help: "Webhook signature failures",
 	}, []string{"provider"})
 
 	webhookReplayBlockedTotal = prom.NewCounterVec(prom.CounterOpts{
-		Name: "typosentinel_webhook_replay_blocked_total",
+		Name: "Falcn_webhook_replay_blocked_total",
 		Help: "Webhook replay blocks",
 	}, []string{"provider"})
 
 	redisConnected = prom.NewGauge(prom.GaugeOpts{
-		Name: "typosentinel_redis_connected",
+		Name: "Falcn_redis_connected",
 		Help: "Redis connection state",
 	})
 
 	webhookProviderEnabled = prom.NewGaugeVec(prom.GaugeOpts{
-		Name: "typosentinel_webhook_provider_enabled",
+		Name: "Falcn_webhook_provider_enabled",
 		Help: "Webhook provider enabled state",
 	}, []string{"provider"})
 
 	webhookProviderSignatureConfigured = prom.NewGaugeVec(prom.GaugeOpts{
-		Name: "typosentinel_webhook_provider_signature_configured",
+		Name: "Falcn_webhook_provider_signature_configured",
 		Help: "Webhook provider signature configured",
 	}, []string{"provider"})
 )
@@ -117,3 +117,5 @@ func SetWebhookProviderSignatureConfigured(provider string, configured bool) {
 		webhookProviderSignatureConfigured.WithLabelValues(provider).Set(0)
 	}
 }
+
+

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/spf13/viper"
 )
 
@@ -318,3 +318,5 @@ func (c *NuGetClient) ClearCache() {
 func (c *NuGetClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
+
+

@@ -14,8 +14,10 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// Version info would typically come from build ldflags
 		// For now, using a placeholder
-		println("TypoSentinel v1.0.0")
+		println("Falcn v1.0.0")
 		println("Build: dev")
 		println("Commit: latest")
 	},
 }
+
+

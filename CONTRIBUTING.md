@@ -1,6 +1,8 @@
-# Contributing to TypoSentinel
+# Contributing to Falcn
 
-Thank you for your interest in contributing! This guide outlines the process and standards we use to keep the project healthy and maintainable.
+First off, thanks for taking the time to contribute to Falcn! 🎉
+
+The following is a set of guidelines for contributing to Falcn and its packages. we use to keep the project healthy and maintainable.
 
 ## Ways to Contribute
 - Bug reports and feature requests via GitHub Issues
@@ -42,8 +44,10 @@ Thank you for your interest in contributing! This guide outlines the process and
 
 ## Security & Reporting
 - See `SECURITY.md`
-- Report vulnerabilities privately via GitHub Security Advisory or email `security@alivanroy.dev`
+- Report vulnerabilities privately via GitHub Security Advisory or email `security@falcn-io.dev`
 
 ## Code of Conduct
 - By participating, you agree to abide by our `CODE_OF_CONDUCT.md`.
+
+
 

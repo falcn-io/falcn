@@ -59,3 +59,5 @@ func TestParseMavenDependencies(t *testing.T) {
 	assert.GreaterOrEqual(t, len(deps), 2)
 	assert.Equal(t, "maven", deps[0].Registry)
 }
+
+

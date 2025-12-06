@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestWindowsDirectoryScanning(t *testing.T) {
 	}
 
 	// Create a temp directory
-	tmpDir, err := os.MkdirTemp("", "typosentinel-windows-test")
+	tmpDir, err := os.MkdirTemp("", "Falcn-windows-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -53,3 +53,5 @@ func TestWindowsDirectoryScanning(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 }
+
+

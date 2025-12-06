@@ -29,7 +29,7 @@ func NewEncryptionService() (*EncryptionService, error) {
 	}
 
 	// Derive key using PBKDF2
-	salt := []byte("typosentinel-salt") // In production, use random salt per installation
+	salt := []byte("Falcn-salt") // In production, use random salt per installation
 	key := pbkdf2.Key([]byte(keyString), salt, 100000, 32, sha256.New)
 
 	// Create AES cipher
@@ -210,7 +210,7 @@ func (e *EncryptionService) RotateEncryptionKey(newKeyString string) error {
 	}
 
 	// Derive new key
-	salt := []byte("typosentinel-salt")
+	salt := []byte("Falcn-salt")
 	newKey := pbkdf2.Key([]byte(newKeyString), salt, 100000, 32, sha256.New)
 
 	// Create new cipher
@@ -231,3 +231,5 @@ func (e *EncryptionService) RotateEncryptionKey(newKeyString string) error {
 
 	return nil
 }
+
+

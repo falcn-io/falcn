@@ -110,3 +110,5 @@ func TestOpenAPIJSONEndpoint(t *testing.T) {
 		t.Fatalf("missing paths field")
 	}
 }
+
+

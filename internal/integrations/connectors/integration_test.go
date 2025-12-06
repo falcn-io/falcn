@@ -3,7 +3,7 @@ package connectors
 import (
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,7 +11,7 @@ func TestSlackConnector(t *testing.T) {
 	config := map[string]interface{}{
 		"webhook_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
 		"channel":     "#test",
-		"username":    "Typosentinel",
+		"username":    "Falcn",
 	}
 
 	log := logger.NewTestLogger()
@@ -50,3 +50,5 @@ func TestWebhookConnector(t *testing.T) {
 	assert.Equal(t, "test-webhook", webhook.GetName())
 	assert.Equal(t, "webhook", webhook.GetType())
 }
+
+

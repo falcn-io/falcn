@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	apimetrics "github.com/Alivanroy/Typosentinel/internal/api/metrics"
+	apimetrics "github.com/falcn-io/falcn/internal/api/metrics"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -42,3 +42,5 @@ func (l *RedisLimiter) Allow(key string) bool {
 	}
 	return int(count) <= l.policy.Limit
 }
+
+

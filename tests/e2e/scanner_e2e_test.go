@@ -5,8 +5,8 @@
 package e2e
 
 import (
-	"github.com/Alivanroy/Typosentinel/internal/analyzer"
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/analyzer"
+	"github.com/falcn-io/falcn/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -92,3 +92,5 @@ func TestE2E_ScanCleanProject(t *testing.T) {
 	assert.Greater(t, result.TotalPackages, 0,
 		"Should have scanned packages")
 }
+
+

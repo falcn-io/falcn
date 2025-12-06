@@ -1,7 +1,7 @@
 package tests
 
 import (
-	sec "github.com/Alivanroy/Typosentinel/internal/security"
+	sec "github.com/falcn-io/falcn/internal/security"
 	"testing"
 )
 
@@ -14,3 +14,5 @@ func TestValidateJWTSecretFailurePaths(t *testing.T) {
 		t.Fatalf("expected error for short secret")
 	}
 }
+
+

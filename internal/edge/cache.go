@@ -125,7 +125,7 @@ func NewRedisCache(config *RedisCacheConfig) (*RedisCache, error) {
 
 	prefix := config.Prefix
 	if prefix == "" {
-		prefix = "typosentinel:gtr:"
+		prefix = "Falcn:gtr:"
 	}
 
 	return &RedisCache{
@@ -194,3 +194,5 @@ func (c *RedisCache) Clear(ctx context.Context) error {
 func (c *RedisCache) Close() error {
 	return c.client.Close()
 }
+
+

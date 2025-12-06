@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
+	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/sirupsen/logrus"
 )
 
@@ -223,3 +223,5 @@ func (ad *AutoDetector) ScanForManifestFiles(rootPath string) (map[string][]stri
 
 	return registryFiles, nil
 }
+
+

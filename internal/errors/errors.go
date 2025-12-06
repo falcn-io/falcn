@@ -1,4 +1,4 @@
-// Package errors provides structured error handling for Typosentinel
+// Package errors provides structured error handling for Falcn
 // This package implements comprehensive error types with context and categorization
 package errors
 
@@ -433,3 +433,5 @@ func GetHTTPStatus(err error) int {
 	}
 	return http.StatusInternalServerError
 }
+
+

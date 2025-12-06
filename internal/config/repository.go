@@ -436,3 +436,5 @@ func (rc *RepositoryConfig) IsWebhookEnabled(platform string) bool {
 	platformConfig, exists := rc.Webhooks.Platforms[platform]
 	return exists && platformConfig.Enabled
 }
+
+

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -994,3 +994,5 @@ func (re *ReputationEngine) detectEnterpriseSecurityViolations(dep types.Depende
 
 	return threats
 }
+
+

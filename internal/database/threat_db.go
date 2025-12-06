@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 
 	_ "github.com/lib/pq"
 )
@@ -409,3 +409,5 @@ func (tr *ThreatRecord) ConvertToThreat() *types.Threat {
 		Metadata:        metadata,
 	}
 }
+
+

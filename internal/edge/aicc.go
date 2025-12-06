@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // AICCAlgorithm implements attestation internal consistency checking
@@ -409,3 +409,5 @@ func (a *AICCAlgorithm) Reset() error {
 	}
 	return nil
 }
+
+

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/internal/edge"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/edge"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // BenchmarkRUNT analyzes performance of the RUNT algorithm
@@ -103,3 +103,5 @@ func BenchmarkGTR(b *testing.B) {
 		}
 	})
 }
+
+

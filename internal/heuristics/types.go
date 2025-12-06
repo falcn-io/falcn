@@ -34,3 +34,5 @@ type MLDetectionResult struct {
 	Anomalies   []string
 	Explanation string
 }
+
+

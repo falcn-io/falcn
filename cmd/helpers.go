@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/analyzer"
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/internal/database"
-	"github.com/Alivanroy/Typosentinel/internal/detector"
-	"github.com/Alivanroy/Typosentinel/internal/output"
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/analyzer"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/database"
+	"github.com/falcn-io/falcn/internal/detector"
+	"github.com/falcn-io/falcn/internal/output"
+	"github.com/falcn-io/falcn/internal/scanner"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // createDefaultConfig creates a default configuration
@@ -193,13 +193,13 @@ func outputAnalysisResultTable(result *detector.CheckPackageResult) {
 // saveScanToDatabase saves scan results to the  database
 func saveScanToDatabase(result *analyzer.ScanResult, scanPath string) error {
 	dbConfig := &config.DatabaseConfig{
-		Type:     getEnvOrDefault("TYPOSENTINEL_DB_TYPE", "sqlite"),
-		Host:     getEnvOrDefault("TYPOSENTINEL_DB_HOST", "localhost"),
-		Port:     getEnvIntOrDefault("TYPOSENTINEL_DB_PORT", 5432),
-		Username: getEnvOrDefault("TYPOSENTINEL_DB_USER", "typosentinel"),
-		Password: getEnvOrDefault("TYPOSENTINEL_DB_PASSWORD", ""),
-		Database: getEnvOrDefault("TYPOSENTINEL_DB_NAME", "./data/typosentinel.db"),
-		SSLMode:  getEnvOrDefault("TYPOSENTINEL_DB_SSLMODE", "disable"),
+		Type:     getEnvOrDefault("Falcn_DB_TYPE", "sqlite"),
+		Host:     getEnvOrDefault("Falcn_DB_HOST", "localhost"),
+		Port:     getEnvIntOrDefault("Falcn_DB_PORT", 5432),
+		Username: getEnvOrDefault("Falcn_DB_USER", "Falcn"),
+		Password: getEnvOrDefault("Falcn_DB_PASSWORD", ""),
+		Database: getEnvOrDefault("Falcn_DB_NAME", "./data/Falcn.db"),
+		SSLMode:  getEnvOrDefault("Falcn_DB_SSLMODE", "disable"),
 	}
 
 	if dbConfig.Type == "" {
@@ -646,3 +646,5 @@ func generateMermaidContentFromResult(result *analyzer.ScanResult) string {
 
 	return content.String()
 }
+
+

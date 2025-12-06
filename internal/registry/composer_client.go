@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/spf13/viper"
 )
 
@@ -311,3 +311,5 @@ func (c *ComposerClient) ClearCache() {
 func (c *ComposerClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
+
+

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
+	"github.com/falcn-io/falcn/pkg/events"
 )
 
 // Connector defines the interface for security tool integrations
@@ -113,3 +113,5 @@ func NewConnectorError(connectorName, operation, message string, retryable bool)
 		Retryable:     retryable,
 	}
 }
+
+

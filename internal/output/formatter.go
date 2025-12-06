@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/analyzer"
-	"github.com/Alivanroy/Typosentinel/internal/detector"
+	"github.com/falcn-io/falcn/internal/analyzer"
+	"github.com/falcn-io/falcn/internal/detector"
 )
 
 type FuturisticFormatter struct {
@@ -27,12 +27,15 @@ func (f *FuturisticFormatter) PrintVersion(version string) {
 		return
 	}
 
-	// ASCII art banner for version display
-	fmt.Println(strings.Repeat("=", 60))
-	fmt.Println("🛡️  TYPOSENTINEL - ADVANCED PACKAGE SECURITY SCANNER")
-	fmt.Println(strings.Repeat("=", 60))
-	fmt.Printf("Version: %s\n", version)
-	fmt.Println("⚡ Powered by Behavioral Analysis & Threat Intelligence")
+	// Falcn ASCII Banner
+	fmt.Println("\033[38;5;214m   ___       _\033[0m")
+	fmt.Println("\033[38;5;214m  / __\\__ _ | |  ___  _ __\033[0m")
+	fmt.Println("\033[38;5;214m / _\\ / _` || | / __|| '_ \\\033[0m")
+	fmt.Println("\033[38;5;214m/ /  | (_| || || (__ | | | |\033[0m")
+	fmt.Println("\033[38;5;214m\\/    \\__,_||_| \\___||_| |_|\033[0m")
+	fmt.Println()
+	fmt.Println("\033[1mPrecision Supply Chain Security\033[0m")
+	fmt.Printf("v%s • falcn.io\n", version)
 	fmt.Println(strings.Repeat("=", 60))
 }
 
@@ -40,6 +43,8 @@ func (f *FuturisticFormatter) PrintBanner() {
 	if f.json {
 		return
 	}
+	fmt.Println("\n\033[38;5;214m◢◣ Falcn\033[0m")
+	fmt.Println("   Precision Supply Chain Security")
 	fmt.Println(strings.Repeat("-", 40))
 }
 
@@ -67,3 +72,4 @@ func (f *FuturisticFormatter) PrintAnalysisResults(result *detector.CheckPackage
 	}
 	fmt.Printf("Findings: %d, Warnings: %d\n", len(result.Threats), len(result.Warnings))
 }
+

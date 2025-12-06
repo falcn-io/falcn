@@ -8,7 +8,7 @@ import (
 
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/spf13/viper"
@@ -57,7 +57,7 @@ func (e *Engine) Evaluate(ctx context.Context, pkg *types.Package) ([]*types.Thr
 	}
 
 	r := rego.New(
-		rego.Query("data.typosentinel.policy.violations"),
+		rego.Query("data.Falcn.policy.violations"),
 		rego.Module("policy.rego", concatModules(e.modules)),
 		rego.Input(map[string]interface{}{
 			"package": pkg,
@@ -154,3 +154,5 @@ func (e *Engine) reload() {
 	}
 	e.modules = mods
 }
+
+

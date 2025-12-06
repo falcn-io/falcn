@@ -1,6 +1,6 @@
 # Obfuscated Code Detection
 
-TypoSentinel flags high-entropy and obfuscated code segments that may hide malicious payloads. Review flagged files and verify encoded content is legitimate.
+Falcn flags high-entropy and obfuscated code segments that may hide malicious payloads. Review flagged files and verify encoded content is legitimate.
 
 ## Indicators
 - High Shannon entropy in file or windowed spans
@@ -48,3 +48,5 @@ run()
 - remove base64/hex encoded executable strings; store data, not code.
 - replace `exec`/`eval` with explicit functions and whitelisted modules.
 - add static analysis (bandit, flake8) rules to block dynamic execution.
+
+

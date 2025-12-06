@@ -1,4 +1,4 @@
-# TypoSentinel v1.1.0
+# Falcn v1.1.0
 
 ## Highlights
 - API authentication with bearer tokens and input validation
@@ -9,7 +9,7 @@
 
 ## Installation
 - Binaries: see GitHub Releases
-- Docker: ghcr.io/<org>/typosentinel-api:v1.1.0
+- Docker: ghcr.io/<org>/Falcn-api:v1.1.0
 
 ## Known Limitations
 - Demo‑only endpoints return `501 Not Implemented`
@@ -18,3 +18,5 @@
 ## Next
 - Expand E2E coverage and ecosystem throughput
 - Consider ML exploration post‑release
+
+

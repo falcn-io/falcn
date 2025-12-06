@@ -42,3 +42,5 @@ func (etd *EnhancedTyposquattingDetector) normalizeForVisualComparison(s string)
 	}
 	return result.String()
 }
+
+

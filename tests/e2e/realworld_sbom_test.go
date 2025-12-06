@@ -48,3 +48,5 @@ func TestRealGithubSBOMCycloneDXAndSPDX(t *testing.T) {
 		}
 	}
 }
+
+

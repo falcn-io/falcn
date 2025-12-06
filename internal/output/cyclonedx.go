@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/scanner"
+	"github.com/falcn-io/falcn/internal/scanner"
 )
 
 type CycloneDXBOM struct {
@@ -42,3 +42,5 @@ func (f *CycloneDXFormatter) Format(res *scanner.ScanResults, opts *FormatterOpt
 	}
 	return json.MarshalIndent(bom, "", opts.Indent)
 }
+
+

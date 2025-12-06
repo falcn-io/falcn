@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"time"
 )
 
@@ -30,3 +30,5 @@ func (s *StubRepo) Generate(dep types.Dependency) ([]types.Threat, []types.Warni
 	}
 	return threats, warnings
 }
+
+

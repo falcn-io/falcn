@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/integrations"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/integrations"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // WebhookConnector sends events to generic HTTP endpoints
@@ -130,14 +130,14 @@ func parseWebhookConfig(settings map[string]interface{}) (WebhookConfig, error) 
 func (w *WebhookConnector) Connect(ctx context.Context) error {
 	// Test connection by sending a test payload
 	testPayload := &WebhookPayload{
-		Source:    "typosentinel",
+		Source:    "Falcn",
 		Timestamp: time.Now().Format(time.RFC3339),
 		Event: &events.SecurityEvent{
 			ID:        "test-connection",
 			Timestamp: time.Now(),
 			Type:      events.EventTypeSystemAlert,
 			Severity:  events.SeverityInfo,
-			Source:    "typosentinel",
+			Source:    "Falcn",
 			Package: events.PackageInfo{
 				Name:     "test-package",
 				Version:  "1.0.0",
@@ -145,7 +145,7 @@ func (w *WebhookConnector) Connect(ctx context.Context) error {
 			},
 			Threat: events.ThreatInfo{
 				Type:        "connection_test",
-				Description: "TypoSentinel webhook connector test",
+				Description: "Falcn webhook connector test",
 			},
 		},
 		Metadata: map[string]interface{}{
@@ -172,7 +172,7 @@ func (w *WebhookConnector) Send(ctx context.Context, event *events.SecurityEvent
 	start := time.Now()
 
 	payload := &WebhookPayload{
-		Source:    "typosentinel",
+		Source:    "Falcn",
 		Timestamp: event.Timestamp.Format(time.RFC3339),
 		Event:     event,
 		Metadata: map[string]interface{}{
@@ -239,7 +239,7 @@ func (w *WebhookConnector) sendWebhook(ctx context.Context, payload *WebhookPayl
 	}
 
 	// Set user agent
-	req.Header.Set("User-Agent", "TypoSentinel-Webhook/1.0")
+	req.Header.Set("User-Agent", "Falcn-Webhook/1.0")
 
 	resp, err := w.client.Do(req)
 	if err != nil {
@@ -293,3 +293,5 @@ func (w *WebhookConnector) GetName() string {
 func (w *WebhookConnector) GetType() string {
 	return "webhook"
 }
+
+

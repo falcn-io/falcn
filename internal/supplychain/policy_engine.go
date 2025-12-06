@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/edge"
-	"github.com/Alivanroy/Typosentinel/internal/security"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/edge"
+	"github.com/falcn-io/falcn/internal/security"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // PolicyAction represents the action to take when a policy is triggered
@@ -476,3 +476,5 @@ func (pe *PolicyEngine) DisablePolicy(policyID string) error {
 
 	return nil
 }
+
+

@@ -53,3 +53,5 @@ func TestCLI_ScanMavenProject(t *testing.T) {
 	require.True(t, ok)
 	assert.GreaterOrEqual(t, int(tp), 1)
 }
+
+

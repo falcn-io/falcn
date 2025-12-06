@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // GoModuleInfo represents information from go.mod
@@ -965,3 +965,5 @@ func (a *EnhancedGoAnalyzer) getReplacementModule(moduleName string) string {
 
 	return replacements[moduleName]
 }
+
+

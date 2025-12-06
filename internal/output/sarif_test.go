@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/internal/analyzer"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/analyzer"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 func TestSARIFFormatter_Format(t *testing.T) {
@@ -29,3 +29,5 @@ func TestSARIFFormatter_Format(t *testing.T) {
 		t.Fatalf("missing runs field")
 	}
 }
+
+

@@ -1,4 +1,4 @@
-name: Run Typosentinel
+name: Run Falcn
 
 on:
   workflow_dispatch: {}
@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOFLAGS: -mod=mod
-      GOPRIVATE: github.com/Alivanroy/*
-      GONOSUMDB: github.com/Alivanroy/*
+      GOPRIVATE: github.com/falcn-io/*
+      GONOSUMDB: github.com/falcn-io/*
       GOPROXY: direct
     steps:
       - uses: actions/checkout@v4
@@ -19,16 +19,18 @@ jobs:
       - name: Build
         run: |
           go mod download || true
-          go build -o typosentinel .
+          go build -o Falcn .
       - name: Run version
         run: |
-          ./typosentinel version || go run . version || true
+          ./Falcn version || go run . version || true
       - name: Run sample scan
         run: |
-          ./typosentinel scan ./tests/e2e/test-projects/npm-vulnerable --output json > run_output.json || echo '{}' > run_output.json
+          ./Falcn scan ./tests/e2e/test-projects/npm-vulnerable --output json > run_output.json || echo '{}' > run_output.json
       - name: Upload run output
         uses: actions/upload-artifact@v4
         with:
           name: run-output
           path: run_output.json
+
+
 

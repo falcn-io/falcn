@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/events"
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/events"
+	"github.com/falcn-io/falcn/pkg/logger"
 )
 
 // EventBus manages event publishing and subscription
@@ -267,3 +267,5 @@ func (eb *EventBus) Stop() {
 		eb.logger.Info("Event bus stop requested", nil)
 	}
 }
+
+

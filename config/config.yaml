@@ -9,3 +9,5 @@ scanner:
   package_managers: []
 output:
   format: json
+
+

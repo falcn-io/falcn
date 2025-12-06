@@ -1,5 +1,5 @@
 name: Bug Report
-description: File a bug report to help us improve TypoSentinel
+description: File a bug report to help us improve Falcn
 title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees: []
@@ -12,8 +12,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: TypoSentinel Version
-      description: What version of TypoSentinel are you running?
+      label: Falcn Version
+      description: What version of Falcn are you running?
       placeholder: e.g., v1.2.3 or commit hash
     validations:
       required: true
@@ -117,7 +117,8 @@ body:
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Alivanroy/Typosentinel/blob/main/CODE_OF_CONDUCT.md)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/falcn-io/Falcn/blob/main/CODE_OF_CONDUCT.md)
       options:
         - label: I agree to follow this project's Code of Conduct
           required: true
+

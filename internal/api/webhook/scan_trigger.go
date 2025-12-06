@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // ScanTriggerImpl implements the ScanTrigger interface
@@ -474,3 +474,5 @@ func (ds *DefaultScanner) countThreats(packages []*types.Package) int {
 	}
 	return count
 }
+
+

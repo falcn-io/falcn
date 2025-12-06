@@ -30,3 +30,5 @@ func TestSingletonMetrics(t *testing.T) {
 		t.Fatalf("expected total scans >=1")
 	}
 }
+
+

@@ -50,3 +50,5 @@ Legend:
 1. Verify SARIF output and missing package manager tests
 2. Add E2E test suites (CLI and API) under build tag `e2e`
 3. Complete API reference and user guide
+
+

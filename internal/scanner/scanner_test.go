@@ -1,7 +1,7 @@
 package scanner
 
 import (
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -49,3 +49,5 @@ func TestScanner_ScanProject_MavenMinimal(t *testing.T) {
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(res.Packages), 1)
 }
+
+

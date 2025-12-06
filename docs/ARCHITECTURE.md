@@ -1,6 +1,6 @@
-# TypoSentinel Architecture & Reference
+# Falcn Architecture & Reference
 
-This document provides a comprehensive overview of the TypoSentinel architecture, command-line interface, and feature set.
+This document provides a comprehensive overview of the Falcn architecture, command-line interface, and feature set.
 
 ## 1. High-Level System Architecture
 
@@ -13,7 +13,7 @@ flowchart TB
         Webhooks["🔗 Webhooks"]
     end
 
-    subgraph Core["🔷 TypoSentinel Core"]
+    subgraph Core["🔷 Falcn Core"]
         Scanner["📦 Scanner Engine"]
         Detector["🔍 Threat Detector"]
         ML["🧠 ML Engine"]
@@ -287,7 +287,7 @@ flowchart TB
         GitLab["GitLab CI"]
         Jenkins["Jenkins"]
         
-        GitHub --> Scanner_CI["TypoSentinel\nScanner"]
+        GitHub --> Scanner_CI["Falcn\nScanner"]
         GitLab --> Scanner_CI
         Jenkins --> Scanner_CI
     end
@@ -463,9 +463,9 @@ flowchart TB
 ## 8. Directory Structure
 
 ```
-typosentinel/
+Falcn/
 ├── cmd/                          # CLI entry points
-│   └── typosentinel/
+│   └── Falcn/
 │       └── main.go
 ├── internal/                     # Private packages
 │   ├── analyzer/                 # Dependency analysis
@@ -512,7 +512,7 @@ typosentinel/
 
 Scans a project directory for threats.
 
-**Usage**: `typosentinel scan [path] [flags]`
+**Usage**: `Falcn scan [path] [flags]`
 
 **Analysis Flags**:
 - `--deep`: Enable deep analysis (slower but more thorough).
@@ -543,13 +543,13 @@ Scans a project directory for threats.
 
 Displays version information.
 
-**Usage**: `typosentinel version`
+**Usage**: `Falcn version`
 
 ## 🌐 API Server
 
-TypoSentinel includes a standalone REST API server for integrating threat analysis into applications and CI/CD pipelines.
+Falcn includes a standalone REST API server for integrating threat analysis into applications and CI/CD pipelines.
 
-**Location**: [`api/main.go`](file:///c:/Users/aliko/Desktop/Typosentinel/api/main.go)
+**Location**: [`api/main.go`](file:///c:/Users/aliko/Desktop/Falcn/api/main.go)
 
 **Key Endpoints**:
 - `POST /v1/analyze` - Analyze single package
@@ -564,7 +564,7 @@ TypoSentinel includes a standalone REST API server for integrating threat analys
 - Prometheus metrics
 - Slack/email alerting for high-risk detections
 
-See [API Reference](file:///c:/Users/aliko/Desktop/Typosentinel/docs/API_REFERENCE.md) for complete documentation.
+See [API Reference](file:///c:/Users/aliko/Desktop/Falcn/docs/API_REFERENCE.md) for complete documentation.
 
 ## ⚙️ Configuration Reference
 
@@ -650,3 +650,5 @@ Generates Software Bill of Materials in standard formats:
 
 ### 6. Vulnerability Scanning
 Integrates with vulnerability databases (OSV, NVD) to identify known CVEs in dependencies.
+
+

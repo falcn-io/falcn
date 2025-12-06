@@ -1,6 +1,6 @@
 # Suspicious Package Behavior
 
-This page explains how TypoSentinel identifies and reports suspicious behaviors in third‑party packages and what actions you should take when such behaviors are detected.
+This page explains how Falcn identifies and reports suspicious behaviors in third‑party packages and what actions you should take when such behaviors are detected.
 
 ## Overview
 Suspicious behavior refers to actions or characteristics in a package that may indicate malicious intent or unacceptable risk. These signals are heuristic and context‑dependent, and they complement known vulnerability data and typosquatting detection.
@@ -14,7 +14,7 @@ Suspicious behavior refers to actions or characteristics in a package that may i
 - Telemetry collection without disclosure or opt‑in
 - Excessive or redundant dependencies with overlapping functionality
 
-## How TypoSentinel Detects It
+## How Falcn Detects It
 - Static inspection of manifest scripts and install hooks
 - Pattern‑based scanning for dangerous APIs and persistence mechanisms
 - Cross‑referencing package metadata against trusted registries
@@ -60,3 +60,5 @@ If you believe a package is malicious:
 - replace dynamic constructs with explicit methods and vetted libraries.
 - decode and inspect payload sources; store static data, not executable strings.
 - add RuboCop rules to ban eval and dangerous metaprogramming in gems.
+
+

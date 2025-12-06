@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // Cache interface for caching functionality
@@ -244,3 +244,5 @@ func (m *MemoryCache) CleanupExpired(ctx context.Context) {
 		}
 	}
 }
+
+

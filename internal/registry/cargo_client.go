@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/spf13/viper"
 )
 
@@ -127,7 +127,7 @@ func (c *CargoClient) GetPackageInfo(ctx context.Context, name, version string) 
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "TypoSentinel/1.0")
+	req.Header.Set("User-Agent", "Falcn/1.0")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -214,7 +214,7 @@ func (c *CargoClient) SearchPackages(ctx context.Context, query string) ([]*type
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "TypoSentinel/1.0")
+	req.Header.Set("User-Agent", "Falcn/1.0")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -268,7 +268,7 @@ func (c *CargoClient) GetPopularPackages(ctx context.Context, limit int) ([]*typ
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("User-Agent", "TypoSentinel/1.0")
+	req.Header.Set("User-Agent", "Falcn/1.0")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -314,3 +314,5 @@ func (c *CargoClient) ClearCache() {
 func (c *CargoClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
+
+

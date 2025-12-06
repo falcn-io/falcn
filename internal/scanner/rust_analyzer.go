@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // RustPackageAnalyzer analyzes Rust projects
@@ -351,3 +351,5 @@ func (a *RustPackageAnalyzer) extractProjectInfo(cargoTomlPath string) (string, 
 
 	return name, version
 }
+
+

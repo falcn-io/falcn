@@ -14,7 +14,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/Alivanroy/Typosentinel/internal/registry"
+	"github.com/falcn-io/falcn/internal/registry"
 	"github.com/sirupsen/logrus"
 )
 
@@ -1792,3 +1792,5 @@ func (r *RUNTAlgorithm) evidenceToFeatureMap(v interface{}) map[string]float64 {
 	}
 	return out
 }
+
+

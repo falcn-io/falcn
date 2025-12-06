@@ -59,7 +59,7 @@ type AuditLogEntry struct {
 func NewAuditLogger(config *AuditLogConfig) (*AuditLogger, error) {
 	if config == nil {
 		config = &AuditLogConfig{
-			LogPath:         "/var/log/typosentinel/audit.log",
+			LogPath:         "/var/log/Falcn/audit.log",
 			EncryptLogs:     true,
 			MaxFileSize:     100 * 1024 * 1024, // 100MB
 			MaxFiles:        10,
@@ -437,3 +437,5 @@ func (al *AuditLogger) GetLogStats() (map[string]interface{}, error) {
 
 	return stats, nil
 }
+
+

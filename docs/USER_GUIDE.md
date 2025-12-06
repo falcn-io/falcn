@@ -1,4 +1,4 @@
-# TypoSentinel User Guide
+# Falcn User Guide
 
 ## Installation
 
@@ -7,20 +7,20 @@
 
 ### From Source
 ```bash
-git clone https://github.com/Alivanroy/Typosentinel.git
-cd Typosentinel
-go build -o typosentinel .
+git clone https://github.com/falcn-io/Falcn.git
+cd Falcn
+go build -o Falcn .
 ```
 
 ### Docker
 ```bash
-docker build -t typosentinel . && docker run --rm -v $(pwd):/scan typosentinel scan /scan
+docker build -t Falcn . && docker run --rm -v $(pwd):/scan Falcn scan /scan
 ```
 
 ## CLI Usage
 ```bash
-./typosentinel version
-./typosentinel scan . --output json --supply-chain --advanced
+./Falcn version
+./Falcn scan . --output json --supply-chain --advanced
 ```
 
 ### CLI Flags
@@ -42,3 +42,5 @@ docker build -t typosentinel . && docker run --rm -v $(pwd):/scan typosentinel s
 - `401 Unauthorized`: ensure `API_KEYS` set and header included
 - `429 Too Many Requests`: reduce request rate
 - Docker: map port `-p 8080:8080`; set env vars with `-e`
+
+

@@ -1,6 +1,6 @@
-# TypoSentinel Integrations
+# Falcn Integrations
 
-TypoSentinel supports integration with various security tools and platforms to automatically forward security events and alerts. This document explains how to configure and use these integrations.
+Falcn supports integration with various security tools and platforms to automatically forward security events and alerts. This document explains how to configure and use these integrations.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ TypoSentinel supports integration with various security tools and platforms to a
 
 ## Overview
 
-The TypoSentinel integration system allows you to:
+The Falcn integration system allows you to:
 
 - **Forward security events** to SIEM platforms like Splunk
 - **Send real-time alerts** to communication platforms like Slack
@@ -25,7 +25,7 @@ The TypoSentinel integration system allows you to:
 
 ## Configuration
 
-Integrations are configured in the main TypoSentinel configuration file (e.g., `config.yaml`).
+Integrations are configured in the main Falcn configuration file (e.g., `config.yaml`).
 
 ### Basic Configuration Structure
 
@@ -69,8 +69,8 @@ connectors:
     settings:
       hec_url: "https://splunk.company.com:8088/services/collector/event"
       token: "your-hec-token-here"
-      index: "typosentinel"           # Target index
-      source: "typosentinel_scanner"  # Event source
+      index: "Falcn"           # Target index
+      source: "Falcn_scanner"  # Event source
       sourcetype: "security_event"    # Event sourcetype
       verify_ssl: true                # SSL verification
       timeout: 30                     # Request timeout (seconds)
@@ -96,7 +96,7 @@ connectors:
     settings:
       webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
       channel: "#security-alerts"     # Target channel
-      username: "TypoSentinel"        # Bot username
+      username: "Falcn"        # Bot username
       icon_emoji: ":shield:"          # Bot icon
       mention_users: ["@security-team"] # Users to mention
       mention_channels: ["@here"]     # Channel mentions
@@ -120,12 +120,12 @@ connectors:
     type: "webhook"
     enabled: true
     settings:
-      url: "https://api.company.com/security/webhooks/typosentinel"
+      url: "https://api.company.com/security/webhooks/Falcn"
       method: "POST"                 # HTTP method
       headers:                       # Custom headers
         Authorization: "Bearer your-api-token"
         Content-Type: "application/json"
-        X-Source: "TypoSentinel"
+        X-Source: "Falcn"
       timeout: 15                    # Request timeout
       verify_ssl: true               # SSL verification
     retry:
@@ -150,10 +150,10 @@ connectors:
     settings:
       smtp_host: "smtp.company.com"   # SMTP server
       smtp_port: 587                  # SMTP port
-      username: "typosentinel@company.com"
+      username: "Falcn@company.com"
       password: "your-email-password"
-      from_email: "typosentinel@company.com"
-      from_name: "TypoSentinel Security Scanner"
+      from_email: "Falcn@company.com"
+      from_name: "Falcn Security Scanner"
       to_emails:                      # Recipients
         - "security-team@company.com"
         - "devops@company.com"
@@ -235,3 +235,5 @@ Supported threat types: `malicious`, `typosquatting`, `suspicious`, `outdated`
 2. Check token permissions and scopes
 3. Ensure tokens haven't expired
 4. Validate authentication headers
+
+

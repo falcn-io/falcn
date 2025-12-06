@@ -387,7 +387,7 @@ func DefaultEnterpriseConfig() *EnterpriseConfig {
 				SessionTimeout: time.Hour * 24,
 				JWT: EnterpriseJWTConfig{
 					Expiration: time.Hour * 24,
-					Issuer:     "typosentinel",
+					Issuer:     "Falcn",
 				},
 			},
 			Authorization: AuthzConfig{
@@ -503,3 +503,5 @@ func (ec *EnterpriseConfig) GetMaxScans() int {
 	}
 	return ec.License.MaxScans
 }
+
+

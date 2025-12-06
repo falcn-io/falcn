@@ -324,3 +324,5 @@ func (ba *BehaviorAnalyzer) AnalyzeBehavior(clientID string, suspicious bool) fl
 
 	return profile.RiskScore
 }
+
+

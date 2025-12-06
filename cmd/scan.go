@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/Alivanroy/Typosentinel/internal/analyzer"
-	"github.com/Alivanroy/Typosentinel/internal/config"
+	"github.com/falcn-io/falcn/internal/analyzer"
+	"github.com/falcn-io/falcn/internal/config"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,7 +21,7 @@ var scanCmd = &cobra.Command{
 	Short: "Scan a project for typosquatting and malicious packages (auto-detects project types)",
 	Long: `Scan a project directory for typosquatting and malicious packages.
 
-TypoSentinel automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
+Falcn automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
 based on manifest files and creates appropriate registry connectors. Use --recursive for monorepos
 and multi-project directories. Specify --package-manager to limit scanning to specific ecosystems.`,
 	Args: cobra.MaximumNArgs(1),
@@ -179,3 +179,5 @@ func runScan(cmd *cobra.Command, args []string) error {
 	outputScanResult(result, outputFormat)
 	return nil
 }
+
+

@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/internal/edge"
-	"github.com/Alivanroy/Typosentinel/internal/security"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/edge"
+	"github.com/falcn-io/falcn/internal/security"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -180,3 +180,5 @@ func TestSupplyChainPolicyEngine(t *testing.T) {
 		assert.False(t, hasBlockAction, "Compliant package should not be blocked")
 	})
 }
+
+

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	reg "github.com/Alivanroy/Typosentinel/internal/registry"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	reg "github.com/falcn-io/falcn/internal/registry"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/spf13/viper"
 )
 
@@ -706,3 +706,5 @@ func (etd *EnhancedTyposquattingDetector) calculateSeverityEnhanced(sim float64,
 	}
 	return types.SeverityMedium
 }
+
+

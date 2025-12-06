@@ -121,3 +121,5 @@ module.exports = function sum(a, b) {
 		assert.Equal(t, 0, len(threats), "Clean code should have no threats")
 	})
 }
+
+

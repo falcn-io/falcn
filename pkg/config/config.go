@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config holds all configuration for the Typosentinel application
+// Config holds all configuration for the Falcn application
 type Config struct {
 	Environment string           `json:"environment"`
 	Version     string           `json:"version"`
@@ -372,7 +372,7 @@ func Load() (*Config, error) {
 		PostgreSQL: PostgreSQLConfig{
 			Host:            getEnv("POSTGRES_HOST", "localhost"),
 			Port:            getEnvAsInt("POSTGRES_PORT", 5432),
-			Database:        getEnv("POSTGRES_DB", "typosentinel"),
+			Database:        getEnv("POSTGRES_DB", "Falcn"),
 			Username:        getEnv("POSTGRES_USER", "admin"),
 			Password:        getEnv("POSTGRES_PASSWORD", ""),
 			SSLMode:         getEnv("POSTGRES_SSL_MODE", "disable"),
@@ -384,7 +384,7 @@ func Load() (*Config, error) {
 		ClickHouse: ClickHouseConfig{
 			Host:            getEnv("CLICKHOUSE_HOST", "localhost"),
 			Port:            getEnvAsInt("CLICKHOUSE_PORT", 9000),
-			Database:        getEnv("CLICKHOUSE_DB", "typosentinel_analytics"),
+			Database:        getEnv("CLICKHOUSE_DB", "Falcn_analytics"),
 			Username:        getEnv("CLICKHOUSE_USER", "default"),
 			Password:        getEnv("CLICKHOUSE_PASSWORD", ""),
 			MaxOpenConns:    getEnvAsInt("CLICKHOUSE_MAX_OPEN_CONNS", 10),
@@ -458,8 +458,8 @@ func Load() (*Config, error) {
 			Secret:            getEnv("JWT_SECRET", "your-secret-key"),
 			Expiration:        getEnvAsDuration("JWT_EXPIRATION", 24*time.Hour),
 			RefreshExpiration: getEnvAsDuration("JWT_REFRESH_EXPIRATION", 7*24*time.Hour),
-			Issuer:            getEnv("JWT_ISSUER", "typosentinel"),
-			Audience:          getEnv("JWT_AUDIENCE", "typosentinel-api"),
+			Issuer:            getEnv("JWT_ISSUER", "Falcn"),
+			Audience:          getEnv("JWT_AUDIENCE", "Falcn-api"),
 		},
 		Encryption: EncryptionConfig{
 			Key:       getEnv("ENCRYPTION_KEY", ""),
@@ -500,13 +500,13 @@ func Load() (*Config, error) {
 			Enabled:   getEnvAsBool("PROMETHEUS_ENABLED", true),
 			Port:      getEnvAsInt("PROMETHEUS_PORT", 9090),
 			Path:      getEnv("PROMETHEUS_PATH", "/metrics"),
-			Namespace: getEnv("PROMETHEUS_NAMESPACE", "typosentinel"),
+			Namespace: getEnv("PROMETHEUS_NAMESPACE", "Falcn"),
 			Subsystem: getEnv("PROMETHEUS_SUBSYSTEM", ""),
 		},
 		Jaeger: JaegerConfig{
 			Enabled:     getEnvAsBool("JAEGER_ENABLED", false),
 			Endpoint:    getEnv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces"),
-			ServiceName: getEnv("JAEGER_SERVICE_NAME", "typosentinel"),
+			ServiceName: getEnv("JAEGER_SERVICE_NAME", "Falcn"),
 			SampleRate:  getEnvAsFloat("JAEGER_SAMPLE_RATE", 0.1),
 		},
 		Logging: LoggingConfig{
@@ -537,7 +537,7 @@ func Load() (*Config, error) {
 			AccessKeyID:     getEnv("MINIO_ACCESS_KEY_ID", "admin"),
 			SecretAccessKey: getEnv("MINIO_SECRET_ACCESS_KEY", ""),
 			UseSSL:          getEnvAsBool("MINIO_USE_SSL", false),
-			BucketName:      getEnv("MINIO_BUCKET_NAME", "typosentinel"),
+			BucketName:      getEnv("MINIO_BUCKET_NAME", "Falcn"),
 			Region:          getEnv("MINIO_REGION", "us-east-1"),
 		},
 		Local: LocalStorageConfig{
@@ -643,3 +643,5 @@ func getEnvAsSlice(key string, defaultValue []string) []string {
 	}
 	return defaultValue
 }
+
+

@@ -70,7 +70,7 @@ body:
       label: Steps to Reproduce (if applicable)
       description: If this is a demonstrable issue, provide steps to reproduce it.
       placeholder: |
-        1. Configure TypoSentinel with...
+        1. Configure Falcn with...
         2. Run command...
         3. Observe behavior...
     validations:
@@ -88,7 +88,7 @@ body:
     id: environment
     attributes:
       label: Environment Details
-      description: Relevant environment information (OS, TypoSentinel version, deployment context).
+      description: Relevant environment information (OS, Falcn version, deployment context).
     validations:
       required: false
 
@@ -109,7 +109,8 @@ body:
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Alivanroy/Typosentinel/blob/main/CODE_OF_CONDUCT.md)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/falcn-io/Falcn/blob/main/CODE_OF_CONDUCT.md)
       options:
         - label: I agree to follow this project's Code of Conduct
           required: true
+

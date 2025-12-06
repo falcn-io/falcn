@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/internal/config"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 func TestEngine_New(t *testing.T) {
@@ -256,3 +256,5 @@ func TestEngine_EnhancedSupplyChainDetector(t *testing.T) {
 		t.Error("Expected nil result from unimplemented detector")
 	}
 }
+
+

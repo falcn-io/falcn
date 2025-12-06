@@ -3,8 +3,8 @@ package benchmarks
 import (
 	"testing"
 
-	"github.com/Alivanroy/Typosentinel/internal/detector"
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/internal/detector"
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 func BenchmarkDetectEnhanced(b *testing.B) {
@@ -99,3 +99,5 @@ func BenchmarkDetectEnhancedLargeProject(b *testing.B) {
 		}
 	}
 }
+
+

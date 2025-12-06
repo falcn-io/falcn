@@ -75,3 +75,5 @@ func TestMinInt_EdgeCases(t *testing.T) {
 		t.Errorf("Expected -999999, got %d", result)
 	}
 }
+
+

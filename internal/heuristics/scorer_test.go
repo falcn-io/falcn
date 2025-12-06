@@ -50,3 +50,5 @@ func TestSimpleMLScorer_Analyze(t *testing.T) {
 		})
 	}
 }
+
+

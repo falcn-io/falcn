@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/logger"
+	"github.com/falcn-io/falcn/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -445,3 +445,5 @@ func TestGenerateScanID(t *testing.T) {
 	assert.Contains(t, scanID1, "webhook_")
 	assert.Contains(t, scanID2, "webhook_")
 }
+
+

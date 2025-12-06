@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Alivanroy/Typosentinel/pkg/types"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -354,3 +354,5 @@ func BenchmarkDIRTAlgorithm(b *testing.B) {
 		_, _ = dirt.AnalyzeWithCriticality(context.Background(), pkg, CriticalityInternal)
 	}
 }
+
+

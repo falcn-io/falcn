@@ -21,8 +21,8 @@ inputs:
     description: 'Fail the build on policy violations'
     required: false
     default: 'true'
-  typosentinel-version:
-    description: 'Version of Typosentinel to use'
+  Falcn-version:
+    description: 'Version of Falcn to use'
     required: false
     default: 'latest'
 
@@ -44,10 +44,10 @@ runs:
       with:
         go-version: '1.23'
         
-    - name: Build Typosentinel
+    - name: Build Falcn
       shell: bash
       run: |
-        go build -o /usr/local/bin/typosentinel .
+        go build -o /usr/local/bin/Falcn .
         
     - name: Detect package files
       id: detect
@@ -84,7 +84,7 @@ runs:
       id: analysis
       shell: bash
       run: |
-        typosentinel scan . --output json --supply-chain --advanced 2>/dev/null | tee scan-result.json >/dev/null || echo '{}' > scan-result.json
+        Falcn scan . --output json --supply-chain --advanced 2>/dev/null | tee scan-result.json >/dev/null || echo '{}' > scan-result.json
 
         THREATS=$(jq '.Threats | length // 0' scan-result.json 2>/dev/null || echo 0)
         TOTAL=$(jq '.TotalPackages // 0' scan-result.json 2>/dev/null || echo 0)
@@ -137,3 +137,5 @@ runs:
         echo "This build has been blocked to prevent potential supply chain attacks."
         echo "Please review the analysis results and address the identified risks."
         exit 1
+
+
