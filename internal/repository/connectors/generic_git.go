@@ -531,5 +531,3 @@ func (g *GenericGitConnector) matchesFilter(repo *repository.Repository, filter 
 
 	return true
 }
-
-

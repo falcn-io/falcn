@@ -179,5 +179,3 @@ func runScan(cmd *cobra.Command, args []string) error {
 	outputScanResult(result, outputFormat)
 	return nil
 }
-
-

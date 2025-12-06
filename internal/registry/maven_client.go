@@ -299,5 +299,3 @@ func (c *MavenClient) ClearCache() {
 func (c *MavenClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
-
-

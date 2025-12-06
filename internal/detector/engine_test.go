@@ -256,5 +256,3 @@ func TestEngine_EnhancedSupplyChainDetector(t *testing.T) {
 		t.Error("Expected nil result from unimplemented detector")
 	}
 }
-
-

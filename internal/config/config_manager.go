@@ -859,5 +859,3 @@ func (cm *ConfigManager) Shutdown() error {
 	logger.Info("Configuration manager shutdown complete")
 	return nil
 }
-
-

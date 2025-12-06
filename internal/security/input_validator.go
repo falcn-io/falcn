@@ -651,5 +651,3 @@ type APIKeyRequest struct {
 	ExpiresAt   time.Time `json:"expires_at" validate:"required"`
 	Permissions []string  `json:"permissions" validate:"required,dive,oneof=read write admin"`
 }
-
-

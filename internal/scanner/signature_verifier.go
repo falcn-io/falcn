@@ -304,5 +304,3 @@ func (sv *SignatureVerifier) createRecentCertThreat(filePath string, certInfo *C
 		DetectedAt: time.Now(),
 	}
 }
-
-

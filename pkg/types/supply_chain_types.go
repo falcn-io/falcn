@@ -717,5 +717,3 @@ type ProjectInfo struct {
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
-
-

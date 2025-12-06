@@ -429,5 +429,3 @@ func ErrDependencyNotFound(dependency string) *EnhancedError {
 		Context("dependency", dependency).
 		Build()
 }
-
-

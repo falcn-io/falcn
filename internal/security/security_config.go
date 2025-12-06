@@ -360,5 +360,3 @@ func loadEndpointLimits() map[string]EndpointLimit {
 
 	return limits
 }
-
-

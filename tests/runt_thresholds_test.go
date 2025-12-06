@@ -21,5 +21,3 @@ func TestUnicodeThresholdConfigAffectsClassification(t *testing.T) {
 		t.Fatalf("expected classification to change when unicode threshold raised, still %s", atk2)
 	}
 }
-
-

@@ -11,15 +11,14 @@ import (
 	"github.com/falcn-io/falcn/internal/cache"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/events"
-	"github.com/falcn-io/falcn/internal/integrations/hub"
 	"github.com/falcn-io/falcn/internal/heuristics"
+	"github.com/falcn-io/falcn/internal/integrations/hub"
 	"github.com/falcn-io/falcn/internal/policy"
 	pkgevents "github.com/falcn-io/falcn/pkg/events"
 	"github.com/falcn-io/falcn/pkg/logger"
 	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // Scanner handles project scanning and dependency analysis
@@ -36,6 +35,7 @@ type Scanner struct {
 	lastProjectPath  string
 	policyEngine     *policy.Engine
 }
+
 // ProjectDetector interface for detecting different project types
 type ProjectDetector interface {
 	Detect(projectPath string) (*ProjectInfo, error)
@@ -166,7 +166,7 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 	}
 
 	// Detect project type
-	projectInfo, err := s.detectProject(projectPath)
+	projectInfo, err := s.DetectProject(projectPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect project: %w", err)
 	}
@@ -195,14 +195,14 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract packages: %w", err)
 	}
+	logrus.Infof("DEBUG: Extracted %d packages from %s", len(packages), projectInfo.Path)
 
 	// Append infrastructure package if it exists
 	if infraPkg != nil {
 		packages = append(packages, infraPkg)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract packages: %w", err)
-	}
+	// Check err again? No, bug in original code (line 203 checked err again but it was nil)
+	// Removing that redundant check which might have been confusing.
 
 	// Enrich package metadata
 	ctx := context.Background()
@@ -241,6 +241,65 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 		packages[i].RiskScore = s.calculateRiskScore(threats)
 	}
 
+	// Phase 3: Content & Network Analysis (File Level)
+	// Run this once per project, not per package
+	cs := NewContentScanner()
+	root := s.lastProjectPath
+	if root == "" {
+		root, _ = os.Getwd()
+	}
+
+	logrus.Infof("DEBUG: Starting ContentScanner on root: %s", root)
+	contentThreats, err := cs.ScanDirectory(root)
+	if err != nil {
+		logrus.Errorf("DEBUG: ContentScanner error: %v", err)
+	}
+	logrus.Infof("DEBUG: ContentScanner found %d threats", len(contentThreats))
+
+	// Phase 4: Static Network Analysis
+	sna := NewStaticNetworkAnalyzer(root)
+	networkThreats, err := sna.ScanDirectory(root)
+
+	// Aggregate file-level threats
+	var projectThreats []types.Threat
+	for _, ct := range contentThreats {
+		projectThreats = append(projectThreats, ct)
+	}
+	if err == nil {
+		for _, nt := range networkThreats {
+			projectThreats = append(projectThreats, nt)
+		}
+	}
+
+	// If we found file-level threats, attach them to a synthetic package
+	if len(projectThreats) > 0 {
+		logrus.Infof("DEBUG: Creating synthetic package for %d project threats", len(projectThreats))
+		filesPkg := &types.Package{
+			Name:      "project-files",
+			Version:   "current",
+			Registry:  "internal",
+			Type:      "source",
+			Threats:   projectThreats,
+			RiskLevel: types.SeverityHigh, // Default to high if threats exist
+		}
+		filesPkg.RiskLevel = s.calculateRiskLevel(func() []*types.Threat {
+			var ptrs []*types.Threat
+			for i := range projectThreats {
+				ptrs = append(ptrs, &projectThreats[i])
+			}
+			return ptrs
+		}())
+		filesPkg.RiskScore = s.calculateRiskScore(func() []*types.Threat {
+			var ptrs []*types.Threat
+			for i := range projectThreats {
+				ptrs = append(ptrs, &projectThreats[i])
+			}
+			return ptrs
+		}())
+
+		packages = append(packages, filesPkg)
+	}
+
 	// Build summary
 	summary := s.buildSummary(packages)
 
@@ -268,7 +327,7 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 
 // BuildDependencyTree builds a dependency tree for the project
 func (s *Scanner) BuildDependencyTree(projectPath string) (*types.DependencyTree, error) {
-	projectInfo, err := s.detectProject(projectPath)
+	projectInfo, err := s.DetectProject(projectPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect project: %w", err)
 	}
@@ -289,8 +348,8 @@ func (s *Scanner) WatchProject(projectPath string, interval time.Duration) error
 	return s.watchWithFileEvents(projectPath)
 }
 
-// detectProject detects the project type and returns project information
-func (s *Scanner) detectProject(projectPath string) (*ProjectInfo, error) {
+// DetectProject detects the project type and returns project information
+func (s *Scanner) DetectProject(projectPath string) (*ProjectInfo, error) {
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
 		return nil, err
@@ -367,39 +426,6 @@ func (s *Scanner) analyzePackageThreats(pkg *types.Package) ([]*types.Threat, er
 	threats = append(threats, s.detectSuspiciousPatterns(pkg)...)
 	threats = append(threats, s.detectMaliciousIndicators(pkg)...)
 	threats = append(threats, s.detectVersionAnomalies(pkg)...)
-
-	// Content scanning integration (project files)
-	if pkg != nil {
-		cs := NewContentScanner()
-		// Merge CIDR presets based on registry
-		reg := strings.ToLower(pkg.Registry)
-		if reg != "" {
-			allowKey := "scanner.content.presets." + reg + ".allow_cidrs"
-			denyKey := "scanner.content.presets." + reg + ".deny_cidrs"
-			cs.allowCIDRs = append(cs.allowCIDRs, viper.GetStringSlice(allowKey)...)
-			cs.denyCIDRs = append(cs.denyCIDRs, viper.GetStringSlice(denyKey)...)
-		}
-		root := s.lastProjectPath
-		if root == "" {
-			root, _ = os.Getwd()
-		}
-		contentThreats, _ := cs.ScanDirectory(root)
-		for i := range contentThreats {
-			ct := contentThreats[i]
-			threats = append(threats, &ct)
-		}
-
-		// Phase 3: Static Network Analysis (Runtime Behavior)
-		// Scan package files for runtime exfiltration and beacon patterns
-		sna := NewStaticNetworkAnalyzer(root)
-		networkThreats, err := sna.ScanDirectory(root)
-		if err == nil && len(networkThreats) > 0 {
-			for i := range networkThreats {
-				nt := networkThreats[i]
-				threats = append(threats, &nt)
-			}
-		}
-	}
 
 	// Policy engine evaluation
 	if s.policyEngine != nil {
@@ -1177,5 +1203,3 @@ func (s *Scanner) getSeverityFromSimilarity(similarity float64) types.Severity {
 	}
 	return types.SeverityLow
 }
-
-

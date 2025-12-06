@@ -369,5 +369,3 @@ func (c *RubyGemsClient) ClearCache() {
 func (c *RubyGemsClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
-
-

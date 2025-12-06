@@ -457,5 +457,3 @@ func NewTestLogger() *Logger {
 	}
 	return NewWithConfig(config)
 }
-
-

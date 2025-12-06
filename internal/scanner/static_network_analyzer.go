@@ -272,5 +272,3 @@ func (sna *StaticNetworkAnalyzer) extractSuspiciousDomains(content string) []str
 
 	return suspicious
 }
-
-

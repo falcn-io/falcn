@@ -695,5 +695,3 @@ func (dda *DependencyDepthAnalyzer) generateDepthRecommendations(result *DepthAn
 
 	return recommendations
 }
-
-

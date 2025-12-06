@@ -29,5 +29,3 @@ func TestSARIFFormatter_Format(t *testing.T) {
 		t.Fatalf("missing runs field")
 	}
 }
-
-

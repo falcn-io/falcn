@@ -17,6 +17,9 @@ type EnhancedScanner struct {
 	buildDetector    BuildIntegrityDetector
 	zeroDayDetector  ZeroDayDetector
 	depGraphAnalyzer DependencyGraphAnalyzer
+	dirtDetector     DIRTDetector
+	gtrDetector      GTRDetector
+	runtDetector     RUNTDetector
 	threatIntel      ThreatIntelligenceEngine
 	honeypotManager  HoneypotManager
 	config           *config.SupplyChainConfig
@@ -28,13 +31,33 @@ type EnhancedScanner struct {
 // SupplyChainScanResult extends the basic scan result with supply chain specific findings
 type SupplyChainScanResult struct {
 	*types.ScanResult
-	BuildIntegrityFindings []BuildIntegrityFinding `json:"build_integrity_findings"`
-	ZeroDayFindings        []ZeroDayFinding        `json:"zero_day_findings"`
-	DependencyGraph        *DependencyGraph        `json:"dependency_graph"`
-	ThreatIntelFindings    []ThreatIntelFinding    `json:"threat_intel_findings"`
-	HoneypotDetections     []HoneypotDetection     `json:"honeypot_detections"`
-	SupplyChainRisk        SupplyChainRiskScore    `json:"supply_chain_risk"`
-	ScanMetadata           SupplyChainScanMetadata `json:"scan_metadata"`
+	BuildIntegrityFindings []BuildIntegrityFinding        `json:"build_integrity_findings"`
+	ZeroDayFindings        []ZeroDayFinding               `json:"zero_day_findings"`
+	DependencyGraph        *DependencyGraph               `json:"dependency_graph"`
+	ThreatIntelFindings    []ThreatIntelFinding           `json:"threat_intel_findings"`
+	HoneypotDetections     []HoneypotDetection            `json:"honeypot_detections"`
+	SupplyChainRisk        SupplyChainRiskScore           `json:"supply_chain_risk"`
+	DIRTAssessments        []types.BusinessRiskAssessment `json:"dirt_assessments"`
+	GTRResults             []types.AlgorithmResult        `json:"gtr_results"`
+	RUNTResults            []types.AlgorithmResult        `json:"runt_results"`
+	ScanMetadata           SupplyChainScanMetadata        `json:"scan_metadata"`
+}
+
+// DIRTDetector interface for business-aware risk assessment
+type DIRTDetector interface {
+	AnalyzeWithCriticality(ctx context.Context, pkg *types.Package, criticality types.AssetCriticality) (*types.BusinessRiskAssessment, error)
+}
+
+// GTRDetector interface for graph threat detection
+type GTRDetector interface {
+	Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error)
+	GetMetrics() *types.AlgorithmMetrics
+}
+
+// RUNTDetector interface for typosquatting detection
+type RUNTDetector interface {
+	Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error)
+	GetMetrics() *types.AlgorithmMetrics
 }
 
 // BuildIntegrityDetector interface for detecting build integrity issues
@@ -252,6 +275,27 @@ func NewEnhancedScanner(baseScanner *Scanner, config *config.SupplyChainConfig) 
 	return scanner, nil
 }
 
+// SetDIRTDetector sets the DIRT detector
+func (es *EnhancedScanner) SetDIRTDetector(d DIRTDetector) {
+	es.mu.Lock()
+	defer es.mu.Unlock()
+	es.dirtDetector = d
+}
+
+// SetGTRDetector sets the GTR detector
+func (es *EnhancedScanner) SetGTRDetector(d GTRDetector) {
+	es.mu.Lock()
+	defer es.mu.Unlock()
+	es.gtrDetector = d
+}
+
+// SetRUNTDetector sets the RUNT detector
+func (es *EnhancedScanner) SetRUNTDetector(d RUNTDetector) {
+	es.mu.Lock()
+	defer es.mu.Unlock()
+	es.runtDetector = d
+}
+
 // ScanWithSupplyChainAnalysis performs enhanced scanning with supply chain security analysis
 func (es *EnhancedScanner) ScanWithSupplyChainAnalysis(ctx context.Context, projectPath string) (*SupplyChainScanResult, error) {
 	es.mu.RLock()
@@ -297,10 +341,89 @@ func (es *EnhancedScanner) ScanWithSupplyChainAnalysis(ctx context.Context, proj
 
 // initializeDetectors initializes all configured detectors
 func (es *EnhancedScanner) initializeDetectors() error {
-	// Initialize detectors based on configuration
-	// This will be implemented with actual detector implementations
 	es.logger.Info("Initializing enhanced scanner detectors")
+
+	// Initialize Dependency Graph Analyzer
+	// In a real scenario, we'd pass config
+	depthConfig := &config.DependencyGraphConfig{
+		Enabled:  true,
+		MaxDepth: 10,
+	}
+	logger := logger.New() // helper
+	depthAnalyzer := NewDependencyDepthAnalyzer(depthConfig, logger)
+	es.depGraphAnalyzer = NewSimpleGraphAnalyzer(depthAnalyzer)
+
 	return nil
+}
+
+// SimpleGraphAnalyzer implements DependencyGraphAnalyzer
+type SimpleGraphAnalyzer struct {
+	depthAnalyzer *DependencyDepthAnalyzer
+}
+
+func NewSimpleGraphAnalyzer(da *DependencyDepthAnalyzer) *SimpleGraphAnalyzer {
+	return &SimpleGraphAnalyzer{depthAnalyzer: da}
+}
+
+func (s *SimpleGraphAnalyzer) BuildDependencyGraph(ctx context.Context, packages []*types.Package) (*DependencyGraph, error) {
+	nodes := make([]DependencyNode, 0)
+	edges := make([]DependencyEdge, 0)
+
+	// Create nodes
+	for _, pkg := range packages {
+		nodes = append(nodes, DependencyNode{
+			ID:      pkg.Name,
+			Package: pkg,
+			Direct:  true, // Simplified
+		})
+
+		// Create edges (assuming Dependencies are strings or simple structs)
+		// types.Package.Dependencies is []Dependency
+		for _, dep := range pkg.Dependencies {
+			edges = append(edges, DependencyEdge{
+				From:         pkg.Name,
+				To:           dep.Name,
+				RelationType: "depends_on",
+			})
+		}
+	}
+
+	return &DependencyGraph{
+		Nodes: nodes,
+		Edges: edges,
+		Depth: 1, // Simplified
+		Stats: GraphStatistics{
+			TotalNodes: len(nodes),
+			TotalEdges: len(edges),
+		},
+	}, nil
+}
+
+func (s *SimpleGraphAnalyzer) AnalyzeTransitiveDependencies(ctx context.Context, graph *DependencyGraph) ([]TransitiveThreat, error) {
+	return []TransitiveThreat{}, nil
+}
+
+func (s *SimpleGraphAnalyzer) DetectDependencyConfusion(ctx context.Context, graph *DependencyGraph) ([]ConfusionThreat, error) {
+	return []ConfusionThreat{}, nil
+}
+
+func (s *SimpleGraphAnalyzer) AnalyzeSupplyChainRisk(ctx context.Context, graph *DependencyGraph) (*SupplyChainRiskAnalysis, error) {
+	// Delegate to DepthAnalyzer
+	depthResult, err := s.depthAnalyzer.AnalyzeDependencyDepth(ctx, graph)
+	if err != nil {
+		return nil, err
+	}
+	if depthResult == nil {
+		return &SupplyChainRiskAnalysis{}, nil
+	}
+
+	// Map result
+	return &SupplyChainRiskAnalysis{
+		OverallRisk: depthResult.AverageDepth * 0.1, // Dummy score
+		Metadata: map[string]interface{}{
+			"depth_metrics": depthResult.DepthMetrics,
+		},
+	}, nil
 }
 
 // performEnhancedAnalysis performs all enhanced security analyses
@@ -312,6 +435,32 @@ func (es *EnhancedScanner) performEnhancedAnalysis(ctx context.Context, packages
 			es.logger.Errorf("Failed to build dependency graph: %v", err)
 		} else {
 			result.DependencyGraph = graph
+		}
+	}
+
+	// Gather package names for batch analysis
+	pkgNames := make([]string, len(packages))
+	for i, p := range packages {
+		pkgNames[i] = p.Name
+	}
+
+	// GTR Analysis
+	if es.gtrDetector != nil {
+		gtrResult, err := es.gtrDetector.Analyze(ctx, pkgNames)
+		if err != nil {
+			es.logger.Errorf("GTR analysis failed: %v", err)
+		} else if gtrResult != nil {
+			result.GTRResults = append(result.GTRResults, *gtrResult)
+		}
+	}
+
+	// RUNT Analysis
+	if es.runtDetector != nil {
+		runtResult, err := es.runtDetector.Analyze(ctx, pkgNames)
+		if err != nil {
+			es.logger.Errorf("RUNT analysis failed: %v", err)
+		} else if runtResult != nil {
+			result.RUNTResults = append(result.RUNTResults, *runtResult)
 		}
 	}
 
@@ -365,6 +514,17 @@ func (es *EnhancedScanner) analyzePackageEnhanced(ctx context.Context, pkg *type
 			es.logger.Errorf("Honeypot detection failed for package %s: %v", pkg.Name, err)
 		} else {
 			result.HoneypotDetections = append(result.HoneypotDetections, detections...)
+		}
+	}
+
+	// DIRT Analysis
+	if es.dirtDetector != nil {
+		// Default to Internal criticality for now
+		assessment, err := es.dirtDetector.AnalyzeWithCriticality(ctx, pkg, types.CriticalityInternal)
+		if err != nil {
+			es.logger.Errorf("DIRT analysis failed for package %s: %v", pkg.Name, err)
+		} else {
+			result.DIRTAssessments = append(result.DIRTAssessments, *assessment)
 		}
 	}
 
@@ -629,5 +789,3 @@ type SupplyChainRiskAnalysis struct {
 	Recommendations []string               `json:"recommendations"`
 	Metadata        map[string]interface{} `json:"metadata"`
 }
-
-

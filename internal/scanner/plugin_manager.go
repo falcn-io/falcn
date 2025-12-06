@@ -384,5 +384,3 @@ func (pm *PluginManager) Shutdown() error {
 	pm.loadedPlugins = make(map[string]*PluginInfo)
 	return nil
 }
-
-

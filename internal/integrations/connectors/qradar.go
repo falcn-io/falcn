@@ -314,5 +314,3 @@ func (q *QRadarConnector) GetName() string {
 func (q *QRadarConnector) GetType() string {
 	return "qradar"
 }
-
-

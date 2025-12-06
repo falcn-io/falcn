@@ -44,5 +44,3 @@ dependencies = ["requests==2.32.0", "numpy>=1.24.0"]
 	_, err = s.ScanProject(dir)
 	require.NoError(t, err)
 }
-
-

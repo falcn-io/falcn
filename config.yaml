@@ -1,0 +1,28 @@
+app:
+  name: "Falcn API"
+  version: "1.0.0"
+  environment: "development"
+  debug: true
+  log_level: "info"
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+redis:
+  enabled: false
+
+logging:
+  level: "info"
+  output: "stdout"
+
+security:
+  jwt:
+    enabled: false
+  encryption:
+    key: "01234567890123456789012345678901"
+    algorithm: "aes-256-gcm"
+
+api:
+  rate_limit:
+    enabled: true

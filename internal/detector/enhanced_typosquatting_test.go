@@ -532,5 +532,3 @@ func TestEnhancedTyposquattingDetector_EmptyStrings(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && (s[0:len(substr)] == substr || contains(s[1:], substr)))
 }
-
-

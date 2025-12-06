@@ -267,5 +267,3 @@ func (eb *EventBus) Stop() {
 		eb.logger.Info("Event bus stop requested", nil)
 	}
 }
-
-

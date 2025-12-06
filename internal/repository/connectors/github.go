@@ -1011,5 +1011,3 @@ func (g *GitHubConnector) decodeBase64Content(content string) ([]byte, error) {
 	// Decode base64
 	return base64.StdEncoding.DecodeString(content)
 }
-
-

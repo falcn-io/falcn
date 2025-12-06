@@ -8,6 +8,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/falcn-io/falcn/pkg/types"
 )
 
 // AlgorithmTier represents the tier/level of an algorithm
@@ -25,53 +27,13 @@ type Algorithm interface {
 	Name() string
 	Tier() AlgorithmTier
 	Description() string
-	Analyze(ctx context.Context, packages []string) (*AlgorithmResult, error)
+	Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error)
 	Configure(config map[string]interface{}) error
-	GetMetrics() *AlgorithmMetrics
+	GetMetrics() *types.AlgorithmMetrics
 	Reset() error
 }
 
-// AlgorithmResult represents the result of an algorithm analysis
-type AlgorithmResult struct {
-	Algorithm string                 `json:"algorithm"`
-	Timestamp time.Time              `json:"timestamp"`
-	Packages  []string               `json:"packages"`
-	Findings  []Finding              `json:"findings"`
-	Metadata  map[string]interface{} `json:"metadata"`
-}
-
-// Finding represents a security finding
-type Finding struct {
-	ID              string     `json:"id"`
-	Package         string     `json:"package"`
-	Type            string     `json:"type"`
-	Severity        string     `json:"severity"`
-	Message         string     `json:"message"`
-	Confidence      float64    `json:"confidence"`
-	Evidence        []Evidence `json:"evidence"`
-	DetectedAt      time.Time  `json:"detected_at"`
-	DetectionMethod string     `json:"detection_method"`
-}
-
-// Evidence represents supporting evidence for a finding
-type Evidence struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Value       interface{} `json:"value"`
-	Score       float64     `json:"score"`
-}
-
-// AlgorithmMetrics represents performance metrics for an algorithm
-type AlgorithmMetrics struct {
-	PackagesProcessed int           `json:"packages_processed"`
-	ThreatsDetected   int           `json:"threats_detected"`
-	ProcessingTime    time.Duration `json:"processing_time"`
-	Accuracy          float64       `json:"accuracy"`
-	Precision         float64       `json:"precision"`
-	Recall            float64       `json:"recall"`
-	F1Score           float64       `json:"f1_score"`
-	LastUpdated       time.Time     `json:"last_updated"`
-}
+// AlgorithmResult, Finding, Evidence, AlgorithmMetrics moved to pkg/types
 
 // AlgorithmInfo contains metadata about an algorithm
 type AlgorithmInfo struct {
@@ -263,7 +225,7 @@ func (r *Registry) Configure(name string, config map[string]interface{}) error {
 }
 
 // Analyze runs analysis using a specific algorithm
-func (r *Registry) Analyze(ctx context.Context, algorithmName string, packages []string) (*AlgorithmResult, error) {
+func (r *Registry) Analyze(ctx context.Context, algorithmName string, packages []string) (*types.AlgorithmResult, error) {
 	algorithm, err := r.Get(algorithmName)
 	if err != nil {
 		return nil, err
@@ -273,8 +235,8 @@ func (r *Registry) Analyze(ctx context.Context, algorithmName string, packages [
 }
 
 // AnalyzeMultiple runs analysis using multiple algorithms
-func (r *Registry) AnalyzeMultiple(ctx context.Context, algorithmNames []string, packages []string) (map[string]*AlgorithmResult, error) {
-	results := make(map[string]*AlgorithmResult)
+func (r *Registry) AnalyzeMultiple(ctx context.Context, algorithmNames []string, packages []string) (map[string]*types.AlgorithmResult, error) {
+	results := make(map[string]*types.AlgorithmResult)
 	errors := make(map[string]error)
 
 	for _, name := range algorithmNames {
@@ -294,7 +256,7 @@ func (r *Registry) AnalyzeMultiple(ctx context.Context, algorithmNames []string,
 }
 
 // AnalyzeByTier runs analysis using all algorithms in a specific tier
-func (r *Registry) AnalyzeByTier(ctx context.Context, tier AlgorithmTier, packages []string) (map[string]*AlgorithmResult, error) {
+func (r *Registry) AnalyzeByTier(ctx context.Context, tier AlgorithmTier, packages []string) (map[string]*types.AlgorithmResult, error) {
 	algorithmNames := r.ListByTier(tier)
 	if len(algorithmNames) == 0 {
 		return nil, fmt.Errorf("no enabled algorithms found for tier %s", tier)
@@ -304,7 +266,7 @@ func (r *Registry) AnalyzeByTier(ctx context.Context, tier AlgorithmTier, packag
 }
 
 // GetMetrics returns metrics for an algorithm
-func (r *Registry) GetMetrics(name string) (*AlgorithmMetrics, error) {
+func (r *Registry) GetMetrics(name string) (*types.AlgorithmMetrics, error) {
 	r.mu.RLock()
 	algorithm, exists := r.algorithms[name]
 	r.mu.RUnlock()
@@ -317,11 +279,11 @@ func (r *Registry) GetMetrics(name string) (*AlgorithmMetrics, error) {
 }
 
 // GetAllMetrics returns metrics for all algorithms
-func (r *Registry) GetAllMetrics() map[string]*AlgorithmMetrics {
+func (r *Registry) GetAllMetrics() map[string]*types.AlgorithmMetrics {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	result := make(map[string]*AlgorithmMetrics)
+	result := make(map[string]*types.AlgorithmMetrics)
 	for name, algorithm := range r.algorithms {
 		result[name] = algorithm.GetMetrics()
 	}
@@ -411,5 +373,3 @@ func InitializeDefaultAlgorithms() error {
 
 	return nil
 }
-
-

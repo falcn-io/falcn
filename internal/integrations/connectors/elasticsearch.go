@@ -292,5 +292,3 @@ func (e *ElasticsearchConnector) GetName() string {
 func (e *ElasticsearchConnector) GetType() string {
 	return "elasticsearch"
 }
-
-

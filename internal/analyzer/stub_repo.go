@@ -30,5 +30,3 @@ func (s *StubRepo) Generate(dep types.Dependency) ([]types.Threat, []types.Warni
 	}
 	return threats, warnings
 }
-
-

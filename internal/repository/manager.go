@@ -770,5 +770,3 @@ func (m *Manager) InitializeDefaultConnectors() error {
 	m.logger.Info("Default connectors should be registered externally to avoid import cycles")
 	return nil
 }
-
-

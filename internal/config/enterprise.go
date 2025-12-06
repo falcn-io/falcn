@@ -503,5 +503,3 @@ func (ec *EnterpriseConfig) GetMaxScans() int {
 	}
 	return ec.License.MaxScans
 }
-
-

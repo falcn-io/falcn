@@ -244,5 +244,3 @@ func (m *MemoryCache) CleanupExpired(ctx context.Context) {
 		}
 	}
 }
-
-

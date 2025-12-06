@@ -471,5 +471,3 @@ func (cs *CICDScanner) createSecretsInVariablesThreat() types.Threat {
 		DetectedAt: time.Now(),
 	}
 }
-
-

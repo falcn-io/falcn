@@ -18,7 +18,7 @@ import (
 // GTRAlgorithm implements graph traversal reconnaissance
 type GTRAlgorithm struct {
 	config       *GTRConfig
-	metrics      *GTRMetrics
+	metrics      *types.AlgorithmMetrics
 	mu           sync.Mutex
 	npmConnector *registry.NPMConnector
 	cache        CacheBackend // Pluggable cache backend (Redis or in-memory)
@@ -42,26 +42,7 @@ type GTRConfig struct {
 	RedisConfig *RedisCacheConfig `yaml:"redis_config"` // Optional Redis config (falls back to in-memory if nil)
 }
 
-// GTRMetrics tracks GTR algorithm performance
-type GTRMetrics struct {
-	GraphsAnalyzed   int64         `json:"graphs_analyzed"`
-	NodesTraversed   int64         `json:"nodes_traversed"`
-	PathsAnalyzed    int64         `json:"paths_analyzed"`
-	CyclesDetected   int64         `json:"cycles_detected"`
-	AttackPathsFound int64         `json:"attack_paths_found"`
-	ProcessingTime   time.Duration `json:"processing_time"`
-	TotalAnalyses    int64         `json:"total_analyses"`
-	AverageLatency   time.Duration `json:"average_latency"`
-	TruePositives    int64         `json:"true_positives"`
-	FalsePositives   int64         `json:"false_positives"`
-	TrueNegatives    int64         `json:"true_negatives"`
-	FalseNegatives   int64         `json:"false_negatives"`
-	Accuracy         float64       `json:"accuracy"`
-	Precision        float64       `json:"precision"`
-	Recall           float64       `json:"recall"`
-	F1Score          float64       `json:"f1_score"`
-	LastUpdated      time.Time     `json:"last_updated"`
-}
+// GTRMetrics removed, using types.AlgorithmMetrics
 
 // NewGTRAlgorithm creates a new GTR algorithm instance
 func NewGTRAlgorithm(config *GTRConfig) *GTRAlgorithm {
@@ -99,7 +80,7 @@ func NewGTRAlgorithm(config *GTRConfig) *GTRAlgorithm {
 
 	g := &GTRAlgorithm{
 		config: config,
-		metrics: &GTRMetrics{
+		metrics: &types.AlgorithmMetrics{
 			LastUpdated: time.Now(),
 		},
 		cache: cache,
@@ -139,12 +120,12 @@ func (g *GTRAlgorithm) Configure(config map[string]interface{}) error {
 }
 
 // GetMetrics returns algorithm metrics
-func (g *GTRAlgorithm) GetMetrics() *AlgorithmMetrics {
+func (g *GTRAlgorithm) GetMetrics() *types.AlgorithmMetrics {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	return &AlgorithmMetrics{
-		PackagesProcessed: int(g.metrics.TotalAnalyses),
-		ThreatsDetected:   int(g.metrics.AttackPathsFound),
+	return &types.AlgorithmMetrics{
+		PackagesProcessed: g.metrics.PackagesProcessed,
+		ThreatsDetected:   g.metrics.ThreatsDetected,
 		ProcessingTime:    g.metrics.ProcessingTime,
 		Accuracy:          g.metrics.Accuracy,
 		Precision:         g.metrics.Precision,
@@ -155,13 +136,13 @@ func (g *GTRAlgorithm) GetMetrics() *AlgorithmMetrics {
 }
 
 // Analyze performs graph traversal reconnaissance on a package
-func (g *GTRAlgorithm) Analyze(ctx context.Context, packages []string) (*AlgorithmResult, error) {
+func (g *GTRAlgorithm) Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error) {
 	startTime := time.Now()
 	logrus.Infof("GTR: Starting graph analysis of %d packages", len(packages))
 	defer func() {
 		g.mu.Lock()
 		g.metrics.ProcessingTime += time.Since(startTime)
-		g.metrics.TotalAnalyses++
+		g.metrics.PackagesProcessed++ // Update generic metric
 		g.metrics.LastUpdated = time.Now()
 		g.mu.Unlock()
 	}()
@@ -170,11 +151,11 @@ func (g *GTRAlgorithm) Analyze(ctx context.Context, packages []string) (*Algorit
 		return nil, fmt.Errorf("no packages provided")
 	}
 
-	result := &AlgorithmResult{
+	result := &types.AlgorithmResult{
 		Algorithm: g.Name(),
 		Timestamp: time.Now(),
 		Packages:  packages,
-		Findings:  make([]Finding, 0),
+		Findings:  make([]types.Finding, 0),
 		Metadata:  make(map[string]interface{}),
 	}
 
@@ -199,8 +180,10 @@ func (g *GTRAlgorithm) Analyze(ctx context.Context, packages []string) (*Algorit
 	result.Metadata["processing_time_ms"] = time.Since(startTime).Milliseconds()
 
 	g.mu.Lock()
-	g.metrics.GraphsAnalyzed++
-	g.metrics.NodesTraversed += int64(len(pkg.Dependencies))
+	// Using generic metric instead of specific GTR metrics which are gone
+	g.metrics.PackagesProcessed++
+	g.metrics.LastUpdated = time.Now()
+	// g.metrics.NodesTraversed += int64(len(pkg.Dependencies)) // Lost specialized metric
 	g.mu.Unlock()
 
 	logrus.Infof("GTR: Analysis completed in %v - found %d findings, analyzed %d nodes",
@@ -210,7 +193,7 @@ func (g *GTRAlgorithm) Analyze(ctx context.Context, packages []string) (*Algorit
 }
 
 // analyzeDependencyGraph analyzes the dependency graph for security issues
-func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *AlgorithmResult) {
+func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *types.AlgorithmResult) {
 	if pkg.Dependencies == nil {
 		// Attempt to resolve dependencies via registry
 		ctx := context.Background()
@@ -262,7 +245,7 @@ func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *Algori
 		// Check for high-risk dependencies
 		if riskScore > g.config.MinRiskThreshold {
 			logrus.Warnf("GTR: High-risk dependency detected - %s (score: %.2f)", dep.Name, riskScore)
-			result.Findings = append(result.Findings, Finding{
+			result.Findings = append(result.Findings, types.Finding{
 				ID:              fmt.Sprintf("gtr_high_risk_%s", dep.Name),
 				Package:         dep.Name,
 				Type:            "high_risk_dependency",
@@ -271,7 +254,7 @@ func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *Algori
 				Confidence:      riskScore,
 				DetectedAt:      time.Now().UTC(),
 				DetectionMethod: "gtr_risk_analysis",
-				Evidence: []Evidence{
+				Evidence: []types.Evidence{
 					{
 						Type:        "risk_score",
 						Description: "Calculated risk score for dependency",
@@ -290,7 +273,7 @@ func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *Algori
 
 		// Check for deep dependencies
 		if depth > 3 {
-			result.Findings = append(result.Findings, Finding{
+			result.Findings = append(result.Findings, types.Finding{
 				ID:              fmt.Sprintf("gtr_deep_dep_%s", dep.Name),
 				Package:         dep.Name,
 				Type:            "deep_dependency",
@@ -299,7 +282,7 @@ func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *Algori
 				Confidence:      0.7,
 				DetectedAt:      time.Now().UTC(),
 				DetectionMethod: "gtr_depth_analysis",
-				Evidence: []Evidence{
+				Evidence: []types.Evidence{
 					{
 						Type:        "dependency_depth",
 						Description: "Depth level in dependency tree",
@@ -312,7 +295,7 @@ func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *Algori
 
 		// Check for development dependencies in production
 		if dep.Development {
-			result.Findings = append(result.Findings, Finding{
+			result.Findings = append(result.Findings, types.Finding{
 				ID:              fmt.Sprintf("gtr_dev_dep_%s", dep.Name),
 				Package:         dep.Name,
 				Type:            "dev_dependency_risk",
@@ -321,7 +304,7 @@ func (g *GTRAlgorithm) analyzeDependencyGraph(pkg *types.Package, result *Algori
 				Confidence:      0.5,
 				DetectedAt:      time.Now().UTC(),
 				DetectionMethod: "gtr_dev_dependency_check",
-				Evidence: []Evidence{
+				Evidence: []types.Evidence{
 					{
 						Type:        "dependency_type",
 						Description: "Type of dependency detected",
@@ -418,7 +401,7 @@ func (g *GTRAlgorithm) getRiskSeverity(riskScore float64) string {
 }
 
 // calculateOverallScores calculates overall threat and confidence scores
-func (g *GTRAlgorithm) calculateOverallScores(result *AlgorithmResult) {
+func (g *GTRAlgorithm) calculateOverallScores(result *types.AlgorithmResult) {
 	if len(result.Findings) == 0 {
 		result.Metadata["threat_score"] = 0.0
 		result.Metadata["confidence"] = 0.8
@@ -503,13 +486,13 @@ func (g *GTRAlgorithm) countHighRiskDependencies(riskMap map[string]float64) int
 func (g *GTRAlgorithm) Reset() error {
 	// Reset metrics
 	g.mu.Lock()
-	g.metrics = &GTRMetrics{
+	g.metrics = &types.AlgorithmMetrics{
 		LastUpdated: time.Now(),
 	}
 	g.mu.Unlock()
 	return nil
 }
-func (g *GTRAlgorithm) detectTyposquatVectorsAcrossPackages(packages []string, result *AlgorithmResult) {
+func (g *GTRAlgorithm) detectTyposquatVectorsAcrossPackages(packages []string, result *types.AlgorithmResult) {
 	if len(packages) < 2 {
 		return
 	}
@@ -524,7 +507,7 @@ func (g *GTRAlgorithm) detectTyposquatVectorsAcrossPackages(packages []string, r
 			sim := levenshteinSimilarity(a, b)
 			if sim >= 0.85 {
 				logrus.Warnf("GTR: Typosquat vector detected - '%s' highly similar to '%s' (%.2f)", a, b, sim)
-				result.Findings = append(result.Findings, Finding{
+				result.Findings = append(result.Findings, types.Finding{
 					ID:              fmt.Sprintf("gtr_typosquat_%s_%s", a, b),
 					Package:         a,
 					Type:            "typosquat_vector",
@@ -533,7 +516,7 @@ func (g *GTRAlgorithm) detectTyposquatVectorsAcrossPackages(packages []string, r
 					Confidence:      sim,
 					DetectedAt:      time.Now().UTC(),
 					DetectionMethod: "gtr_name_collision",
-					Evidence: []Evidence{
+					Evidence: []types.Evidence{
 						{Type: "name_similarity", Description: "Levenshtein-based similarity", Value: map[string]interface{}{"a": a, "b": b}, Score: sim},
 					},
 				})
@@ -715,5 +698,3 @@ func (g *GTRAlgorithm) getDependencies(ctx context.Context, name string) []strin
 	logrus.Debugf("GTR: Fetched and cached %d dependencies for package %s", len(info.Dependencies), name)
 	return info.Dependencies
 }
-
-

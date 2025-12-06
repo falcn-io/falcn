@@ -159,5 +159,3 @@ deploy:
 		assert.GreaterOrEqual(t, len(threats), 1, "Should detect hardcoded secrets")
 	})
 }
-
-

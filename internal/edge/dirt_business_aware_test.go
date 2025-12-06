@@ -354,5 +354,3 @@ func BenchmarkDIRTAlgorithm(b *testing.B) {
 		_, _ = dirt.AnalyzeWithCriticality(context.Background(), pkg, CriticalityInternal)
 	}
 }
-
-

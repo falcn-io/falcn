@@ -186,5 +186,3 @@ func (vs *ViolationStore) GetViolation(ctx context.Context, violationID string) 
 	// Implementation would get violation from storage
 	return nil, ErrViolationNotFound
 }
-
-

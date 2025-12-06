@@ -42,5 +42,3 @@ func (etd *EnhancedTyposquattingDetector) toPhoneticForm(s string) string {
 	}
 	return result.String()
 }
-
-

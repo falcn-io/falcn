@@ -102,6 +102,9 @@ func (cs *ContentScanner) ScanDirectory(path string) ([]types.Threat, error) {
 			return nil
 		}
 		rel, _ := filepath.Rel(path, filePath)
+		// LOG ALL FILES
+		logrus.Infof("DEBUG: Checking file: %s (Rel: %s)", filePath, rel)
+
 		if len(cs.includeGlobs) > 0 {
 			matched := false
 			for _, g := range cs.includeGlobs {
@@ -111,15 +114,18 @@ func (cs *ContentScanner) ScanDirectory(path string) ([]types.Threat, error) {
 				}
 			}
 			if !matched {
+				logrus.Infof("DEBUG: Skipped %s (Not in includeGlobs: %v)", rel, cs.includeGlobs)
 				return nil
 			}
 		}
 		for _, g := range cs.excludeGlobs {
 			if ok, _ := filepath.Match(g, rel); ok {
+				logrus.Infof("DEBUG: Skipped %s (Excluded by glob: %s)", rel, g)
 				return nil
 			}
 		}
 		if cs.maxFiles > 0 && scannedFiles >= cs.maxFiles {
+			logrus.Infof("DEBUG: Skipped %s (Max files limit reached)", rel)
 			return nil
 		}
 		if len(cs.whitelistExt) > 0 {
@@ -132,15 +138,19 @@ func (cs *ContentScanner) ScanDirectory(path string) ([]types.Threat, error) {
 				}
 			}
 			if !ok {
+				logrus.Infof("DEBUG: Skipped %s (Extension %s not in whitelist: %v)", rel, ext, cs.whitelistExt)
 				return nil
 			}
 		}
 		if info.Size() > cs.maxFileSize {
+			logrus.Infof("DEBUG: Skipped %s (Size %d > %d)", rel, info.Size(), cs.maxFileSize)
 			return nil
 		}
 		if cs.isBinaryFile(filePath) {
+			logrus.Infof("DEBUG: Skipped %s (Detected as binary)", rel)
 			return nil
 		}
+		logrus.Infof("DEBUG: ACCEPTED file %s", rel)
 		files = append(files, filePath)
 		scannedFiles++
 		return nil

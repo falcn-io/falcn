@@ -657,4 +657,67 @@ type AuditLog struct {
 	Error          string                 `json:"error,omitempty"`
 }
 
+// AssetCriticality defines the business value of the target application/repository
+type AssetCriticality string
 
+const (
+	CriticalityUnknown  AssetCriticality = "UNKNOWN"  // Not yet assessed
+	CriticalityPublic   AssetCriticality = "PUBLIC"   // Marketing sites, blogs (low impact)
+	CriticalityInternal AssetCriticality = "INTERNAL" // Admin tools, internal apps (medium impact)
+	CriticalityCritical AssetCriticality = "CRITICAL" // Billing, Auth, Core Services (high impact)
+)
+
+// BusinessRiskAssessment contains the business-aware risk analysis
+type BusinessRiskAssessment struct {
+	PackageName          string                 `json:"package_name"`
+	TechnicalRisk        float64                `json:"technical_risk"` // 0.0 - 1.0
+	BusinessRisk         float64                `json:"business_risk"`  // Technical * Criticality
+	AssetCriticality     AssetCriticality       `json:"asset_criticality"`
+	ImpactMultiplier     float64                `json:"impact_multiplier"`
+	RiskLevel            string                 `json:"risk_level"`         // LOW/MEDIUM/HIGH/CRITICAL
+	RecommendedAction    string                 `json:"recommended_action"` // ALLOW/REVIEW/ALERT/BLOCK
+	DependencyDepth      int                    `json:"dependency_depth"`
+	DirectDependency     bool                   `json:"direct_dependency"`
+	VulnerabilityCount   int                    `json:"vulnerability_count"`
+	TransitiveDependents int                    `json:"transitive_dependents"` // How many packages depend on this
+	Justification        string                 `json:"justification"`
+	Metadata             map[string]interface{} `json:"metadata"`
+}
+
+// AlgorithmResult represents the result of an algorithm analysis
+type AlgorithmResult struct {
+	Algorithm string                 `json:"algorithm"`
+	Timestamp time.Time              `json:"timestamp"`
+	Packages  []string               `json:"packages"`
+	Findings  []Finding              `json:"findings"`
+	Metadata  map[string]interface{} `json:"metadata"`
+}
+
+// Finding represents a security finding from edge algorithms
+type Finding struct {
+	ID              string     `json:"id"`
+	Package         string     `json:"package"`
+	Type            string     `json:"type"`
+	Severity        string     `json:"severity"`
+	Message         string     `json:"message"`
+	Confidence      float64    `json:"confidence"`
+	Evidence        []Evidence `json:"evidence"`
+	DetectedAt      time.Time  `json:"detected_at"`
+	DetectionMethod string     `json:"detection_method"`
+}
+
+// Evidence represents supporting evidence for a detailed finding
+// types.Evidence is already defined in this file (line 179)
+// type Evidence struct { ... }
+
+// AlgorithmMetrics represents performance metrics for an algorithm
+type AlgorithmMetrics struct {
+	PackagesProcessed int           `json:"packages_processed"`
+	ThreatsDetected   int           `json:"threats_detected"`
+	ProcessingTime    time.Duration `json:"processing_time"`
+	Accuracy          float64       `json:"accuracy"`
+	Precision         float64       `json:"precision"`
+	Recall            float64       `json:"recall"`
+	F1Score           float64       `json:"f1_score"`
+	LastUpdated       time.Time     `json:"last_updated"`
+}

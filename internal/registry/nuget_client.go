@@ -318,5 +318,3 @@ func (c *NuGetClient) ClearCache() {
 func (c *NuGetClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
-
-

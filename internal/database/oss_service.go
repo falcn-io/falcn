@@ -536,5 +536,3 @@ func (s *OSSService) GetDB() *sql.DB {
 func (s *OSSService) Close() error {
 	return s.db.Close()
 }
-
-

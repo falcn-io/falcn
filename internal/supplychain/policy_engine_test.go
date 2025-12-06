@@ -180,5 +180,3 @@ func TestSupplyChainPolicyEngine(t *testing.T) {
 		assert.False(t, hasBlockAction, "Compliant package should not be blocked")
 	})
 }
-
-

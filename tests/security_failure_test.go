@@ -14,5 +14,3 @@ func TestValidateJWTSecretFailurePaths(t *testing.T) {
 		t.Fatalf("expected error for short secret")
 	}
 }
-
-

@@ -15,13 +15,14 @@ import (
 	"unicode"
 
 	"github.com/falcn-io/falcn/internal/registry"
+	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
 // RUNTAlgorithm implements the RUNT algorithm for typosquatting detection
 type RUNTAlgorithm struct {
 	config  *RUNTConfig
-	metrics *AlgorithmMetrics
+	metrics *types.AlgorithmMetrics
 
 	// Pre-computed similarity matrices
 	visualSimilarityMap map[rune][]rune
@@ -144,7 +145,7 @@ func NewRUNTAlgorithm(config *RUNTConfig) *RUNTAlgorithm {
 
 	runt := &RUNTAlgorithm{
 		config: config,
-		metrics: &AlgorithmMetrics{
+		metrics: &types.AlgorithmMetrics{
 			LastUpdated: time.Now(),
 		},
 		knownPackages: make(map[string]bool),
@@ -192,19 +193,19 @@ func (r *RUNTAlgorithm) Configure(config map[string]interface{}) error {
 	return nil
 }
 
-func (r *RUNTAlgorithm) GetMetrics() *AlgorithmMetrics {
+func (r *RUNTAlgorithm) GetMetrics() *types.AlgorithmMetrics {
 	return r.metrics
 }
 
-func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*AlgorithmResult, error) {
+func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error) {
 	startTime := time.Now()
 	logrus.Infof("RUNT: Starting analysis of %d packages", len(packages))
 
-	result := &AlgorithmResult{
+	result := &types.AlgorithmResult{
 		Algorithm: r.Name(),
 		Timestamp: startTime,
 		Packages:  packages,
-		Findings:  make([]Finding, 0),
+		Findings:  make([]types.Finding, 0),
 		Metadata:  make(map[string]interface{}),
 	}
 
@@ -224,7 +225,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 		packageName        string
 		suspiciousPackages []SuspiciousPackage
 		deps               []string
-		recursiveFindings  []Finding
+		recursiveFindings  []types.Finding
 	}
 
 	resultsChan := make(chan packageResult, len(packages))
@@ -256,7 +257,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 			}
 
 			// Recursive dependency analysis
-			var recursiveFindings []Finding
+			var recursiveFindings []types.Finding
 			if r.config.EnableDependencyAnalysis {
 				// Convert sync.Map to regular map for this invocation
 				analyzed := make(map[string]bool)
@@ -290,7 +291,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 			for _, suspicious := range suspiciousPackages {
 				if suspicious.SimilarityScore > r.config.OverallThreshold {
 					logrus.Warnf("RUNT: Potential typosquatting detected - '%s' similar to '%s' (score: %.2f, type: %s)", packageName, suspicious.Name, suspicious.SimilarityScore, suspicious.AttackType)
-					evidences := []Evidence{
+					evidences := []types.Evidence{
 						{
 							Type:        "target_package",
 							Description: "Target package for typosquatting",
@@ -311,7 +312,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 						},
 					}
 					if suspicious.Features.KeyboardLayout > 0.7 {
-						evidences = append(evidences, Evidence{
+						evidences = append(evidences, types.Evidence{
 							Type:        "keyboard_detail",
 							Description: "Adjacent key matches and transpositions",
 							Value:       r.keyboardAdjacencyDetails(packageName, suspicious.Name),
@@ -319,7 +320,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 						})
 					}
 					if suspicious.Features.Unicode > 0.7 {
-						evidences = append(evidences, Evidence{
+						evidences = append(evidences, types.Evidence{
 							Type:        "unicode_detail",
 							Description: "Unicode script and visual normalization analysis",
 							Value:       r.unicodeDetails(packageName, suspicious.Name),
@@ -327,7 +328,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 						})
 					}
 					if suspicious.Features.Semantic > 0.7 {
-						evidences = append(evidences, Evidence{
+						evidences = append(evidences, types.Evidence{
 							Type:        "semantic_detail",
 							Description: "Token matching and stripped-name similarity",
 							Value:       r.semanticDetails(packageName, suspicious.Name),
@@ -348,7 +349,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 						thr = r.config.PhoneticAttackThreshold
 					}
 					if thr > 0 {
-						evidences = append(evidences, Evidence{
+						evidences = append(evidences, types.Evidence{
 							Type:        "attack_threshold_used",
 							Description: "Threshold applied for selected attack classification",
 							Value:       thr,
@@ -356,7 +357,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 						})
 					}
 					dn, dv := r.dominantFeature(suspicious.Features)
-					finding := Finding{
+					finding := types.Finding{
 						ID:              fmt.Sprintf("runt_typosquatting_%s", packageName),
 						Package:         packageName,
 						Type:            "TYPOSQUATTING_DETECTED",
@@ -365,17 +366,17 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 						Confidence:      r.computeConfidence(suspicious.Features),
 						DetectedAt:      time.Now().UTC(),
 						DetectionMethod: "runt_similarity_analysis",
-						Evidence: append(evidences, Evidence{
+						Evidence: append(evidences, types.Evidence{
 							Type:        "feature_contributions",
 							Description: "Weighted contributions to overall similarity",
 							Value:       r.featureContributions(suspicious.Features),
 							Score:       suspicious.SimilarityScore,
-						}, Evidence{
+						}, types.Evidence{
 							Type:        "dominant_feature",
 							Description: "Highest raw feature contributing to detection",
 							Value:       map[string]interface{}{"name": dn, "value": dv},
 							Score:       dv,
-						}, Evidence{
+						}, types.Evidence{
 							Type:        "similarity_summary",
 							Description: "Top feature contributions",
 							Value:       r.topContributions(r.featureContributions(suspicious.Features), 3),
@@ -412,7 +413,7 @@ func (r *RUNTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 		result.Metadata["evidence_summary"] = r.computeEvidenceSummary(result.Findings)
 		maxScore := 0.0
 		sumScore := 0.0
-		var top Finding
+		var top types.Finding
 		for _, f := range result.Findings {
 			sumScore += f.Confidence
 			if f.Confidence > maxScore {
@@ -1650,7 +1651,7 @@ func (bmm *BayesianMixtureModel) computeProbability(features []float64) float64 
 // Reset resets the algorithm state
 func (r *RUNTAlgorithm) Reset() error {
 	// Reset metrics
-	r.metrics = &AlgorithmMetrics{
+	r.metrics = &types.AlgorithmMetrics{
 		ProcessingTime: 0,
 	}
 
@@ -1670,7 +1671,7 @@ func (r *RUNTAlgorithm) Reset() error {
 
 	return nil
 }
-func (r *RUNTAlgorithm) recursiveAnalyzeDependencies(ctx context.Context, name string, depth, maxDepth int, visited map[string]bool, analyzedGlobal map[string]bool, simCache map[string][]SuspiciousPackage) []Finding {
+func (r *RUNTAlgorithm) recursiveAnalyzeDependencies(ctx context.Context, name string, depth, maxDepth int, visited map[string]bool, analyzedGlobal map[string]bool, simCache map[string][]SuspiciousPackage) []types.Finding {
 	if depth >= maxDepth || visited[name] {
 		return nil
 	}
@@ -1679,30 +1680,30 @@ func (r *RUNTAlgorithm) recursiveAnalyzeDependencies(ctx context.Context, name s
 		return nil
 	}
 	deps := r.getDependencies(ctx, name)
-	findings := make([]Finding, 0)
+	findings := make([]types.Finding, 0)
 	for _, dep := range deps {
 		featuresList := r.findSuspiciousPackagesCached(dep, simCache)
 		for _, sp := range featuresList {
 			if sp.SimilarityScore > r.config.OverallThreshold {
-				evidences := []Evidence{
+				evidences := []types.Evidence{
 					{Type: "parent_package", Description: "Dependency parent", Value: name, Score: sp.SimilarityScore},
 					{Type: "target_package", Description: "Suspicious dependency", Value: sp.Name, Score: sp.SimilarityScore},
 					{Type: "similarity_features", Description: "Similarity analysis features", Value: sp.Features, Score: sp.SimilarityScore},
 					{Type: "attack_type", Description: "Type of typosquatting attack", Value: sp.AttackType, Score: 0.8},
 				}
 				if sp.Features.KeyboardLayout > 0.7 {
-					evidences = append(evidences, Evidence{Type: "keyboard_detail", Description: "Adjacent key matches and transpositions", Value: r.keyboardAdjacencyDetails(dep, sp.Name), Score: sp.Features.KeyboardLayout})
+					evidences = append(evidences, types.Evidence{Type: "keyboard_detail", Description: "Adjacent key matches and transpositions", Value: r.keyboardAdjacencyDetails(dep, sp.Name), Score: sp.Features.KeyboardLayout})
 				}
 				if sp.Features.Unicode > 0.7 {
-					evidences = append(evidences, Evidence{Type: "unicode_detail", Description: "Unicode script and visual normalization analysis", Value: r.unicodeDetails(dep, sp.Name), Score: sp.Features.Unicode})
+					evidences = append(evidences, types.Evidence{Type: "unicode_detail", Description: "Unicode script and visual normalization analysis", Value: r.unicodeDetails(dep, sp.Name), Score: sp.Features.Unicode})
 				}
 				dn2, dv2 := r.dominantFeature(sp.Features)
 				evidences = append(evidences,
-					Evidence{Type: "feature_contributions", Description: "Weighted contributions to overall similarity", Value: r.featureContributions(sp.Features), Score: sp.SimilarityScore},
-					Evidence{Type: "dominant_feature", Description: "Highest raw feature contributing to detection", Value: map[string]interface{}{"name": dn2, "value": dv2}, Score: dv2},
-					Evidence{Type: "similarity_summary", Description: "Top feature contributions", Value: r.topContributions(r.featureContributions(sp.Features), 3), Score: sp.SimilarityScore},
+					types.Evidence{Type: "feature_contributions", Description: "Weighted contributions to overall similarity", Value: r.featureContributions(sp.Features), Score: sp.SimilarityScore},
+					types.Evidence{Type: "dominant_feature", Description: "Highest raw feature contributing to detection", Value: map[string]interface{}{"name": dn2, "value": dv2}, Score: dv2},
+					types.Evidence{Type: "similarity_summary", Description: "Top feature contributions", Value: r.topContributions(r.featureContributions(sp.Features), 3), Score: sp.SimilarityScore},
 				)
-				findings = append(findings, Finding{
+				findings = append(findings, types.Finding{
 					ID:              fmt.Sprintf("runt_dep_typosquatting_%s_%s", name, dep),
 					Package:         dep,
 					Type:            "TYPOSQUATTING_DETECTED",
@@ -1732,7 +1733,7 @@ func (r *RUNTAlgorithm) findSuspiciousPackagesCached(packageName string, cache m
 	cache[packageName] = v
 	return v
 }
-func (r *RUNTAlgorithm) computeAttackSummary(findings []Finding) map[string]int {
+func (r *RUNTAlgorithm) computeAttackSummary(findings []types.Finding) map[string]int {
 	m := make(map[string]int)
 	for _, f := range findings {
 		m[f.Type]++
@@ -1747,7 +1748,7 @@ func (r *RUNTAlgorithm) computeAttackSummary(findings []Finding) map[string]int 
 	return m
 }
 
-func (r *RUNTAlgorithm) computeEvidenceSummary(findings []Finding) map[string]int {
+func (r *RUNTAlgorithm) computeEvidenceSummary(findings []types.Finding) map[string]int {
 	summary := make(map[string]int)
 	for _, f := range findings {
 		for _, e := range f.Evidence {
@@ -1792,5 +1793,3 @@ func (r *RUNTAlgorithm) evidenceToFeatureMap(v interface{}) map[string]float64 {
 	}
 	return out
 }
-
-

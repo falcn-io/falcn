@@ -980,5 +980,3 @@ func (ds *DatabaseService) GetComplianceTrends(ctx context.Context, days int) ([
 	}
 	return trends, nil
 }
-
-

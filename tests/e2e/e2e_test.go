@@ -218,5 +218,3 @@ func TestSBOMGeneration(t *testing.T) {
 	_, err = os.Stat("/tmp/test-cyclonedx-sbom.json")
 	assert.NoError(t, err, "CycloneDX SBOM file was not created")
 }
-
-

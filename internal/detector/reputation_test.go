@@ -697,5 +697,3 @@ func TestReputationEngine_detectEnterpriseSecurityViolations(t *testing.T) {
 		})
 	}
 }
-
-

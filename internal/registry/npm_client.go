@@ -299,5 +299,3 @@ func (c *NPMClient) GetPopularPackageNames(ctx context.Context, limit int) ([]st
 	}
 	return names, nil
 }
-
-

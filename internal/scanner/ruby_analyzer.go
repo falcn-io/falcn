@@ -710,5 +710,3 @@ func (a *RubyPackageAnalyzer) extractProjectInfo(gemspecPath string) (string, st
 
 	return name, version
 }
-
-

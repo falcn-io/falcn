@@ -231,5 +231,3 @@ func (e *EncryptionService) RotateEncryptionKey(newKeyString string) error {
 
 	return nil
 }
-
-

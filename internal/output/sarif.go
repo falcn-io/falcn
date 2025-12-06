@@ -675,5 +675,3 @@ func (f *SARIFFormatter) calculateRiskScore(threat types.Threat) float64 {
 
 	return baseScore
 }
-
-

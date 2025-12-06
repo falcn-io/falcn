@@ -317,5 +317,3 @@ func (b *BaseAnalyzer) ValidateProject(projectInfo *ProjectInfo) error {
 
 	return nil
 }
-
-

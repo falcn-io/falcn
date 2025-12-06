@@ -999,5 +999,3 @@ func (b *BitbucketConnector) parseFullName(fullName string) (owner, name string)
 	}
 	return "", url.QueryEscape(fullName)
 }
-
-

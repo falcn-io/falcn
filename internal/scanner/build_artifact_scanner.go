@@ -240,5 +240,3 @@ func (bas *BuildArtifactScanner) calculateSeverity(path string, info os.FileInfo
 	// Medium: Binaries in build outputs (expected but should be verified)
 	return types.SeverityMedium
 }
-
-

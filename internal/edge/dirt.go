@@ -13,15 +13,7 @@ import (
 	"github.com/falcn-io/falcn/pkg/types"
 )
 
-// AssetCriticality defines the business value of the target application/repository
-type AssetCriticality string
-
-const (
-	CriticalityUnknown  AssetCriticality = "UNKNOWN"  // Not yet assessed
-	CriticalityPublic   AssetCriticality = "PUBLIC"   // Marketing sites, blogs (low impact)
-	CriticalityInternal AssetCriticality = "INTERNAL" // Admin tools, internal apps (medium impact)
-	CriticalityCritical AssetCriticality = "CRITICAL" // Billing, Auth, Core Services (high impact)
-)
+// AssetCriticality definitions moved to pkg/types
 
 // DIRTConfig holds configuration for the DIRT algorithm with business context
 type DIRTConfig struct {
@@ -54,22 +46,7 @@ type DIRTMetrics struct {
 	LastUpdated        time.Time     `json:"last_updated"`
 }
 
-// BusinessRiskAssessment contains the business-aware risk analysis
-type BusinessRiskAssessment struct {
-	PackageName          string                 `json:"package_name"`
-	TechnicalRisk        float64                `json:"technical_risk"` // 0.0 - 1.0
-	BusinessRisk         float64                `json:"business_risk"`  // Technical * Criticality
-	AssetCriticality     AssetCriticality       `json:"asset_criticality"`
-	ImpactMultiplier     float64                `json:"impact_multiplier"`
-	RiskLevel            string                 `json:"risk_level"`         // LOW/MEDIUM/HIGH/CRITICAL
-	RecommendedAction    string                 `json:"recommended_action"` // ALLOW/REVIEW/ALERT/BLOCK
-	DependencyDepth      int                    `json:"dependency_depth"`
-	DirectDependency     bool                   `json:"direct_dependency"`
-	VulnerabilityCount   int                    `json:"vulnerability_count"`
-	TransitiveDependents int                    `json:"transitive_dependents"` // How many packages depend on this
-	Justification        string                 `json:"justification"`
-	Metadata             map[string]interface{} `json:"metadata"`
-}
+// BusinessRiskAssessment definition moved to pkg/types
 
 // DIRTAlgorithm implements business-aware dependency impact analysis
 type DIRTAlgorithm struct {
@@ -134,8 +111,8 @@ func (d *DIRTAlgorithm) Description() string {
 func (d *DIRTAlgorithm) AnalyzeWithCriticality(
 	ctx context.Context,
 	pkg *types.Package,
-	criticality AssetCriticality,
-) (*BusinessRiskAssessment, error) {
+	criticality types.AssetCriticality,
+) (*types.BusinessRiskAssessment, error) {
 	startTime := time.Now()
 	defer func() {
 		d.metrics.ProcessingTime = time.Since(startTime)
@@ -147,7 +124,7 @@ func (d *DIRTAlgorithm) AnalyzeWithCriticality(
 		cacheKey := fmt.Sprintf("%s:%s:%s", pkg.Name, pkg.Version, criticality)
 		if cached, ok := d.cache.Load(cacheKey); ok {
 			d.metrics.CacheHits++
-			return cached.(*BusinessRiskAssessment), nil
+			return cached.(*types.BusinessRiskAssessment), nil
 		}
 		d.metrics.CacheMisses++
 	}
@@ -163,7 +140,8 @@ func (d *DIRTAlgorithm) AnalyzeWithCriticality(
 	riskLevel, action := d.determineRiskLevelAndAction(businessRisk)
 
 	// Step 4: Build assessment
-	assessment := &BusinessRiskAssessment{
+	// Step 4: Build assessment
+	assessment := &types.BusinessRiskAssessment{
 		PackageName:          pkg.Name,
 		TechnicalRisk:        technicalRisk,
 		BusinessRisk:         businessRisk,
@@ -306,15 +284,15 @@ func (d *DIRTAlgorithm) calculateComplexityScore(pkg *types.Package) float64 {
 }
 
 // getCriticalityMultiplier returns the business impact multiplier
-func (d *DIRTAlgorithm) getCriticalityMultiplier(criticality AssetCriticality) float64 {
+func (d *DIRTAlgorithm) getCriticalityMultiplier(criticality types.AssetCriticality) float64 {
 	switch criticality {
-	case CriticalityCritical:
+	case types.CriticalityCritical:
 		return d.config.CriticalMultiplier // 2.0
-	case CriticalityInternal:
+	case types.CriticalityInternal:
 		return d.config.InternalMultiplier // 1.0
-	case CriticalityPublic:
+	case types.CriticalityPublic:
 		return d.config.PublicMultiplier // 0.5
-	case CriticalityUnknown:
+	case types.CriticalityUnknown:
 		return 1.0 // Default to internal multiplier
 	default:
 		return 1.0
@@ -336,7 +314,7 @@ func (d *DIRTAlgorithm) determineRiskLevelAndAction(businessRisk float64) (strin
 }
 
 // buildJustification creates a human-readable explanation
-func (d *DIRTAlgorithm) buildJustification(technical, business float64, criticality AssetCriticality) string {
+func (d *DIRTAlgorithm) buildJustification(technical, business float64, criticality types.AssetCriticality) string {
 	return fmt.Sprintf(
 		"Technical risk: %.2f, Business context: %s (%.1fx multiplier), Final risk: %.2f",
 		technical,
@@ -369,15 +347,15 @@ func (d *DIRTAlgorithm) countTransitiveDependents(pkg *types.Package) int {
 }
 
 // Analyze implements the Algorithm interface for compatibility
-func (d *DIRTAlgorithm) Analyze(ctx context.Context, packages []string) (*AlgorithmResult, error) {
+func (d *DIRTAlgorithm) Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error) {
 	// Default to INTERNAL criticality if not specified
 	// For full functionality, use AnalyzeWithCriticality directly
 
-	results := &AlgorithmResult{
+	results := &types.AlgorithmResult{
 		Algorithm: d.Name(),
 		Timestamp: time.Now(),
 		Packages:  packages,
-		Findings:  make([]Finding, 0),
+		Findings:  make([]types.Finding, 0),
 		Metadata:  make(map[string]interface{}),
 	}
 
@@ -390,14 +368,14 @@ func (d *DIRTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 		}
 
 		// Use INTERNAL criticality as default for CLI
-		assessment, err := d.AnalyzeWithCriticality(ctx, pkg, CriticalityInternal)
+		assessment, err := d.AnalyzeWithCriticality(ctx, pkg, types.CriticalityInternal)
 		if err != nil {
 			return nil, err
 		}
 
 		// Map assessment to findings
 		if assessment.RiskLevel == "HIGH" || assessment.RiskLevel == "CRITICAL" {
-			finding := Finding{
+			finding := types.Finding{
 				ID:              fmt.Sprintf("dirt_risk_%s", pkgName),
 				Package:         pkgName,
 				Type:            "SUPPLY_CHAIN_RISK",
@@ -406,7 +384,7 @@ func (d *DIRTAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 				Confidence:      1.0,
 				DetectedAt:      time.Now(),
 				DetectionMethod: "DIRT",
-				Evidence: []Evidence{
+				Evidence: []types.Evidence{
 					{
 						Type:        "business_risk",
 						Description: "Business risk assessment score",
@@ -450,11 +428,11 @@ func (d *DIRTAlgorithm) Configure(config map[string]interface{}) error {
 }
 
 // GetMetrics returns algorithm performance metrics
-func (d *DIRTAlgorithm) GetMetrics() *AlgorithmMetrics {
+func (d *DIRTAlgorithm) GetMetrics() *types.AlgorithmMetrics {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	return &AlgorithmMetrics{
+	return &types.AlgorithmMetrics{
 		PackagesProcessed: int(d.metrics.PackagesAnalyzed),
 		ThreatsDetected:   int(d.metrics.HighRiskDetected),
 		ProcessingTime:    d.metrics.ProcessingTime,
@@ -473,5 +451,3 @@ func (d *DIRTAlgorithm) Reset() error {
 	d.cache = sync.Map{}
 	return nil
 }
-
-

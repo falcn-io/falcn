@@ -117,5 +117,3 @@ func SetWebhookProviderSignatureConfigured(provider string, configured bool) {
 		webhookProviderSignatureConfigured.WithLabelValues(provider).Set(0)
 	}
 }
-
-

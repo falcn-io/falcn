@@ -353,5 +353,3 @@ func Duration(key string, value time.Duration) Field {
 func Error(err error) Field {
 	return Field{Key: "error", Value: err.Error()}
 }
-
-

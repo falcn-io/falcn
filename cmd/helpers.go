@@ -646,5 +646,3 @@ func generateMermaidContentFromResult(result *analyzer.ScanResult) string {
 
 	return content.String()
 }
-
-

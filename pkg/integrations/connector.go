@@ -113,5 +113,3 @@ func NewConnectorError(connectorName, operation, message string, retryable bool)
 		Retryable:     retryable,
 	}
 }
-
-

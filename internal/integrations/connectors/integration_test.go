@@ -50,5 +50,3 @@ func TestWebhookConnector(t *testing.T) {
 	assert.Equal(t, "test-webhook", webhook.GetName())
 	assert.Equal(t, "webhook", webhook.GetType())
 }
-
-

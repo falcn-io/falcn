@@ -40,5 +40,3 @@ func (f *SPDXFormatter) Format(res *scanner.ScanResults, opts FormatterOptions) 
 	}
 	return json.MarshalIndent(doc, "", opts.Indent)
 }
-
-

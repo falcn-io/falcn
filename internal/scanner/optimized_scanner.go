@@ -409,5 +409,3 @@ func estimateSize(value interface{}) int64 {
 	// Simple estimation - in a real implementation, this would be more sophisticated
 	return 1024 // 1KB estimate
 }
-
-

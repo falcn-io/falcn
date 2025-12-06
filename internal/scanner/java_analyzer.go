@@ -440,5 +440,3 @@ func (a *JavaPackageAnalyzer) extractGradleProjectInfo(gradlePath string) (strin
 
 	return name, version
 }
-
-

@@ -1,0 +1,9 @@
+{
+    "name": "my-app",
+    "version": "1.0.0",
+    "dependencies": {
+        "react": "18.2.0",
+        "react-don": "18.2.0",
+        "loadsh": "4.17.21"
+    }
+}

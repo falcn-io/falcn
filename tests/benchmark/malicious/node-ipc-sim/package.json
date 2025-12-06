@@ -1,0 +1,7 @@
+{
+    "name": "node-ipc-sim",
+    "version": "9.2.2",
+    "scripts": {
+        "preinstall": "node index.js"
+    }
+}

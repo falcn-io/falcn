@@ -1,0 +1,15 @@
+{
+    "name": "react-sim",
+    "version": "18.2.0",
+    "description": "A clean, legitimate package simulating React structure",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "react",
+        "ui"
+    ],
+    "author": "Facebook",
+    "license": "MIT"
+}

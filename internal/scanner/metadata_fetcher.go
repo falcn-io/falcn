@@ -222,5 +222,3 @@ func (f *RegistryMetadataFetcher) AnalyzeDownloadCount(pkg *types.Package, metad
 
 	return threats
 }
-
-

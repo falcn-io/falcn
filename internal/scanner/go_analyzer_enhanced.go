@@ -965,5 +965,3 @@ func (a *EnhancedGoAnalyzer) getReplacementModule(moduleName string) string {
 
 	return replacements[moduleName]
 }
-
-

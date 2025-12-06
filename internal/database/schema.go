@@ -314,5 +314,3 @@ func (sm *SchemaManager) tableExists(ctx context.Context, tableName string) (boo
 	err := sm.db.QueryRowContext(ctx, query, tableName).Scan(&exists)
 	return exists, err
 }
-
-

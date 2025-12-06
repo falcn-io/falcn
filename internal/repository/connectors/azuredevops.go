@@ -1002,5 +1002,3 @@ func (a *AzureDevOpsConnector) parseFullName(fullName string) (project, repo str
 	}
 	return "", fullName
 }
-
-

@@ -178,5 +178,3 @@ func (bd *BinaryDetector) calculateSeverity(packagePath string, binaries []strin
 
 	return types.SeverityMedium
 }
-
-

@@ -474,5 +474,3 @@ func (ds *DefaultScanner) countThreats(packages []*types.Package) int {
 	}
 	return count
 }
-
-

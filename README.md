@@ -122,16 +122,18 @@ Falcn uses a modular architecture separating scanning, detection, and policy enf
 
 ```mermaid
 flowchart LR
-    CLI["🖥️ CLI"] --> Scanner
-    API["🌐 API"] --> Scanner
+    CLI["🖥️ CLI"] --> Analyzer
+    API["🌐 API"] --> Analyzer
     
     subgraph Engine["Falcn Engine"]
+        Analyzer["🧠 Analyzer"]
         Scanner["📦 Scanner"]
         Detector["🔍 Threat Detector"]
         Policy["📋 Policy Engine"]
     end
     
-    Scanner --> Detector
+    Analyzer --> Scanner
+    Analyzer --> Detector
     Detector --> Policy
     Policy --> Output["📊 Report (JSON/SARIF)"]
 ```

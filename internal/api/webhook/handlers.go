@@ -827,5 +827,3 @@ func (h *WebhookHandler) extractGitLabChangedPaths(commits []struct {
 func (h *WebhookHandler) generateScanID() string {
 	return fmt.Sprintf("webhook_%d", time.Now().UnixNano())
 }
-
-

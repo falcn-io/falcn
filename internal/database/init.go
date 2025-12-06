@@ -168,5 +168,3 @@ func (dm *DatabaseManager) ValidateSchema(ctx context.Context) error {
 	}
 	return dm.schemaManager.ValidateSchema(ctx)
 }
-
-

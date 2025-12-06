@@ -97,5 +97,3 @@ func main() {
 
 	fmt.Println("\n✅ Security check completed!")
 }
-
-

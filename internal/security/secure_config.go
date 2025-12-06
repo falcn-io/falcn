@@ -232,5 +232,3 @@ func (v *SecureConfigValidator) GetSecurityRecommendations() []string {
 
 	return recommendations
 }
-
-

@@ -314,5 +314,3 @@ func (c *CargoClient) ClearCache() {
 func (c *CargoClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
-
-

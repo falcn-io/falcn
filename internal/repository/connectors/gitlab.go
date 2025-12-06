@@ -985,5 +985,3 @@ func (g *GitLabConnector) decodeBase64Content(content string) ([]byte, error) {
 	// Decode base64
 	return json.RawMessage(content), nil
 }
-
-

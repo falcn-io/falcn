@@ -9,5 +9,3 @@ type FormatterOptions struct {
 	Verbose     bool
 	Indent      string
 }
-
-

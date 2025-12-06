@@ -92,5 +92,3 @@ func TestE2E_ScanCleanProject(t *testing.T) {
 	assert.Greater(t, result.TotalPackages, 0,
 		"Should have scanned packages")
 }
-
-

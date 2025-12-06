@@ -510,5 +510,3 @@ func (e *EmailConnector) GetName() string {
 func (e *EmailConnector) GetType() string {
 	return "email"
 }
-
-

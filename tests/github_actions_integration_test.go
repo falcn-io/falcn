@@ -772,5 +772,3 @@ type AlertPackage struct {
 	Reason  string `json:"reason"`
 	Policy  string `json:"policy"`
 }
-
-

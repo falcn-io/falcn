@@ -287,5 +287,3 @@ func (s *SplunkConnector) GetName() string {
 func (s *SplunkConnector) GetType() string {
 	return "splunk"
 }
-
-

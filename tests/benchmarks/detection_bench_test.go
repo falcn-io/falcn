@@ -99,5 +99,3 @@ func BenchmarkDetectEnhancedLargeProject(b *testing.B) {
 		}
 	}
 }
-
-

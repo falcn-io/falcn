@@ -103,5 +103,3 @@ func BenchmarkGTR(b *testing.B) {
 		}
 	})
 }
-
-

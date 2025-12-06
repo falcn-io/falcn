@@ -584,5 +584,3 @@ func (pe *PolicyEngine) GetPolicy(policyID string) (*SecurityPolicy, bool) {
 	policy, exists := pe.policies[policyID]
 	return policy, exists
 }
-
-

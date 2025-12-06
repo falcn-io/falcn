@@ -381,5 +381,3 @@ func (a *PHPPackageAnalyzer) extractProjectInfo(composerJSONPath string) (string
 
 	return composerData.Name, composerData.Version
 }
-
-

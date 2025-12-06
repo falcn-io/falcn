@@ -535,5 +535,3 @@ func TestHomoglyphDetector_detectMixedScripts(t *testing.T) {
 		})
 	}
 }
-
-

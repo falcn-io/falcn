@@ -23,7 +23,7 @@ type AnalysisResult struct {
 	ThreatScore    float64                `json:"threat_score"` // 0.0 - 1.0
 	Confidence     float64                `json:"confidence"`   // 0.0 - 1.0
 	AttackVectors  []string               `json:"attack_vectors"`
-	Findings       []Finding              `json:"findings"`
+	Findings       []types.Finding        `json:"findings"`
 	Metadata       map[string]interface{} `json:"metadata"`
 	ProcessingTime time.Duration          `json:"processing_time"`
 	Timestamp      time.Time              `json:"timestamp"`
@@ -47,11 +47,11 @@ type EdgeConfig struct {
 
 // EngineMetrics tracks overall engine performance
 type EngineMetrics struct {
-	TotalPackagesAnalyzed int64                        `json:"total_packages_analyzed"`
-	AlgorithmMetrics      map[string]*AlgorithmMetrics `json:"algorithm_metrics"`
-	AverageProcessingTime time.Duration                `json:"average_processing_time"`
-	ThreatDetectionRate   float64                      `json:"threat_detection_rate"`
-	LastAnalysis          time.Time                    `json:"last_analysis"`
+	TotalPackagesAnalyzed int64                              `json:"total_packages_analyzed"`
+	AlgorithmMetrics      map[string]*types.AlgorithmMetrics `json:"algorithm_metrics"`
+	AverageProcessingTime time.Duration                      `json:"average_processing_time"`
+	ThreatDetectionRate   float64                            `json:"threat_detection_rate"`
+	LastAnalysis          time.Time                          `json:"last_analysis"`
 }
 
 // NewEdgeEngine creates a new edge algorithm engine
@@ -60,7 +60,7 @@ func NewEdgeEngine(config *EdgeConfig) *EdgeEngine {
 		algorithms: make(map[string]Algorithm),
 		config:     config,
 		metrics: &EngineMetrics{
-			AlgorithmMetrics: make(map[string]*AlgorithmMetrics),
+			AlgorithmMetrics: make(map[string]*types.AlgorithmMetrics),
 		},
 	}
 }
@@ -240,7 +240,7 @@ func (e *EdgeEngine) calculateOverallThreatScore(results []*AnalysisResult) floa
 func (e *EdgeEngine) updateMetrics(algorithmName string, result *AnalysisResult) {
 	metrics := e.metrics.AlgorithmMetrics[algorithmName]
 	if metrics == nil {
-		metrics = &AlgorithmMetrics{}
+		metrics = &types.AlgorithmMetrics{}
 		e.metrics.AlgorithmMetrics[algorithmName] = metrics
 	}
 
@@ -267,5 +267,3 @@ func (e *EdgeEngine) GetAlgorithmNames() []string {
 func (e *EdgeEngine) GetMetrics() *EngineMetrics {
 	return e.metrics
 }
-
-

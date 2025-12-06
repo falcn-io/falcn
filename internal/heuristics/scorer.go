@@ -47,5 +47,3 @@ func (s *SimpleMLScorer) Analyze(features *EnhancedPackageFeatures) *MLDetection
 		Explanation: "Heuristic analysis based on package metadata",
 	}
 }
-
-

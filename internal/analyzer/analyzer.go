@@ -3,23 +3,21 @@ package analyzer
 import (
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/detector"
+	"github.com/falcn-io/falcn/internal/edge"
 	"github.com/falcn-io/falcn/internal/registry"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/falcn-io/falcn/internal/vulnerability"
 	"github.com/falcn-io/falcn/pkg/types"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -63,6 +61,7 @@ type ScanResult struct {
 	Duration      time.Duration          `json:"duration"`
 	Path          string                 `json:"path"`
 	TotalPackages int                    `json:"total_packages"`
+	Packages      []types.Package        `json:"packages,omitempty"` // Added for architecture unification
 	Threats       []types.Threat         `json:"threats"`
 	Warnings      []types.Warning        `json:"warnings"`
 	Resolution    *ResolutionResult      `json:"resolution,omitempty"`
@@ -132,66 +131,66 @@ func (a *Analyzer) Scan(path string, options *ScanOptions) (*ScanResult, error) 
 		return a.scanRecursive(path, options, result)
 	}
 
-	// Use auto-detection if no specific package managers are specified
-	if len(options.PackageManagers) == 0 {
-		// Auto-detect project types and create registry connectors
-		projects, err := a.autoDetector.DetectAllProjectTypes(path)
-		if err != nil {
-			logrus.Warnf("Auto-detection failed: %v", err)
-		} else {
-			logrus.Infof("Auto-detected %d projects", len(projects))
-			// Create registry connectors for detected project types
-			connectors, err := a.autoDetector.CreateConnectorsForProjects(projects)
-			if err != nil {
-				logrus.Warnf("Failed to create connectors: %v", err)
-			} else {
-				// Add connectors to the analyzer's registry map
-				for registryType, connector := range connectors {
-					a.registries[registryType] = connector
-					logrus.Debugf("Created %s registry connector", registryType)
-				}
-			}
-		}
-	}
-
-	// Discover dependency files
-	depFiles, err := a.discoverDependencyFiles(path, options)
+	// Use Scanner for discovery and parsing (Architecture Unification)
+	scannerInstance, err := scanner.New(a.config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to discover dependency files: %w", err)
+		return nil, fmt.Errorf("failed to create scanner: %w", err)
 	}
 
-	if len(depFiles) == 0 {
+	// Check if the path is a valid project (using the public DetectProject)
+	if _, err := scannerInstance.DetectProject(path); err != nil {
 		if options.AllowEmptyProjects {
-			// No dependency files found - return empty result instead of error
-			logrus.Infof("No dependency files found in %s", path)
+			logrus.Infof("No project detected in %s: %v", path, err)
 			result.TotalPackages = 0
-			result.Threats = []types.Threat{}
-			result.Warnings = []types.Warning{}
 			result.Duration = time.Since(start)
 			return result, nil
-		} else {
-			return nil, fmt.Errorf("no dependency files found in %s", path)
 		}
+		return nil, fmt.Errorf("no supported project found in %s: %w", path, err)
 	}
 
-	logrus.Infof("Found %d dependency files", len(depFiles))
-
-	// Parse dependencies from all files
-	allDependencies := make([]types.Dependency, 0)
-	for _, file := range depFiles {
-		deps, err := a.parseDependencyFile(file, options)
-		if err != nil {
-			logrus.Warnf("Failed to parse %s: %v", file, err)
-			continue
-		}
-		allDependencies = append(allDependencies, deps...)
+	// Run ScanProject to get packages
+	scanRes, err := scannerInstance.ScanProject(path)
+	if err != nil {
+		return nil, fmt.Errorf("scanner failed: %w", err)
 	}
 
-	result.TotalPackages = len(allDependencies)
-	logrus.Infof("Analyzing %d dependencies", len(allDependencies))
+	// Map generic Packages to Analyzer's flow
+	// ScanProject returns *types.ScanResult which has Packages []*types.Package
+	// We need to convert []*types.Package to []types.Dependency for Resolver/Detector validation logic
+	// But Scanner.ScanProject ALREADY runs threat detection (it calls analyzePackageThreats).
+	// Currently Analyzer also runs `detectThreats` using `a.detector`.
+	// Analyzer's detector might have different logic?
+	// `Scanner` uses `detectors` (not `internal/detector`?)
+	// `Scanner` calls `s.analyzePackageThreats`.
+
+	// IF we rely on Scanner, we take its results.
+	// But Analyzer has `Resolver`. Scanner does not run resolver.
+	// So we should extract packages, run resolver, then maybe run EXTRA detection if needed.
+
+	// Extract packages from scan result
+	var packages []types.Package
+	var dependencies []types.Dependency
+
+	for _, pkg := range scanRes.Packages {
+		packages = append(packages, *pkg)
+
+		// Create Dependency representation for compatibility with legacy Analyzer logic
+		dep := types.Dependency{
+			Name:     pkg.Name,
+			Version:  pkg.Version,
+			Registry: pkg.Registry,
+			Source:   "scanner", // unknown source file if not provided by package
+			Direct:   true,      // assume direct for now or check metadata
+		}
+		dependencies = append(dependencies, dep)
+	}
+
+	result.TotalPackages = len(packages)
+	result.Packages = packages
+	logrus.Infof("Scanner found %d packages", len(packages))
 
 	// Filter excluded packages
-	filteredDeps := a.filterDependencies(allDependencies, options.ExcludePackages)
+	filteredDeps := a.filterDependencies(dependencies, options.ExcludePackages)
 
 	// Resolve dependencies and detect conflicts
 	var resolution *ResolutionResult
@@ -200,43 +199,45 @@ func (a *Analyzer) Scan(path string, options *ScanOptions) (*ScanResult, error) 
 		if err != nil {
 			logrus.Warnf("Dependency resolution failed: %v", err)
 		} else {
-			logrus.Debugf("Dependency resolution completed: %d conflicts, %d warnings",
-				len(resolution.Conflicts), len(resolution.Warnings))
-
-			// Use resolved dependencies for threat detection if available
-			if len(resolution.Resolved) > 0 {
-				filteredDeps = resolution.Resolved
-			}
+			result.Resolution = resolution
+			result.Summary.ConflictCount = len(resolution.Conflicts)
 		}
 	}
 
-	// Perform threat detection
-	ctx := context.Background()
-	threats, warnings, err := a.detectThreats(ctx, filteredDeps, options)
+	// Detect threats using Analyzer's detector (if separate from Scanner's)
+	// Scanner.ScanProject already populates Threats in Packages.
+	// We should merge them or just trust Scanner?
+	// Analyzer uses `a.detectThreats`. This uses `internal/detector`.
+	// Scanner uses `analyzers` and simple heuristics?
+	// `Scanner` structure has `analyzers`.
+
+	// Let's run Analyzer's `detectThreats` as well for now to ensure we don't lose coverage.
+	// But we should use the dependencies.
+	threats, warnings, err := a.detectThreats(context.Background(), filteredDeps, options)
 	if err != nil {
 		return nil, fmt.Errorf("threat detection failed: %w", err)
 	}
 
-	result.Threats = threats
-	result.Warnings = warnings
-	result.Resolution = resolution
-	result.Duration = time.Since(start)
-	result.Summary = a.calculateSummary(threats, warnings, len(filteredDeps))
-
-	// Update summary with resolution data if available
-	if resolution != nil {
-		result.Summary.ConflictCount = len(resolution.Conflicts)
-		result.Summary.TotalWarnings += len(resolution.Warnings)
+	// Merge threats from Scanner?
+	// scanRes.Packages has threats.
+	for _, pkg := range scanRes.Packages {
+		if len(pkg.Threats) > 0 {
+			result.Threats = append(result.Threats, pkg.Threats...)
+		}
 	}
 
-	// Add metadata
-	result.Metadata["dependency_files"] = depFiles
-	result.Metadata["scan_options"] = options
-	result.Metadata["detector_version"] = a.detector.Version()
+	result.Threats = append(result.Threats, threats...)
+	result.Warnings = append(result.Warnings, warnings...)
 
-	logrus.Infof("Scan %s completed in %v. Found %d threats, %d warnings",
-		scanID, result.Duration, len(threats), len(warnings))
+	result.Duration = time.Since(start)
+	result.Summary = a.calculateSummary(result.Threats, result.Warnings, result.TotalPackages)
 
+	// Populate resolution in summary if available
+	if resolution != nil {
+		result.Summary.ConflictCount = len(resolution.Conflicts)
+	}
+
+	logrus.Infof("Scan completed in %v", result.Duration)
 	return result, nil
 }
 
@@ -389,905 +390,6 @@ func (a *Analyzer) determineOverallRisk(score float64) string {
 		return "low"
 	}
 	return "minimal"
-}
-
-// discoverDependencyFiles finds all dependency files in the given path
-func (a *Analyzer) discoverDependencyFiles(path string, options *ScanOptions) ([]string, error) {
-	if options.SpecificFile != "" {
-		// Scan specific file
-		if !filepath.IsAbs(options.SpecificFile) {
-			options.SpecificFile = filepath.Join(path, options.SpecificFile)
-		}
-		return []string{options.SpecificFile}, nil
-	}
-
-	var depFiles []string
-
-	// Known dependency file patterns
-	patterns := []string{
-		"package.json",
-		"package-lock.json",
-		"yarn.lock",
-		"pnpm-lock.yaml",
-		"requirements.txt",
-		"requirements-dev.txt",
-		"Pipfile",
-		"Pipfile.lock",
-		"pyproject.toml",
-		"poetry.lock",
-		"go.mod",
-		"go.sum",
-		"pom.xml",
-		"Cargo.toml",
-		"Cargo.lock",
-		"Gemfile",
-		"Gemfile.lock",
-		"composer.json",
-		"composer.lock",
-	}
-
-	err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			// Skip common directories that shouldn't contain dependency files
-			dirName := info.Name()
-			skipDirs := []string{
-				"node_modules", ".git", "vendor", ".venv", "__pycache__",
-				".tox", ".pytest_cache", "target", "dist", "build",
-				".terraform", ".gradle",
-			}
-			for _, skip := range skipDirs {
-				if dirName == skip {
-					return filepath.SkipDir
-				}
-			}
-
-			// Skip Windows problematic directories
-			if strings.HasPrefix(dirName, "real-actions-") ||
-				strings.HasPrefix(dirName, "docker-test-") ||
-				strings.HasPrefix(dirName, "docker-realworld-") ||
-				strings.HasPrefix(dirName, "docker-e2e-") ||
-				dirName == "custom_test_workspace" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		fileName := info.Name()
-		for _, pattern := range patterns {
-			if fileName == pattern {
-				depFiles = append(depFiles, filePath)
-				break
-			}
-		}
-
-		return nil
-	})
-
-	return depFiles, err
-}
-
-// parseDependencyFile parses dependencies from a specific file
-func (a *Analyzer) parseDependencyFile(filePath string, options *ScanOptions) ([]types.Dependency, error) {
-	logrus.Debugf("Parsing dependency file: %s", filePath)
-
-	// Determine file type and registry
-	fileType, registryType := a.detectFileType(filePath)
-	logrus.Printf("DEBUG: Parsing file %s with type %s", filePath, fileType)
-	if fileType == "" {
-		return nil, fmt.Errorf("unsupported file type: %s", filePath)
-	}
-
-	// Parse dependencies based on file type
-	switch fileType {
-	case "npm":
-		return a.parseNPMDependencies(filePath, options)
-	case "python":
-		return a.parsePythonDependencies(filePath, options)
-	case "go":
-		return a.parseGoDependencies(filePath)
-	case "maven":
-		return a.parseMavenDependencies(filePath)
-	default:
-		// Check if we have a registry connector for this type
-		if connector, exists := a.registries[registryType]; exists {
-			// Use the registry connector to parse dependencies
-			logrus.Debugf("Using %s connector to parse %s", registryType, filePath)
-			// For now, return empty dependencies as we need to implement
-			// specific parsing logic for each registry type
-			_ = connector // Use connector to avoid unused variable error
-			return []types.Dependency{}, nil
-		}
-		// For unsupported file types, return empty
-		return []types.Dependency{}, nil
-	}
-}
-
-// parsePythonDependencies handles parsing of Python-related files
-func (a *Analyzer) parsePythonDependencies(filePath string, options *ScanOptions) ([]types.Dependency, error) {
-	fileName := filepath.Base(filePath)
-	switch fileName {
-	case "requirements.txt", "requirements-dev.txt":
-		return a.parsePythonRequirements(filePath)
-	case "pyproject.toml":
-		return a.parsePyprojectToml(filePath)
-	case "Pipfile":
-		return a.parsePipfile(filePath)
-	default:
-		return []types.Dependency{}, nil
-	}
-}
-
-func (a *Analyzer) parseGoDependencies(filePath string) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read go.mod: %w", err)
-	}
-	lines := strings.Split(string(data), "\n")
-	var deps []types.Dependency
-	inBlock := false
-	for _, line := range lines {
-		l := strings.TrimSpace(line)
-		if l == "" || strings.HasPrefix(l, "//") {
-			continue
-		}
-		if strings.HasPrefix(l, "require (") {
-			inBlock = true
-			continue
-		}
-		if inBlock && strings.HasPrefix(l, ")") {
-			inBlock = false
-			continue
-		}
-		if strings.HasPrefix(l, "require ") {
-			parts := strings.Fields(l)
-			if len(parts) >= 3 {
-				deps = append(deps, types.Dependency{Name: parts[1], Version: parts[2], Registry: "go", Source: filePath, Direct: true})
-			}
-			continue
-		}
-		if inBlock {
-			parts := strings.Fields(l)
-			if len(parts) >= 2 {
-				deps = append(deps, types.Dependency{Name: parts[0], Version: parts[1], Registry: "go", Source: filePath, Direct: true})
-			}
-		}
-	}
-	return deps, nil
-}
-
-func (a *Analyzer) parseMavenDependencies(filePath string) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read pom.xml: %w", err)
-	}
-	type dep struct{ GroupID, ArtifactID, Version string }
-	type pom struct {
-		Dependencies struct {
-			Dependency []struct {
-				GroupID    string `xml:"groupId"`
-				ArtifactID string `xml:"artifactId"`
-				Version    string `xml:"version"`
-			} `xml:"dependency"`
-		} `xml:"dependencies"`
-	}
-	var p pom
-	if err := xml.Unmarshal(data, &p); err != nil {
-		return nil, fmt.Errorf("failed to parse pom.xml: %w", err)
-	}
-	var deps []types.Dependency
-	for _, d := range p.Dependencies.Dependency {
-		name := d.GroupID + ":" + d.ArtifactID
-		ver := d.Version
-		if name != ":" {
-			deps = append(deps, types.Dependency{Name: name, Version: ver, Registry: "maven", Source: filePath, Direct: true})
-		}
-	}
-	return deps, nil
-}
-
-func (a *Analyzer) parsePythonRequirements(filePath string) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read requirements.txt: %w", err)
-	}
-	lines := strings.Split(string(data), "\n")
-	reqRegex := regexp.MustCompile(`^([a-zA-Z0-9_.\-]+)([><=!~]+)?([0-9A-Za-z_.\-]+.*)?$`)
-	var dependencies []types.Dependency
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		if strings.HasPrefix(line, "-e ") {
-			pkg := strings.TrimSpace(strings.TrimPrefix(line, "-e "))
-			if pkg != "" {
-				dependencies = append(dependencies, types.Dependency{
-					Name:     pkg,
-					Version:  "*",
-					Registry: "pypi",
-					Source:   filePath,
-					Direct:   true,
-				})
-			}
-			continue
-		}
-		if strings.Contains(line, ";") {
-			parts := strings.Split(line, ";")
-			line = strings.TrimSpace(parts[0])
-		}
-		if strings.Contains(line, "[") && strings.Contains(line, "]") {
-			start := strings.Index(line, "[")
-			end := strings.Index(line, "]") + 1
-			if start >= 0 && end > start {
-				line = line[:start] + line[end:]
-			}
-		}
-		matches := reqRegex.FindStringSubmatch(line)
-		if len(matches) >= 2 {
-			name := matches[1]
-			version := "*"
-			if len(matches) >= 4 && matches[3] != "" {
-				op := matches[2]
-				spec := matches[3]
-				version = strings.TrimSpace(op + spec)
-			}
-			dependencies = append(dependencies, types.Dependency{
-				Name:     name,
-				Version:  version,
-				Registry: "pypi",
-				Source:   filePath,
-				Direct:   true,
-			})
-		}
-	}
-	return dependencies, nil
-}
-
-func (a *Analyzer) parsePyprojectToml(filePath string) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read pyproject.toml: %w", err)
-	}
-	var pyproject struct {
-		Project struct {
-			Dependencies []string `toml:"dependencies"`
-		} `toml:"project"`
-		Tool struct {
-			Poetry struct {
-				Dependencies    map[string]interface{} `toml:"dependencies"`
-				DevDependencies map[string]interface{} `toml:"dev-dependencies"`
-				Group           map[string]struct {
-					Dependencies map[string]interface{} `toml:"dependencies"`
-				} `toml:"group"`
-			} `toml:"poetry"`
-		} `toml:"tool"`
-	}
-	if err := toml.Unmarshal(data, &pyproject); err != nil {
-		return nil, fmt.Errorf("failed to parse pyproject.toml: %w", err)
-	}
-	var dependencies []types.Dependency
-	addDep := func(name, version string, depType string) {
-		if name == "" {
-			return
-		}
-		dependencies = append(dependencies, types.Dependency{
-			Name:     name,
-			Version:  version,
-			Registry: "pypi",
-			Source:   filePath,
-			Direct:   true,
-			ExtraData: map[string]interface{}{
-				"type": depType,
-			},
-		})
-	}
-	for _, dep := range pyproject.Project.Dependencies {
-		n, v := a.parsePythonRequirementString(dep)
-		addDep(n, v, "project")
-	}
-	for name, spec := range pyproject.Tool.Poetry.Dependencies {
-		if name == "python" {
-			continue
-		}
-		version := "*"
-		switch s := spec.(type) {
-		case string:
-			version = s
-		case map[string]interface{}:
-			if ver, ok := s["version"].(string); ok {
-				version = ver
-			}
-		}
-		addDep(name, version, "poetry")
-	}
-	for name, spec := range pyproject.Tool.Poetry.DevDependencies {
-		version := "*"
-		switch s := spec.(type) {
-		case string:
-			version = s
-		case map[string]interface{}:
-			if ver, ok := s["version"].(string); ok {
-				version = ver
-			}
-		}
-		addDep(name, version, "poetry-dev")
-	}
-	for groupName, group := range pyproject.Tool.Poetry.Group {
-		for name, spec := range group.Dependencies {
-			version := "*"
-			switch s := spec.(type) {
-			case string:
-				version = s
-			case map[string]interface{}:
-				if ver, ok := s["version"].(string); ok {
-					version = ver
-				}
-			}
-			addDep(name, version, "group-"+groupName)
-		}
-	}
-	return dependencies, nil
-}
-
-func (a *Analyzer) parsePipfile(filePath string) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Pipfile: %w", err)
-	}
-	var pipfile struct {
-		Packages    map[string]interface{} `toml:"packages"`
-		DevPackages map[string]interface{} `toml:"dev-packages"`
-	}
-	if err := toml.Unmarshal(data, &pipfile); err != nil {
-		return nil, fmt.Errorf("failed to parse Pipfile: %w", err)
-	}
-	var dependencies []types.Dependency
-	add := func(name, version string, depType string) {
-		if name == "" {
-			return
-		}
-		dependencies = append(dependencies, types.Dependency{
-			Name:     name,
-			Version:  version,
-			Registry: "pypi",
-			Source:   filePath,
-			Direct:   true,
-			ExtraData: map[string]interface{}{
-				"type": depType,
-			},
-		})
-	}
-	for name, spec := range pipfile.Packages {
-		version := "*"
-		switch s := spec.(type) {
-		case string:
-			version = s
-		case map[string]interface{}:
-			if ver, ok := s["version"].(string); ok {
-				version = ver
-			}
-		}
-		add(name, version, "prod")
-	}
-	for name, spec := range pipfile.DevPackages {
-		version := "*"
-		switch s := spec.(type) {
-		case string:
-			version = s
-		case map[string]interface{}:
-			if ver, ok := s["version"].(string); ok {
-				version = ver
-			}
-		}
-		add(name, version, "dev")
-	}
-	return dependencies, nil
-}
-
-func (a *Analyzer) parsePythonRequirementString(req string) (string, string) {
-	r := strings.TrimSpace(req)
-	if strings.Contains(r, ";") {
-		parts := strings.Split(r, ";")
-		r = strings.TrimSpace(parts[0])
-	}
-	if strings.Contains(r, "[") && strings.Contains(r, "]") {
-		start := strings.Index(r, "[")
-		end := strings.Index(r, "]") + 1
-		if start >= 0 && end > start {
-			r = r[:start] + r[end:]
-		}
-	}
-	re := regexp.MustCompile(`^([a-zA-Z0-9_.\-]+)([><=!~]+)?([0-9A-Za-z_.\-]+.*)?$`)
-	m := re.FindStringSubmatch(r)
-	if len(m) >= 2 {
-		name := m[1]
-		version := "*"
-		if len(m) >= 4 && m[3] != "" {
-			op := m[2]
-			spec := m[3]
-			version = strings.TrimSpace(op + spec)
-		}
-		return name, version
-	}
-	return r, "*"
-}
-
-// parseNPMDependencies handles parsing of NPM-related files
-func (a *Analyzer) parseNPMDependencies(filePath string, options *ScanOptions) ([]types.Dependency, error) {
-	fileName := filepath.Base(filePath)
-	logrus.Printf("DEBUG: parseNPMDependencies called with fileName: %s", fileName)
-
-	switch fileName {
-	case "package.json":
-		return a.parsePackageJSON(filePath, options)
-	case "package-lock.json":
-		return a.parsePackageLockJSON(filePath, options)
-	case "yarn.lock":
-		return a.parseYarnLock(filePath, options)
-	default:
-		return []types.Dependency{}, nil
-	}
-}
-
-// parsePackageJSON parses dependencies from package.json with enhanced metadata extraction
-func (a *Analyzer) parsePackageJSON(filePath string, options *ScanOptions) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read package.json: %w", err)
-	}
-
-	// Enhanced package.json structure with more metadata
-	var packageData struct {
-		Name                 string            `json:"name"`
-		Version              string            `json:"version"`
-		Description          string            `json:"description"`
-		Author               interface{}       `json:"author"`
-		License              string            `json:"license"`
-		Repository           interface{}       `json:"repository"`
-		Homepage             string            `json:"homepage"`
-		Keywords             []string          `json:"keywords"`
-		Dependencies         map[string]string `json:"dependencies"`
-		DevDependencies      map[string]string `json:"devDependencies"`
-		PeerDependencies     map[string]string `json:"peerDependencies"`
-		OptionalDependencies map[string]string `json:"optionalDependencies"`
-		BundledDependencies  []string          `json:"bundledDependencies"`
-		Engines              map[string]string `json:"engines"`
-		Scripts              map[string]string `json:"scripts"`
-	}
-
-	if err := json.Unmarshal(data, &packageData); err != nil {
-		return nil, fmt.Errorf("failed to parse package.json: %w", err)
-	}
-
-	// Validate package.json structure
-	if packageData.Name == "" {
-		return nil, fmt.Errorf("package.json missing required 'name' field")
-	}
-
-	logrus.Debugf("Parsing package.json for %s@%s with %d dependencies and %d devDependencies",
-		packageData.Name, packageData.Version, len(packageData.Dependencies), len(packageData.DevDependencies))
-
-	var dependencies []types.Dependency
-
-	// Parse regular dependencies with enhanced metadata
-	for name, version := range packageData.Dependencies {
-		if name == "" || version == "" {
-			logrus.Warnf("Skipping invalid dependency: name='%s', version='%s'", name, version)
-			continue
-		}
-
-		dep := types.Dependency{
-			Name:        name,
-			Version:     a.normalizeVersion(version),
-			Registry:    "npm",
-			Source:      filePath,
-			Direct:      true,
-			Development: false,
-			ExtraData: map[string]interface{}{
-				"constraint": version,
-				"parent":     packageData.Name,
-			},
-		}
-		dependencies = append(dependencies, dep)
-	}
-
-	// Parse dev dependencies if requested
-	if options.IncludeDevDependencies {
-		for name, version := range packageData.DevDependencies {
-			if name == "" || version == "" {
-				logrus.Warnf("Skipping invalid dev dependency: name='%s', version='%s'", name, version)
-				continue
-			}
-
-			dep := types.Dependency{
-				Name:        name,
-				Version:     a.normalizeVersion(version),
-				Registry:    "npm",
-				Source:      filePath,
-				Direct:      true,
-				Development: true,
-				ExtraData: map[string]interface{}{
-					"constraint": version,
-					"parent":     packageData.Name,
-				},
-			}
-			dependencies = append(dependencies, dep)
-		}
-	}
-
-	// Parse peer dependencies
-	for name, version := range packageData.PeerDependencies {
-		if name == "" || version == "" {
-			logrus.Warnf("Skipping invalid peer dependency: name='%s', version='%s'", name, version)
-			continue
-		}
-
-		dep := types.Dependency{
-			Name:        name,
-			Version:     a.normalizeVersion(version),
-			Registry:    "npm",
-			Source:      filePath,
-			Direct:      true,
-			Development: false,
-			ExtraData: map[string]interface{}{
-				"constraint": version,
-				"parent":     packageData.Name,
-				"type":       "peer",
-			},
-		}
-		dependencies = append(dependencies, dep)
-	}
-
-	// Parse optional dependencies
-	for name, version := range packageData.OptionalDependencies {
-		if name == "" || version == "" {
-			logrus.Warnf("Skipping invalid optional dependency: name='%s', version='%s'", name, version)
-			continue
-		}
-
-		dep := types.Dependency{
-			Name:        name,
-			Version:     a.normalizeVersion(version),
-			Registry:    "npm",
-			Source:      filePath,
-			Direct:      true,
-			Development: false,
-			ExtraData: map[string]interface{}{
-				"constraint": version,
-				"parent":     packageData.Name,
-				"type":       "optional",
-			},
-		}
-		dependencies = append(dependencies, dep)
-	}
-
-	logrus.Printf("DEBUG: Returning %d total dependencies", len(dependencies))
-	return dependencies, nil
-}
-
-// normalizeVersion normalizes version constraints to extract actual version numbers
-func (a *Analyzer) normalizeVersion(constraint string) string {
-	if constraint == "" {
-		return ""
-	}
-
-	// Remove common prefixes and operators
-	constraint = strings.TrimSpace(constraint)
-	constraint = strings.TrimPrefix(constraint, "^")
-	constraint = strings.TrimPrefix(constraint, "~")
-	constraint = strings.TrimPrefix(constraint, ">=")
-	constraint = strings.TrimPrefix(constraint, "<=")
-	constraint = strings.TrimPrefix(constraint, ">")
-	constraint = strings.TrimPrefix(constraint, "<")
-	constraint = strings.TrimPrefix(constraint, "=")
-
-	// Handle version ranges (take the first version)
-	if strings.Contains(constraint, " - ") {
-		parts := strings.Split(constraint, " - ")
-		if len(parts) > 0 {
-			constraint = strings.TrimSpace(parts[0])
-		}
-	}
-
-	// Handle OR conditions (take the first version)
-	if strings.Contains(constraint, " || ") {
-		parts := strings.Split(constraint, " || ")
-		if len(parts) > 0 {
-			constraint = strings.TrimSpace(parts[0])
-			return a.normalizeVersion(constraint) // Recursive call to handle nested operators
-		}
-	}
-
-	// Handle git URLs and file paths
-	if strings.HasPrefix(constraint, "git+") || strings.HasPrefix(constraint, "file:") || strings.HasPrefix(constraint, "http") {
-		return "latest" // Default for non-semver sources
-	}
-
-	// Handle npm tags
-	if constraint == "latest" || constraint == "next" || constraint == "beta" || constraint == "alpha" {
-		return constraint
-	}
-
-	return strings.TrimSpace(constraint)
-}
-
-// parsePackageLockJSON parses dependencies from package-lock.json with enhanced metadata
-func (a *Analyzer) parsePackageLockJSON(filePath string, options *ScanOptions) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read package-lock.json: %w", err)
-	}
-
-	// Enhanced lock file structure
-	var lockData struct {
-		Name            string `json:"name"`
-		Version         string `json:"version"`
-		LockfileVersion int    `json:"lockfileVersion"`
-		Packages        map[string]struct {
-			Version      string            `json:"version"`
-			Dev          bool              `json:"dev"`
-			Optional     bool              `json:"optional"`
-			Peer         bool              `json:"peer"`
-			Resolved     string            `json:"resolved"`
-			Integrity    string            `json:"integrity"`
-			Dependencies map[string]string `json:"dependencies"`
-			Engines      map[string]string `json:"engines"`
-			License      string            `json:"license"`
-		} `json:"packages"`
-	}
-
-	if err := json.Unmarshal(data, &lockData); err != nil {
-		return nil, fmt.Errorf("failed to parse package-lock.json: %w", err)
-	}
-
-	// Validate lock file structure
-	if lockData.LockfileVersion == 0 {
-		logrus.Warnf("package-lock.json missing lockfileVersion, assuming version 1")
-	}
-
-	logrus.Debugf("Parsing package-lock.json v%d for %s@%s with %d packages",
-		lockData.LockfileVersion, lockData.Name, lockData.Version, len(lockData.Packages))
-
-	var dependencies []types.Dependency
-
-	for packagePath, packageInfo := range lockData.Packages {
-		// Skip the root package (empty path)
-		if packagePath == "" {
-			continue
-		}
-
-		// Skip dev dependencies if not requested
-		if packageInfo.Dev && !options.IncludeDevDependencies {
-			continue
-		}
-
-		// Extract package name from path (remove node_modules/ prefix)
-		packageName := strings.TrimPrefix(packagePath, "node_modules/")
-
-		// Handle scoped packages correctly
-		if strings.Contains(packageName, "/node_modules/") {
-			// This is a nested dependency, extract the actual package name
-			parts := strings.Split(packageName, "/node_modules/")
-			if len(parts) > 1 {
-				packageName = parts[len(parts)-1]
-			}
-		}
-
-		// Validate package info
-		if packageName == "" || packageInfo.Version == "" {
-			logrus.Warnf("Skipping invalid package: path='%s', version='%s'", packagePath, packageInfo.Version)
-			continue
-		}
-
-		// Determine dependency type
-		depType := "production"
-		if packageInfo.Dev {
-			depType = "development"
-		} else if packageInfo.Peer {
-			depType = "peer"
-		} else if packageInfo.Optional {
-			depType = "optional"
-		}
-
-		dep := types.Dependency{
-			Name:        packageName,
-			Version:     packageInfo.Version,
-			Registry:    "npm",
-			Source:      filePath,
-			Direct:      !strings.Contains(packagePath, "/node_modules/"),
-			Development: packageInfo.Dev,
-			ExtraData: map[string]interface{}{
-				"resolved":    packageInfo.Resolved,
-				"integrity":   packageInfo.Integrity,
-				"type":        depType,
-				"path":        packagePath,
-				"license":     packageInfo.License,
-				"lockVersion": lockData.LockfileVersion,
-			},
-		}
-		dependencies = append(dependencies, dep)
-	}
-
-	logrus.Debugf("Extracted %d dependencies from package-lock.json", len(dependencies))
-	return dependencies, nil
-}
-
-// parseYarnLock parses dependencies from yarn.lock with enhanced parsing
-func (a *Analyzer) parseYarnLock(filePath string, options *ScanOptions) ([]types.Dependency, error) {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read yarn.lock: %w", err)
-	}
-
-	content := string(data)
-	lines := strings.Split(content, "\n")
-
-	logrus.Debugf("Parsing yarn.lock with %d lines", len(lines))
-
-	var dependencies []types.Dependency
-	packageMap := make(map[string]*types.Dependency)
-
-	var currentPackages []string
-	var currentDep *types.Dependency
-	var inPackageBlock bool
-
-	for _, line := range lines {
-		originalLine := line
-		line = strings.TrimSpace(line)
-
-		// Skip empty lines and comments
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		// Check for package declaration (starts without indentation and contains @)
-		if !strings.HasPrefix(originalLine, " ") && !strings.HasPrefix(originalLine, "\t") {
-			if strings.Contains(line, "@") && strings.HasSuffix(line, ":") {
-				// Parse package declaration line
-				packageDecl := strings.TrimSuffix(line, ":")
-				currentPackages = a.parseYarnPackageDeclaration(packageDecl)
-				inPackageBlock = len(currentPackages) > 0
-
-				if inPackageBlock {
-					currentDep = &types.Dependency{
-						Registry:    "npm",
-						Source:      filePath,
-						Direct:      true,
-						Development: false, // Yarn.lock doesn't distinguish dev deps
-						ExtraData:   make(map[string]interface{}),
-					}
-				}
-			} else {
-				inPackageBlock = false
-			}
-			continue
-		}
-
-		// Parse properties within package block
-		if inPackageBlock && currentDep != nil {
-			if strings.HasPrefix(line, "version ") {
-				version := a.extractYarnValue(line)
-				currentDep.Version = version
-				currentDep.ExtraData["version"] = version
-			} else if strings.HasPrefix(line, "resolved ") {
-				resolved := a.extractYarnValue(line)
-				currentDep.ExtraData["resolved"] = resolved
-			} else if strings.HasPrefix(line, "integrity ") {
-				integrity := a.extractYarnValue(line)
-				currentDep.ExtraData["integrity"] = integrity
-			} else if strings.HasPrefix(line, "dependencies:") {
-				// Start of dependencies block - we could parse these for transitive deps
-				currentDep.ExtraData["hasDependencies"] = true
-			}
-
-			// Check if we've reached the end of the package block
-			if currentDep.Version != "" && len(currentPackages) > 0 {
-				// Create dependencies for all package names in the declaration
-				for _, pkgName := range currentPackages {
-					if pkgName == "" {
-						continue
-					}
-
-					// Check if we already have this package with this version
-					key := fmt.Sprintf("%s@%s", pkgName, currentDep.Version)
-					if _, exists := packageMap[key]; !exists {
-						dep := &types.Dependency{
-							Name:        pkgName,
-							Version:     currentDep.Version,
-							Registry:    currentDep.Registry,
-							Source:      currentDep.Source,
-							Direct:      currentDep.Direct,
-							Development: currentDep.Development,
-							ExtraData:   make(map[string]interface{}),
-						}
-
-						// Copy metadata
-						for k, v := range currentDep.ExtraData {
-							dep.ExtraData[k] = v
-						}
-						dep.ExtraData["packageDeclaration"] = strings.Join(currentPackages, ", ")
-
-						packageMap[key] = dep
-						dependencies = append(dependencies, *dep)
-					}
-				}
-
-				// Reset for next package
-				currentPackages = nil
-				currentDep = nil
-				inPackageBlock = false
-			}
-		}
-	}
-
-	logrus.Debugf("Extracted %d unique dependencies from yarn.lock", len(dependencies))
-	return dependencies, nil
-}
-
-// parseYarnPackageDeclaration parses a yarn package declaration line
-func (a *Analyzer) parseYarnPackageDeclaration(decl string) []string {
-	var packages []string
-
-	// Handle multiple package declarations separated by commas
-	parts := strings.Split(decl, ",")
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		part = strings.Trim(part, `"'`)
-
-		// Extract package name (everything before the last @)
-		if strings.Contains(part, "@") {
-			// Handle scoped packages like @babel/core@^7.0.0
-			lastAtIndex := strings.LastIndex(part, "@")
-			if lastAtIndex > 0 {
-				packageName := part[:lastAtIndex]
-				if packageName != "" {
-					packages = append(packages, packageName)
-				}
-			}
-		}
-	}
-
-	return packages
-}
-
-// extractYarnValue extracts the value from a yarn.lock property line
-func (a *Analyzer) extractYarnValue(line string) string {
-	parts := strings.SplitN(line, " ", 2)
-	if len(parts) < 2 {
-		return ""
-	}
-
-	value := strings.TrimSpace(parts[1])
-	value = strings.Trim(value, `"'`)
-	return value
-}
-
-// detectFileType determines the file type and associated registry
-func (a *Analyzer) detectFileType(filePath string) (fileType, registryType string) {
-	fileName := filepath.Base(filePath)
-
-	switch fileName {
-	case "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "npm-shrinkwrap.json":
-		return "npm", "npm"
-	case "requirements.txt", "requirements-dev.txt", "Pipfile", "Pipfile.lock", "pyproject.toml", "poetry.lock":
-		return "python", "pypi"
-	case "go.mod", "go.sum":
-		return "go", "go"
-	case "pom.xml":
-		return "maven", "maven"
-	case "Cargo.toml", "Cargo.lock":
-		return "rust", "cargo"
-	case "Gemfile", "Gemfile.lock":
-		return "ruby", "rubygems"
-	case "composer.json", "composer.lock":
-		return "php", "packagist"
-	default:
-		return "", ""
-	}
 }
 
 // filterDependencies removes excluded packages from the dependency list
@@ -1587,7 +689,7 @@ func (a *Analyzer) scanRecursive(rootPath string, options *ScanOptions, result *
 	logrus.Infof("Found %d project directories for recursive scan", len(projectDirs))
 
 	// Scan each project directory
-	allDependencies := make([]types.Dependency, 0)
+	var allPackages []types.Package
 	allThreats := make([]types.Threat, 0)
 	allWarnings := make([]types.Warning, 0)
 	projectResults := make(map[string]*ScanResult)
@@ -1610,32 +712,24 @@ func (a *Analyzer) scanRecursive(rootPath string, options *ScanOptions, result *
 		projectResults[projectDir] = projectResult
 
 		// Aggregate results
-		allThreats = append(allThreats, projectResult.Threats...)
-		allWarnings = append(allWarnings, projectResult.Warnings...)
-
-		// Parse dependencies from project
-		depFiles, err := a.discoverDependencyFiles(projectDir, &projectOptions)
-		if err != nil {
-			logrus.Warnf("Failed to discover dependencies in %s: %v", projectDir, err)
-			continue
+		if projectResult.Threats != nil {
+			allThreats = append(allThreats, projectResult.Threats...)
 		}
-
-		for _, file := range depFiles {
-			deps, err := a.parseDependencyFile(file, &projectOptions)
-			if err != nil {
-				logrus.Warnf("Failed to parse %s: %v", file, err)
-				continue
-			}
-			allDependencies = append(allDependencies, deps...)
+		if projectResult.Warnings != nil {
+			allWarnings = append(allWarnings, projectResult.Warnings...)
+		}
+		if projectResult.Packages != nil {
+			allPackages = append(allPackages, projectResult.Packages...)
 		}
 	}
 
 	// Update result with aggregated data
-	result.TotalPackages = len(allDependencies)
+	result.Packages = allPackages
+	result.TotalPackages = len(allPackages)
 	result.Threats = allThreats
 	result.Warnings = allWarnings
 	result.Duration = time.Since(start)
-	result.Summary = a.calculateSummary(allThreats, allWarnings, len(allDependencies))
+	result.Summary = a.calculateSummary(allThreats, allWarnings, len(allPackages))
 
 	// Add metadata for recursive scan
 	result.Metadata["recursive_scan"] = true
@@ -1795,6 +889,19 @@ func (a *Analyzer) scanWithSupplyChain(path string, options *ScanOptions) (*Scan
 		return nil, fmt.Errorf("failed to create enhanced scanner: %w", err)
 	}
 
+	// Initialize DIRT Algorithm (Edge)
+	// We use default configuration for now
+	dirtAlgo := edge.NewDIRTAlgorithm(nil)
+	enhancedScanner.SetDIRTDetector(dirtAlgo)
+
+	// Initialize GTR Algorithm (Edge)
+	gtrAlgo := edge.NewGTRAlgorithm(nil)
+	enhancedScanner.SetGTRDetector(gtrAlgo)
+
+	// Initialize RUNT Algorithm (Edge)
+	runtAlgo := edge.NewRUNTAlgorithm(nil)
+	enhancedScanner.SetRUNTDetector(runtAlgo)
+
 	// Perform enhanced scan
 	ctx := context.Background()
 	enhancedResult, err := enhancedScanner.ScanWithSupplyChainAnalysis(ctx, path)
@@ -1827,14 +934,21 @@ func (a *Analyzer) scanWithSupplyChain(path string, options *ScanOptions) (*Scan
 		}
 	}
 
-	// Add supply chain specific metadata
+	// Enriched metadata
+	if result.Metadata == nil {
+		result.Metadata = make(map[string]interface{})
+	}
 	result.Metadata["supply_chain_analysis"] = true
+	result.Metadata["supply_chain_risk_score"] = enhancedResult.SupplyChainRisk.OverallScore
+	result.Metadata["supply_chain_risk_level"] = enhancedResult.SupplyChainRisk.RiskLevel
 	result.Metadata["build_integrity_findings"] = len(enhancedResult.BuildIntegrityFindings)
 	result.Metadata["zero_day_findings"] = len(enhancedResult.ZeroDayFindings)
 	result.Metadata["threat_intel_findings"] = len(enhancedResult.ThreatIntelFindings)
 	result.Metadata["honeypot_detections"] = len(enhancedResult.HoneypotDetections)
-	result.Metadata["supply_chain_risk_score"] = enhancedResult.SupplyChainRisk.OverallScore
-	result.Metadata["supply_chain_risk_level"] = enhancedResult.SupplyChainRisk.RiskLevel
+	result.Metadata["dependency_graph"] = enhancedResult.DependencyGraph
+	result.Metadata["dirt_assessments"] = enhancedResult.DIRTAssessments
+	result.Metadata["gtr_results"] = enhancedResult.GTRResults
+	result.Metadata["runt_results"] = enhancedResult.RUNTResults
 
 	// Create summary with threat and warning counts
 	result.Summary = ScanSummary{
@@ -2006,5 +1120,3 @@ func (r *ScanResult) OutputHTML(w io.Writer) error {
 </html>`)
 	return err
 }
-
-

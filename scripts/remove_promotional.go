@@ -66,5 +66,3 @@ func main() {
 
 	fmt.Printf("Removed %d lines from %s\n", removed, path)
 }
-
-

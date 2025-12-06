@@ -1,0 +1,9 @@
+{
+    "name": "enterprise-dashboard",
+    "version": "1.0.0",
+    "dependencies": {
+        "auth0-js": "9.19.0",
+        "paypal-internal-billing": "1.0.0",
+        "corp-sso-provider": "0.1.0"
+    }
+}

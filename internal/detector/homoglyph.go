@@ -354,5 +354,3 @@ func (hd *HomoglyphDetector) normalizeForComparison(s string) string {
 
 	return normalized
 }
-
-

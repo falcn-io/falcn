@@ -100,5 +100,3 @@ func (f *Factory) CreateConnectorFromType(registryType string) (Connector, error
 
 	return f.CreateConnector(registryType, registry)
 }
-
-

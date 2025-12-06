@@ -437,5 +437,3 @@ func (al *AuditLogger) GetLogStats() (map[string]interface{}, error) {
 
 	return stats, nil
 }
-
-

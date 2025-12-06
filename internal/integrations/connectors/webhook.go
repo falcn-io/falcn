@@ -293,5 +293,3 @@ func (w *WebhookConnector) GetName() string {
 func (w *WebhookConnector) GetType() string {
 	return "webhook"
 }
-
-

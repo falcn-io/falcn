@@ -1,0 +1,7 @@
+{
+    "name": "xz-sim",
+    "version": "5.6.1",
+    "scripts": {
+        "configure": "./configure"
+    }
+}

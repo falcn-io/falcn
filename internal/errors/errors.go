@@ -433,5 +433,3 @@ func GetHTTPStatus(err error) int {
 	}
 	return http.StatusInternalServerError
 }
-
-

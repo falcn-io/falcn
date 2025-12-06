@@ -706,5 +706,3 @@ func (etd *EnhancedTyposquattingDetector) calculateSeverityEnhanced(sim float64,
 	}
 	return types.SeverityMedium
 }
-
-

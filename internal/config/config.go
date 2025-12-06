@@ -1305,5 +1305,3 @@ func NewDefaultConfig() *Config {
 
 	return config
 }
-
-

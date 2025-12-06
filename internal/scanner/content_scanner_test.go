@@ -87,5 +87,3 @@ func TestContentScanner(t *testing.T) {
 		})
 	}
 }
-
-

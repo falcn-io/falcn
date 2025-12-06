@@ -175,5 +175,3 @@ func (e *SecurityEvent) meetsSeverityThreshold(minSeverity Severity) bool {
 
 	return eventLevel >= minLevel
 }
-
-

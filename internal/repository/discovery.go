@@ -601,5 +601,3 @@ func (ds *DiscoveryService) getEnabledPlatforms() []string {
 	}
 	return platforms
 }
-
-

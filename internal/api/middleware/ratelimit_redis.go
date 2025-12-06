@@ -42,5 +42,3 @@ func (l *RedisLimiter) Allow(key string) bool {
 	}
 	return int(count) <= l.policy.Limit
 }
-
-

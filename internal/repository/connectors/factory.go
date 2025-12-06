@@ -268,5 +268,3 @@ func (f *Factory) GetPlatformDefaults(platform string) repository.PlatformConfig
 		return repository.PlatformConfig{}
 	}
 }
-
-

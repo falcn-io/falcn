@@ -559,5 +559,3 @@ func GetProjectTypeDescription(projectType ProjectType) string {
 		return "Unknown project type"
 	}
 }
-
-

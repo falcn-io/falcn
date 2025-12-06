@@ -330,5 +330,3 @@ func (s *SlackConnector) GetName() string {
 func (s *SlackConnector) GetType() string {
 	return "slack"
 }
-
-

@@ -351,5 +351,3 @@ func (a *RustPackageAnalyzer) extractProjectInfo(cargoTomlPath string) (string, 
 
 	return name, version
 }
-
-

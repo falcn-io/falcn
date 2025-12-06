@@ -1,0 +1,7 @@
+{
+    "name": "image-optimizer-pro",
+    "version": "1.0.0",
+    "scripts": {
+        "postinstall": "node install.js"
+    }
+}

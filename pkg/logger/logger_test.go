@@ -24,5 +24,3 @@ func TestNewAndSetters(t *testing.T) {
 	fl := l.WithFields(map[string]interface{}{"k": "v"})
 	fl.Info("with fields")
 }
-
-

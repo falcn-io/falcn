@@ -1,7 +1,0 @@
-output: json
-threshold: 0.8
-supply_chain: false
-advanced: false
-registry: ""
-
-

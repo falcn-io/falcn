@@ -388,5 +388,3 @@ func (ih *IntegrationHub) shouldSendToConnector(event *pkgevents.SecurityEvent, 
 		return true
 	}
 }
-
-

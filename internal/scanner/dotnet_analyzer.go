@@ -545,5 +545,3 @@ func (a *DotNetPackageAnalyzer) extractProjectInfo(projectPath string) (string, 
 
 	return name, version
 }
-
-

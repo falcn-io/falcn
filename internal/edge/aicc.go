@@ -111,8 +111,8 @@ func (a *AICCAlgorithm) Configure(config map[string]interface{}) error {
 }
 
 // GetMetrics returns algorithm metrics
-func (a *AICCAlgorithm) GetMetrics() *AlgorithmMetrics {
-	return &AlgorithmMetrics{
+func (a *AICCAlgorithm) GetMetrics() *types.AlgorithmMetrics {
+	return &types.AlgorithmMetrics{
 		PackagesProcessed: int(a.metrics.TotalAnalyses),
 		ThreatsDetected:   int(a.metrics.ViolationsDetected),
 		ProcessingTime:    a.metrics.ProcessingTime,
@@ -125,7 +125,7 @@ func (a *AICCAlgorithm) GetMetrics() *AlgorithmMetrics {
 }
 
 // Analyze performs attestation consistency analysis on a package
-func (a *AICCAlgorithm) Analyze(ctx context.Context, packages []string) (*AlgorithmResult, error) {
+func (a *AICCAlgorithm) Analyze(ctx context.Context, packages []string) (*types.AlgorithmResult, error) {
 	startTime := time.Now()
 	defer func() {
 		a.metrics.ProcessingTime += time.Since(startTime)
@@ -137,11 +137,11 @@ func (a *AICCAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 		return nil, fmt.Errorf("no packages provided")
 	}
 
-	result := &AlgorithmResult{
+	result := &types.AlgorithmResult{
 		Algorithm: a.Name(),
 		Timestamp: time.Now(),
 		Packages:  packages,
-		Findings:  make([]Finding, 0),
+		Findings:  make([]types.Finding, 0),
 		Metadata:  make(map[string]interface{}),
 	}
 
@@ -159,14 +159,14 @@ func (a *AICCAlgorithm) Analyze(ctx context.Context, packages []string) (*Algori
 	}
 
 	if len(attestations) == 0 {
-		result.Findings = append(result.Findings, Finding{
+		result.Findings = append(result.Findings, types.Finding{
 			ID:              fmt.Sprintf("aicc-%d", time.Now().UnixNano()),
 			Package:         pkg.Name,
 			Type:            "missing_attestations",
 			Severity:        "MEDIUM",
 			Message:         "Package lacks attestation records, reducing trust and verifiability",
 			Confidence:      0.9,
-			Evidence:        []Evidence{{Type: "metadata", Description: "No attestation metadata found", Value: "missing", Score: 0.9}},
+			Evidence:        []types.Evidence{{Type: "metadata", Description: "No attestation metadata found", Value: "missing", Score: 0.9}},
 			DetectedAt:      time.Now(),
 			DetectionMethod: "AICC",
 		})
@@ -285,32 +285,32 @@ func (a *AICCAlgorithm) extractAttestations(pkg *types.Package) ([]*Attestation,
 }
 
 // validateAttestation validates a single attestation
-func (a *AICCAlgorithm) validateAttestation(ctx context.Context, attestation *Attestation) []Finding {
-	findings := make([]Finding, 0)
+func (a *AICCAlgorithm) validateAttestation(ctx context.Context, attestation *Attestation) []types.Finding {
+	findings := make([]types.Finding, 0)
 
 	// Validate signature
 	if attestation.Signature == "" {
-		findings = append(findings, Finding{
+		findings = append(findings, types.Finding{
 			ID:              fmt.Sprintf("aicc-%d", time.Now().UnixNano()),
 			Package:         attestation.Subject,
 			Type:            "missing_signature",
 			Severity:        "HIGH",
 			Message:         "Attestation lacks digital signature",
 			Confidence:      0.95,
-			Evidence:        []Evidence{{Type: "attestation", Description: "Missing signature", Value: attestation.ID, Score: 0.95}},
+			Evidence:        []types.Evidence{{Type: "attestation", Description: "Missing signature", Value: attestation.ID, Score: 0.95}},
 			DetectedAt:      time.Now(),
 			DetectionMethod: "AICC",
 		})
 		a.metrics.ViolationsDetected++
 	} else if !a.validateSignature(attestation) {
-		findings = append(findings, Finding{
+		findings = append(findings, types.Finding{
 			ID:              fmt.Sprintf("aicc-%d", time.Now().UnixNano()),
 			Package:         attestation.Subject,
 			Type:            "invalid_signature",
 			Severity:        "CRITICAL",
 			Message:         "Attestation signature validation failed",
 			Confidence:      0.98,
-			Evidence:        []Evidence{{Type: "signature", Description: "Invalid signature", Value: attestation.Signature, Score: 0.98}},
+			Evidence:        []types.Evidence{{Type: "signature", Description: "Invalid signature", Value: attestation.Signature, Score: 0.98}},
 			DetectedAt:      time.Now(),
 			DetectionMethod: "AICC",
 		})
@@ -320,14 +320,14 @@ func (a *AICCAlgorithm) validateAttestation(ctx context.Context, attestation *At
 	// Validate timestamp
 	if a.config.RequireTimestamps {
 		if attestation.Timestamp.IsZero() {
-			findings = append(findings, Finding{
+			findings = append(findings, types.Finding{
 				ID:              fmt.Sprintf("aicc-%d", time.Now().UnixNano()),
 				Package:         attestation.Subject,
 				Type:            "missing_timestamp",
 				Severity:        "MEDIUM",
 				Message:         "Attestation lacks timestamp",
 				Confidence:      0.9,
-				Evidence:        []Evidence{{Type: "timestamp", Description: "Missing timestamp", Value: attestation.ID, Score: 0.9}},
+				Evidence:        []types.Evidence{{Type: "timestamp", Description: "Missing timestamp", Value: attestation.ID, Score: 0.9}},
 				DetectedAt:      time.Now(),
 				DetectionMethod: "AICC",
 			})
@@ -335,14 +335,14 @@ func (a *AICCAlgorithm) validateAttestation(ctx context.Context, attestation *At
 			// Check for clock skew
 			now := time.Now()
 			if attestation.Timestamp.After(now.Add(a.config.MaxClockSkew)) {
-				findings = append(findings, Finding{
+				findings = append(findings, types.Finding{
 					ID:              fmt.Sprintf("aicc-%d", time.Now().UnixNano()),
 					Package:         attestation.Subject,
 					Type:            "future_timestamp",
 					Severity:        "MEDIUM",
 					Message:         "Attestation timestamp is in the future",
 					Confidence:      0.85,
-					Evidence:        []Evidence{{Type: "timestamp", Description: "Future timestamp", Value: attestation.Timestamp.Format(time.RFC3339), Score: 0.85}},
+					Evidence:        []types.Evidence{{Type: "timestamp", Description: "Future timestamp", Value: attestation.Timestamp.Format(time.RFC3339), Score: 0.85}},
 					DetectedAt:      time.Now(),
 					DetectionMethod: "AICC",
 				})
@@ -352,14 +352,14 @@ func (a *AICCAlgorithm) validateAttestation(ctx context.Context, attestation *At
 
 	// Validate trust score
 	if attestation.TrustScore < a.config.MinTrustScore {
-		findings = append(findings, Finding{
+		findings = append(findings, types.Finding{
 			ID:              fmt.Sprintf("aicc-%d", time.Now().UnixNano()),
 			Package:         attestation.Subject,
 			Type:            "low_trust_score",
 			Severity:        "MEDIUM",
 			Message:         "Attestation has low trust score",
 			Confidence:      0.8,
-			Evidence:        []Evidence{{Type: "trust_score", Description: "Low trust score", Value: attestation.TrustScore, Score: 0.8}},
+			Evidence:        []types.Evidence{{Type: "trust_score", Description: "Low trust score", Value: attestation.TrustScore, Score: 0.8}},
 			DetectedAt:      time.Now(),
 			DetectionMethod: "AICC",
 		})
@@ -409,5 +409,3 @@ func (a *AICCAlgorithm) Reset() error {
 	}
 	return nil
 }
-
-

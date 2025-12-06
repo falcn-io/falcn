@@ -19,5 +19,3 @@ func NewStub() *Analyzer {
 		stubRepo:   NewStubRepo(),
 	}
 }
-
-

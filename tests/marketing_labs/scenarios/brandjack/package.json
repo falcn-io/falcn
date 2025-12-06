@@ -1,0 +1,9 @@
+{
+    "name": "cloud-worker",
+    "version": "1.0.0",
+    "dependencies": {
+        "google-cloud-token-generator": "1.0.0",
+        "aws-s3-uploader-pro": "1.2.3",
+        "microsoft-azure-functions-core": "2.0.0"
+    }
+}

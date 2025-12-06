@@ -114,5 +114,3 @@ func TestDIRTBusinessAwareAnalysis(t *testing.T) {
 		})
 	}
 }
-
-

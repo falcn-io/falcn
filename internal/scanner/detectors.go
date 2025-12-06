@@ -319,5 +319,3 @@ func (d *DotNetDetector) GetManifestFiles() []string {
 func (d *DotNetDetector) GetProjectType() string {
 	return "dotnet"
 }
-
-

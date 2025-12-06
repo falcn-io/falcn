@@ -223,5 +223,3 @@ func (ad *AutoDetector) ScanForManifestFiles(rootPath string) (map[string][]stri
 
 	return registryFiles, nil
 }
-
-

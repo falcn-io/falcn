@@ -311,5 +311,3 @@ func (c *ComposerClient) ClearCache() {
 func (c *ComposerClient) SetCacheTTL(ttl time.Duration) {
 	c.cacheTTL = ttl
 }
-
-

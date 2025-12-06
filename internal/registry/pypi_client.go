@@ -439,5 +439,3 @@ func isValidPackageName(name string) bool {
 
 	return true
 }
-
-

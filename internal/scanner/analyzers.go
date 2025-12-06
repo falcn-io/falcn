@@ -1293,5 +1293,3 @@ func (a *GenericAnalyzer) AnalyzeDependencies(projectInfo *ProjectInfo) (*types.
 		CreatedAt:    time.Now(),
 	}, nil
 }
-
-

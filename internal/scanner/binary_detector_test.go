@@ -206,5 +206,3 @@ func TestBinaryDetectorFileTypes(t *testing.T) {
 		})
 	}
 }
-
-

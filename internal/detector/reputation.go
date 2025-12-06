@@ -994,5 +994,3 @@ func (re *ReputationEngine) detectEnterpriseSecurityViolations(dep types.Depende
 
 	return threats
 }
-
-

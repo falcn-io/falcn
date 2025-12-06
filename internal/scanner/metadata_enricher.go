@@ -257,5 +257,3 @@ func (e *MetadataEnricher) enrichPyPIPackage(ctx context.Context, pkg *types.Pac
 
 	return nil
 }
-
-

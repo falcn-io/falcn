@@ -286,5 +286,3 @@ func (r *DependencyResolver) getSourceList(deps []types.Dependency) []string {
 	sort.Strings(result)
 	return result
 }
-
-

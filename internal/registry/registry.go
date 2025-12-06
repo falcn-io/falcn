@@ -643,5 +643,3 @@ func (m *Manager) Close() error {
 	}
 	return nil
 }
-
-

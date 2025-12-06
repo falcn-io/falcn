@@ -338,5 +338,3 @@ func (pg *PDFGenerator) StreamPDFToWriter(templateName string, data interface{},
 	_, err = writer.Write(pdfBytes)
 	return err
 }
-
-

@@ -19,5 +19,3 @@ func TestScannerHandlesLockfilesPresence(t *testing.T) {
 	_, err = s.ScanProject(dir)
 	require.NoError(t, err)
 }
-
-

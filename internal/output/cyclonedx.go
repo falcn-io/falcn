@@ -42,5 +42,3 @@ func (f *CycloneDXFormatter) Format(res *scanner.ScanResults, opts *FormatterOpt
 	}
 	return json.MarshalIndent(bom, "", opts.Indent)
 }
-
-

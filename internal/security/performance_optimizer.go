@@ -506,5 +506,3 @@ var (
 	ErrMemoryLimitExceeded = errors.New("memory limit exceeded")
 	ErrCacheNotAvailable   = errors.New("cache not available")
 )
-
-

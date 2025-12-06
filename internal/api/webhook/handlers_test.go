@@ -445,5 +445,3 @@ func TestGenerateScanID(t *testing.T) {
 	assert.Contains(t, scanID1, "webhook_")
 	assert.Contains(t, scanID2, "webhook_")
 }
-
-

@@ -14,6 +14,7 @@ flowchart TB
     end
 
     subgraph Core["🔷 Falcn Core"]
+        Analyzer["🧠 Analyzer Engine"]
         Scanner["📦 Scanner Engine"]
         Detector["🔍 Threat Detector"]
         ML["🧠 ML Engine"]
@@ -42,14 +43,16 @@ flowchart TB
         Dashboard["Dashboard"]
     end
 
-    CLI --> Scanner
-    API --> Scanner
+    CLI --> Analyzer
+    API --> Analyzer
     CICD --> API
     Webhooks --> API
 
+    Analyzer --> Scanner
+    Analyzer --> Policy
+    
     Scanner --> Detector
     Scanner --> ML
-    Scanner --> Policy
     
     Detector --> Registries
     ML --> Registries
@@ -57,7 +60,7 @@ flowchart TB
     Scanner --> Storage
     Detector --> Storage
     
-    Scanner --> Output
+    Analyzer --> Output
     Policy --> Output
 
     style Core fill:#e1f5fe
@@ -130,17 +133,19 @@ flowchart LR
     Main --> AnalyzeCmd
     Main --> VersionCmd
     
-    ScanCmd --> Scanner
-    AnalyzeCmd --> Scanner
+    ScanCmd --> Analyzer
+    AnalyzeCmd --> Analyzer
+    
+    Analyzer --> Scanner
+    Analyzer --> Plugins
+    Analyzer --> DetectorPkg
+    Analyzer --> MLPkg
+    Analyzer --> CachePkg
     
     Scanner --> Analyzers
-    Scanner --> Plugins
-    Scanner --> DetectorPkg
-    Scanner --> MLPkg
-    Scanner --> CachePkg
     
     REST --> Handlers
-    Handlers --> Scanner
+    Handlers --> Analyzer
     Handlers --> PolicyEngine
     
     Scanner --> Types
@@ -152,7 +157,18 @@ flowchart LR
     style Pkg fill:#ffe0b2
 ```
 
-## 3. Scanning Pipeline Flow
+## 3. Architecture Clarification: Scanner vs Analyzer
+
+A common point of confusion is the distinction between **Scanner** and **Analyzer**.
+
+| Component | Package | Role | Responsibilities |
+|-----------|---------|------|------------------|
+| **Analyzer** | `internal/analyzer` | **The Brain (Orchestrator)** | • Integration point for CLI/API.<br>• Orchestrates the entire flow.<br>• Resolves dependency graphs (Resolution).<br>• Aggregates results from Detectors and Scanner.<br>• Determines final Risk Scores. |
+| **Scanner** | `internal/scanner` | **The Eyes (Discovery)** | • Crawls the file system.<br>• Detects project types (e.g., NPM, PyPI).<br>• Parses manifest files (Extraction).<br>• Runs file-level scans (Content, CI/CD).<br>• Returns raw `Package` objects. |
+
+**Flow:** `CLI/API` -> `Analyzer.Scan()` -> `Scanner.ScanProject()`
+
+## 4. Scanning Pipeline Flow
 
 ```mermaid
 flowchart TD
@@ -353,6 +369,7 @@ sequenceDiagram
     participant API as 🌐 API Server
     participant Auth as 🔐 Auth Middleware
     participant RateLimit as ⏱️ Rate Limiter
+    participant Analyzer as 🧠 Analyzer
     participant Scanner as 📦 Scanner
     participant Cache as 💾 Cache
     participant Registry as 📚 Registry
@@ -366,7 +383,8 @@ sequenceDiagram
     API->>RateLimit: Check Rate Limit
     RateLimit-->>API: ✓ Within Limit
     
-    API->>Scanner: Analyze Package
+    API->>Analyzer: Analyze Package
+    Analyzer->>Scanner: Scan Project
     Scanner->>Cache: Check Cache
     
     alt Cache Hit
@@ -387,10 +405,11 @@ sequenceDiagram
         Scanner->>Cache: Store Result
     end
     
-    Scanner->>Policy: Evaluate Policies
-    Policy-->>Scanner: Policy Decision
+    Scanner-->>Analyzer: Scan Results
+    Analyzer->>Policy: Evaluate Policies
+    Policy-->>Analyzer: Policy Decision
     
-    Scanner-->>API: Analysis Result
+    Analyzer-->>API: Analysis Result
     API-->>Client: 200 OK + JSON Response
 ```
 

@@ -50,7 +50,7 @@ type PolicyCondition struct {
 type SupplyChainPolicyContext struct {
 	Package          *types.Package
 	BusinessRisk     float64
-	AssetCriticality edge.AssetCriticality
+	AssetCriticality types.AssetCriticality
 	DependencyDepth  int
 	IsDirect         bool
 	Registry         string
@@ -420,7 +420,7 @@ func (pe *PolicyEngine) evaluateMaintenanceCondition(condition PolicyCondition, 
 }
 
 // evaluateCriticalityCondition evaluates asset criticality conditions
-func (pe *PolicyEngine) evaluateCriticalityCondition(condition PolicyCondition, criticality edge.AssetCriticality) bool {
+func (pe *PolicyEngine) evaluateCriticalityCondition(condition PolicyCondition, criticality types.AssetCriticality) bool {
 	return string(criticality) == condition.Value.(string)
 }
 
@@ -476,5 +476,3 @@ func (pe *PolicyEngine) DisablePolicy(policyID string) error {
 
 	return nil
 }
-
-

@@ -49,5 +49,3 @@ func TestScanner_ScanProject_MavenMinimal(t *testing.T) {
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(res.Packages), 1)
 }
-
-

@@ -188,5 +188,3 @@ func (c *PopularCache) fetchPopularDynamic(registry string, limit int) []string 
 	}
 	return nil
 }
-
-

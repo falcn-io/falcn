@@ -409,5 +409,3 @@ func (tr *ThreatRecord) ConvertToThreat() *types.Threat {
 		Metadata:        metadata,
 	}
 }
-
-

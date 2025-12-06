@@ -57,5 +57,3 @@ func (cf *ConnectorFactory) GetSupportedTypes() []string {
 		"email",
 	}
 }
-
-
