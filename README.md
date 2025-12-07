@@ -49,23 +49,18 @@ Falcn understands and analyzes dependencies for the world's most popular languag
 *   **Dependency Confusion**: Alerts on internal package names that claim existence in public registries.
 *   **Malware Analysis**: Static analysis to detect obfuscated code, suspicious network calls, and install scripts.
 
-### � Supply Chain Intelligence
+### 📦 Supply Chain Intelligence
 *   **Maintainer Reputation**: Scores packages based on maintainer history, commit velocity, and community trust.
 *   **Build Integrity**: Verifies signatures and checksums against official registry records.
 *   **Dormancy Detection**: Flags packages that have been abandoned or suddenly resurrected (potential account hijacking).
 
-### � Integrations & Reporting
+### 🧩 Integrations & Reporting
 *   **Sinks**: Forward alerts to **Splunk**, **Slack**, **Email**, or generic **Webhooks**.
 *   **Formats**: Output results in **JSON**, **SARIF** (GitHub Security tab compatible), or **Futuristic CLI Tables**.
 *   **SBOM**: Generate SPDX or CycloneDX software bills of materials automatically.
 
 ## 📥 Installation
 
-### Homebrew (macOS/Linux)
-```bash
-brew tap falcn-io/tap
-brew install falcn
-```
 
 ### Go Install
 ```bash
