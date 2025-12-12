@@ -14,6 +14,7 @@ import (
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/detector"
 	"github.com/falcn-io/falcn/internal/edge"
+	"github.com/falcn-io/falcn/internal/llm"
 	"github.com/falcn-io/falcn/internal/registry"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/falcn-io/falcn/internal/vulnerability"
@@ -30,6 +31,7 @@ type Analyzer struct {
 	autoDetector *registry.AutoDetector
 	factory      *registry.Factory
 	stubRepo     *StubRepo
+	llmProvider  llm.Provider
 }
 
 // ScanOptions contains options for scanning
@@ -96,6 +98,18 @@ func New(cfg *config.Config) (*Analyzer, error) {
 	factory := registry.NewFactory()
 	autoDetector := registry.NewAutoDetector()
 
+	// Initialize LLM provider with guardrails
+	var llmProvider llm.Provider
+	if cfg.LLM.Enabled {
+		rawProvider, err := llm.NewProvider(cfg.LLM)
+		if err != nil {
+			logrus.Warnf("Failed to initialize LLM provider: %v. AI explanations disabled.", err)
+		} else {
+			llmProvider = llm.NewSafeProvider(rawProvider)
+			logrus.Infof("LLM Provider (%s) initialized with Guardrails", rawProvider.ID())
+		}
+	}
+
 	return &Analyzer{
 		config:       cfg,
 		detector:     detectorEngine,
@@ -103,6 +117,7 @@ func New(cfg *config.Config) (*Analyzer, error) {
 		autoDetector: autoDetector,
 		factory:      factory,
 		registries:   make(map[string]registry.Connector),
+		llmProvider:  llmProvider,
 	}, nil
 }
 
@@ -622,6 +637,29 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 		}
 	}
 
+	// AI Explanation Step (Phase 5)
+	if a.llmProvider != nil && len(allThreats) > 0 {
+		logrus.Infof("Generating AI explanations for %d threats...", len(allThreats))
+		for i := range allThreats {
+			// Only explain High/Critical threats to save time/tokens
+			if allThreats[i].Severity == types.SeverityCritical || allThreats[i].Severity == types.SeverityHigh {
+				prompt := fmt.Sprintf("Package: %s\nType: %s\nDescription: %s\nEvidence: %v",
+					allThreats[i].Package, allThreats[i].Type, allThreats[i].Description, allThreats[i].Metadata)
+
+				explanation, err := a.llmProvider.GenerateExplanation(ctx, prompt)
+				if err != nil {
+					logrus.Warnf("Failed to generate AI explanation for %s: %v", allThreats[i].Package, err)
+					continue
+				}
+
+				if allThreats[i].Metadata == nil {
+					allThreats[i].Metadata = make(map[string]interface{})
+				}
+				allThreats[i].Metadata["ai_explanation"] = explanation
+			}
+		}
+	}
+
 	duration := time.Since(start)
 	logrus.Infof("Threat analysis completed in %v. Found %d threats, %d warnings", duration, len(allThreats), len(allWarnings))
 
@@ -1019,6 +1057,27 @@ func (r *ScanResult) OutputConsole(w io.Writer) error {
 			}
 			if threat.Recommendation != "" {
 				fmt.Fprintf(w, "   💡 Recommendation: %s\n", threat.Recommendation)
+			}
+
+			// AI Agent View
+			if explanation, ok := threat.Metadata["ai_explanation"]; ok {
+				fmt.Fprintf(w, "\n   🤖 Falcn AI Agent Analysis:\n")
+				fmt.Fprintf(w, "   ┌──────────────────────────────────────────────────────────┐\n")
+
+				// Basic word wrapping for clean display
+				words := strings.Fields(fmt.Sprintf("%v", explanation))
+				line := "   │"
+				for _, word := range words {
+					if len(line)+len(word)+1 > 60 {
+						fmt.Fprintf(w, "%-62s│\n", line)
+						line = "   │ " + word
+					} else {
+						line += " " + word
+					}
+				}
+				fmt.Fprintf(w, "%-62s│\n", line)
+
+				fmt.Fprintf(w, "   └──────────────────────────────────────────────────────────┘\n")
 			}
 		}
 	}

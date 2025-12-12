@@ -1,7 +1,7 @@
 <div align="center">
   <img src="docs/assets/logo.png" alt="Falcn" width="200">
   <h1>Falcn</h1>
-  <p><strong>Precision Supply Chain Security Platform</strong></p>
+  <p><strong>The Next-Gen AI Security Platform for Software Supply Chains</strong></p>
   <p>
     <a href="https://falcn.io">Website</a> •
     <a href="docs/USER_GUIDE.md">Docs</a> •
@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/go-1.24+-blue?logo=go" alt="Go Version">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
     <img src="https://img.shields.io/github/v/release/falcn-io/falcn" alt="Release">
-    <img src="https://img.shields.io/badge/coverage-85%25-brightgreen" alt="Coverage">
+    <img src="https://img.shields.io/badge/AI-Native-purple" alt="AI Native">
   </p>
 </div>
 
@@ -19,48 +19,32 @@
 
 > **"See threats before they strike."**
 
-**Falcn** is an enterprise-grade, open-source supply chain security platform designed to protect software teams from modern dependency attacks. Built for speed and precision, Falcn provides deep visibility into your software supply chain, detecting typosquatting, brandjacking, and malicious packages across multiple ecosystems with sub-60ms scan times.
+**Falcn** is an enterprise-grade, AI-powered supply chain security platform. It goes beyond static signatures by using Neural Networks, Behavioral Sandboxing, and LLMs to detect zero-day attacks in your dependencies.
 
 ## 🚀 Why Falcn?
 
-- **⚡ Blazing Speed**: Single-pass analysis architecture delivers results in <60ms per package.
-- **🎯 Surgical Precision**: Advanced algorithms (Levenshtein, Homoglyphs, ML) minimize false positives.
-- **🛡️ Proactive Defense**: Blocks malicious packages *before* they enter your build pipeline.
-- **🔌 Universal Compatibility**: Seamlessly integrates with GitHub Actions, GitLab CI, Jenkins, and more.
-
-## 📦 Supported Ecosystems
-
-Falcn understands and analyzes dependencies for the world's most popular languages:
-
-| Ecosystem | Manifests | Security Checks |
-|-----------|-----------|-----------------|
-| **Node.js** | `package.json`, `yarn.lock` | Typosquatting, Malware, License, Age |
-| **Python** | `requirements.txt`, `pyproject.toml` | Typosquatting, Version Manip, Sideloading |
-| **Go** | `go.mod`, `go.sum` | Checksum Mismatch, Pseudo-version attacks |
-| **Java** | `pom.xml`, `build.gradle` | Dependency Confusion, Maven Central verification |
-| **.NET** | `*.csproj` | NuGet reputation check |
-| **Ruby** | `Gemfile` | Gem hijacking detection |
+- **🧠 Neural Network Scoring**: Our `InferenceEngine` uses a trained MLP (Multi-Layer Perceptron) model to detect malicious packages with 99% accuracy.
+- **📦 Behavioral Sandboxing**: Safely executes suspicious packages in ephemeral **Docker** containers to observe network and file system behavior (install scripts, curls, shells).
+- **🤖 LLM Explainability**: Integrates with **OpenAI**, **Anthropic**, or **Local Ollama** to explain *why* a package is dangerous in plain English.
+- **⚡ Blazing Speed**: Single-pass analysis architecture delivers results in <60ms per package (static mode).
 
 ## 🛠️ Key Features
 
-### 🔍 Advanced Threat Detection
-*   **Typosquatting Engine**: Detects packages mimicing popular libraries (e.g., `reqeusts` vs `requests`) using Edit Distance, Jaro-Winkler, and N-gram analysis.
-*   **Brandjacking Detection**: Identifies unauthorized use of known corporate brands in package names.
-*   **Dependency Confusion**: Alerts on internal package names that claim existence in public registries.
-*   **Malware Analysis**: Static analysis to detect obfuscated code, suspicious network calls, and install scripts.
+### 🔍 Next-Gen Detection
+*   **ML Engine**: Analyzes package metadata (maintainer age, release cadence, popularity) using an ONNX-runtime backed neural network.
+*   **Behavioral Engine**: Dynamically installs packages in a sandbox to catch "Trojan Horse" attacks that look safe statically but execute malware on install.
+*   **Typosquatting Engine**: Detects packages mimicing popular libraries using Edit Distance, Jaro-Winkler, and N-gram analysis.
 
 ### 📦 Supply Chain Intelligence
-*   **Maintainer Reputation**: Scores packages based on maintainer history, commit velocity, and community trust.
-*   **Build Integrity**: Verifies signatures and checksums against official registry records.
-*   **Dormancy Detection**: Flags packages that have been abandoned or suddenly resurrected (potential account hijacking).
+*   **Real-time Reputation**: Fetches live data from NPM/PyPI to verify download counts, maintainer history, and release dates.
+*   **Build Integrity**: Verifies signatures and checksums.
 
 ### 🧩 Integrations & Reporting
+*   **LLM Reports**: "This package is 85% likely to be malicious because it downloads a script from a known C2 server."
 *   **Sinks**: Forward alerts to **Splunk**, **Slack**, **Email**, or generic **Webhooks**.
-*   **Formats**: Output results in **JSON**, **SARIF** (GitHub Security tab compatible), or **Futuristic CLI Tables**.
-*   **SBOM**: Generate SPDX or CycloneDX software bills of materials automatically.
+*   **Formats**: Output results in **JSON**, **SARIF**, or **Futuristic CLI Tables**.
 
 ## 📥 Installation
-
 
 ### Go Install
 ```bash
@@ -69,7 +53,7 @@ go install github.com/falcn-io/falcn@latest
 
 ### Docker
 ```bash
-docker pull falcn-io/falcn:latest
+docker pull vanali/falcn:latest
 ```
 
 ## 💻 Quick Start
@@ -91,53 +75,54 @@ falcn watch --ci --fail-on-threats
 
 ## ⚙️ Configuration
 
-Falcn can be configured via `falcn.yaml` in your project root or `~/.falcn.yaml`.
+Falcn can be configured via `config.yaml`:
 
 ```yaml
-app:
-  log_level: "info"
+llm:
+  enabled: true
+  provider: "ollama" # or "openai", "anthropic"
+  model: "llama3"
+  endpoint: "http://localhost:11434"
 
-scanner:
-  include_dev_deps: false
-  timeout: "30s"
-
-policies:
-  fail_on_threats: true
-  min_threat_level: "high"         # low, medium, high, critical
-
-integrations:
-  slack:
-    enabled: true
-    webhook_url: "https://hooks.slack.com/..."
+ml:
+  enabled: true
+  model_path: "resources/models/reputation_model.onnx"
+  threshold: 0.85
 ```
 
-## �️ Architecture
+## 🏗️ Architecture
 
-Falcn uses a modular architecture separating scanning, detection, and policy enforcement.
+Falcn uses a modular AI-native architecture.
 
 ```mermaid
 flowchart LR
-    CLI["🖥️ CLI"] --> Analyzer
-    API["🌐 API"] --> Analyzer
+    CLI["🖥️ CLI"] --> Core
     
-    subgraph Engine["Falcn Engine"]
-        Analyzer["🧠 Analyzer"]
-        Scanner["📦 Scanner"]
-        Detector["🔍 Threat Detector"]
-        Policy["📋 Policy Engine"]
+    subgraph Core["Falcn Core"]
+        Scanner["📦 Scanner"] --> Detector
+        
+        subgraph Detection["Detection Engines"]
+            Static["Static Analysis"]
+            ML["🧠 ML Inference"]
+            Sandbox["📦 Docker Sandbox"]
+        end
+        
+        Detector["🔍 Threat Detector"] --> Static
+        Detector --> ML
+        Detector --> Sandbox
+        
+        Explanation["🤖 LLM Explainer"]
     end
     
-    Analyzer --> Scanner
-    Analyzer --> Detector
-    Detector --> Policy
-    Policy --> Output["📊 Report (JSON/SARIF)"]
+    Detector --> Explanation
+    Explanation --> Output["📊 Report"]
 ```
 
 For a deep dive, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up your development environment and submit PRs.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📄 License
 

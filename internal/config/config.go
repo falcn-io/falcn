@@ -92,6 +92,9 @@ type Config struct {
 
 	// Supply Chain Security settings
 	SupplyChain *SupplyChainConfig `mapstructure:"supply_chain"`
+
+	// LLM settings
+	LLM LLMConfig `mapstructure:"llm"`
 }
 
 // AppConfig contains application-level configuration
@@ -105,6 +108,15 @@ type AppConfig struct {
 	DataDir     string      `mapstructure:"data_dir" validate:"required,dir"`
 	TempDir     string      `mapstructure:"temp_dir" validate:"required"`
 	MaxWorkers  int         `mapstructure:"max_workers" validate:"required,min=1,max=100"`
+}
+
+// LLMConfig contains LLM configuration
+type LLMConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Provider string `mapstructure:"provider" validate:"required_if=Enabled true,oneof=openai anthropic ollama"`
+	Model    string `mapstructure:"model" validate:"required_if=Enabled true"`
+	Endpoint string `mapstructure:"endpoint"` // For Ollama
+	APIKey   string `mapstructure:"api_key"`
 }
 
 // ServerConfig contains HTTP server configuration
@@ -791,6 +803,12 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("ml.update_interval", "24h")
 	viper.SetDefault("ml.model_config.type", "tensorflow")
 	viper.SetDefault("ml.model_config.preprocessing.scaling", "standard")
+
+	// LLM defaults
+	viper.SetDefault("llm.enabled", false)
+	viper.SetDefault("llm.provider", "ollama")
+	viper.SetDefault("llm.model", "llama3")
+	viper.SetDefault("llm.endpoint", "http://localhost:11434")
 
 	// Scanner defaults
 	viper.SetDefault("scanner.max_concurrency", 10)

@@ -13,7 +13,14 @@ go build -o Falcn .
 ```
 
 ### Docker
+You can pull the official image or build it yourself:
+
 ```bash
+# Pull official image
+docker pull vanali/falcn:latest
+docker run --rm -v $(pwd):/scan vanali/falcn scan /scan
+
+# Or build from source
 docker build -t Falcn . && docker run --rm -v $(pwd):/scan Falcn scan /scan
 ```
 

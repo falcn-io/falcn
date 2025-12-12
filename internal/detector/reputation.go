@@ -1,12 +1,15 @@
 package detector
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/ml"
+	"github.com/falcn-io/falcn/internal/registry"
 	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
@@ -14,6 +17,9 @@ import (
 // ReputationEngine analyzes package reputation using multiple data sources
 type ReputationEngine struct {
 	client          *http.Client
+	npmClient       *registry.NPMClient
+	pypiClient      *registry.PyPIClient
+	inferenceEngine *ml.InferenceEngine
 	malwareDBURL    string
 	vulnDBURL       string
 	cacheTimeout    time.Duration
@@ -67,15 +73,29 @@ type CommunityFlag struct {
 
 // NewReputationEngine creates a new reputation engine
 func NewReputationEngine(cfg *config.Config) *ReputationEngine {
-	return &ReputationEngine{
+	engine := &ReputationEngine{
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		npmClient:       registry.NewNPMClient(),
+		pypiClient:      registry.NewPyPIClient(),
+		inferenceEngine: ml.NewInferenceEngine(),
 		malwareDBURL:    "https://api.malware-db.com/v1/packages",
 		vulnDBURL:       "https://api.vuln-db.com/v1/packages",
 		cacheTimeout:    1 * time.Hour,
 		reputationCache: make(map[string]*ReputationData),
 	}
+
+	// Try to load ML model
+	// Determine usage of config or default path. For now default.
+	modelPath := "resources/models/reputation_model.onnx"
+	if err := engine.inferenceEngine.LoadModel(modelPath); err != nil {
+		logrus.Warnf("Failed to load ML model from %s: %v. Using heuristics fallback.", modelPath, err)
+	} else {
+		logrus.Infof("ML Reputation Model loaded successfully from %s", modelPath)
+	}
+
+	return engine
 }
 
 // Analyze analyzes the reputation of a package (alias for AnalyzeReputation)
@@ -244,29 +264,50 @@ func (re *ReputationEngine) fetchNPMData(data *ReputationData) error {
 	if data.Metadata == nil {
 		data.Metadata = make(map[string]interface{})
 	}
-	// Fetch NPM registry data with realistic estimation
 	data.Metadata["registry_api"] = "npm"
 
-	// Estimate download count based on package characteristics
-	downloadCount := re.estimateNPMDownloads(data.PackageName)
-	data.DownloadCount = downloadCount
+	ctx := context.Background()
 
-	// Estimate maintainer count (1-5 for most packages)
-	data.MaintainerCount = 1 + (len(data.PackageName) % 4)
-
-	// Estimate creation and update times based on package name hash
-	nameHash := 0
-	for _, char := range data.PackageName {
-		nameHash += int(char)
+	// 1. Get Package Metadata
+	pkgInfo, err := re.npmClient.GetPackageInfo(ctx, data.PackageName)
+	if err != nil {
+		return fmt.Errorf("failed to fetch npm package info: %w", err)
 	}
 
-	// Vary creation time (6 months to 5 years ago)
-	creationMonths := 6 + (nameHash % 54) // 6-60 months
-	data.CreatedAt = time.Now().AddDate(0, -creationMonths, 0)
+	// Map Metadata
+	data.Metadata["description"] = pkgInfo.Description
+	data.Metadata["homepage"] = pkgInfo.Homepage
+	data.Metadata["license"] = pkgInfo.License
+	data.MaintainerCount = len(pkgInfo.Maintainers)
 
-	// Vary last update (1 day to 6 months ago)
-	updateDays := 1 + (nameHash % 180) // 1-180 days
-	data.LastUpdated = time.Now().AddDate(0, 0, -updateDays)
+	// Parse timestamps
+	if createdStr, ok := pkgInfo.Time["created"]; ok {
+		if t, err := time.Parse(time.RFC3339, createdStr); err == nil {
+			data.CreatedAt = t
+		}
+	} else {
+		// Fallback if not found (very rare)
+		data.CreatedAt = time.Now()
+	}
+
+	if modifiedStr, ok := pkgInfo.Time["modified"]; ok {
+		if t, err := time.Parse(time.RFC3339, modifiedStr); err == nil {
+			data.LastUpdated = t
+		}
+	} else {
+		data.LastUpdated = time.Now()
+	}
+
+	// 2. Get Real Download Stats
+	stats, err := re.npmClient.GetDownloadStats(ctx, data.PackageName, "last-month")
+	if err == nil {
+		data.DownloadCount = int64(stats.Downloads)
+		data.Metadata["downloads_last_month"] = stats.Downloads
+	} else {
+		// Log warning but don't fail, use 0
+		logrus.Warnf("Failed to fetch download stats for %s: %v", data.PackageName, err)
+		data.DownloadCount = 0
+	}
 
 	return nil
 }
@@ -276,27 +317,51 @@ func (re *ReputationEngine) fetchPyPIData(data *ReputationData) error {
 	if data.Metadata == nil {
 		data.Metadata = make(map[string]interface{})
 	}
-	// Fetch PyPI registry data with realistic estimation
 	data.Metadata["registry_api"] = "pypi"
 
-	// Estimate download count based on package characteristics
-	downloadCount := re.estimatePyPIDownloads(data.PackageName)
-	data.DownloadCount = downloadCount
-
-	// Estimate maintainer count (1-3 for most Python packages)
-	data.MaintainerCount = 1 + (len(data.PackageName) % 3)
-
-	// Estimate creation and update times
-	nameHash := 0
-	for _, char := range data.PackageName {
-		nameHash += int(char)
+	info, err := re.pypiClient.GetPackageInfo(data.PackageName)
+	if err != nil {
+		return fmt.Errorf("failed to fetch pypi package info: %w", err)
 	}
 
-	creationMonths := 12 + (nameHash % 36) // 1-4 years
-	data.CreatedAt = time.Now().AddDate(0, -creationMonths, 0)
+	data.Metadata["description"] = info.Info.Summary
+	data.Metadata["author"] = info.Info.Author
+	data.Metadata["license"] = info.Info.License
+	data.MaintainerCount = 1 // Default, as PyPI returns single Maintainer string usually
 
-	updateDays := 7 + (nameHash % 90) // 1 week to 3 months
-	data.LastUpdated = time.Now().AddDate(0, 0, -updateDays)
+	// Derive dates from releases
+	var latest time.Time
+	var earliest time.Time
+	first := true
+
+	for _, releases := range info.Releases {
+		for _, r := range releases {
+			if r.UploadTime == "" {
+				continue
+			}
+			t, err := time.Parse(time.RFC3339, r.UploadTime)
+			if err != nil {
+				continue
+			}
+
+			if first {
+				latest = t
+				earliest = t
+				first = false
+			} else {
+				if t.After(latest) {
+					latest = t
+				}
+				if t.Before(earliest) {
+					earliest = t
+				}
+			}
+		}
+	}
+
+	data.LastUpdated = latest
+	data.CreatedAt = earliest
+	data.DownloadCount = 0 // PyPI API does not provide download stats
 
 	return nil
 }
@@ -306,28 +371,10 @@ func (re *ReputationEngine) fetchGoData(data *ReputationData) error {
 	if data.Metadata == nil {
 		data.Metadata = make(map[string]interface{})
 	}
-	// Fetch Go module data with realistic estimation
 	data.Metadata["registry_api"] = "go"
-
-	// Estimate download count based on package characteristics
-	downloadCount := re.estimateGoDownloads(data.PackageName)
-	data.DownloadCount = downloadCount
-
-	// Go modules typically have 1-2 maintainers
-	data.MaintainerCount = 1 + (len(data.PackageName) % 2)
-
-	// Estimate creation and update times
-	nameHash := 0
-	for _, char := range data.PackageName {
-		nameHash += int(char)
-	}
-
-	creationMonths := 3 + (nameHash % 24) // 3 months to 2 years
-	data.CreatedAt = time.Now().AddDate(0, -creationMonths, 0)
-
-	updateDays := 1 + (nameHash % 30) // 1-30 days
-	data.LastUpdated = time.Now().AddDate(0, 0, -updateDays)
-
+	// TODO: Implement Go Proxy client (proxy.golang.org)
+	data.ReputationScore = 0.5
+	data.TrustLevel = "unknown"
 	return nil
 }
 
@@ -357,7 +404,59 @@ func (re *ReputationEngine) fetchMalwareData(data *ReputationData) error {
 
 // calculateReputationScore calculates the final reputation score
 func (re *ReputationEngine) calculateReputationScore(data *ReputationData) {
+	// Try ML-based scoring first
+	input := ml.InputData{
+		DownloadCount:      data.DownloadCount,
+		MaintainerCount:    data.MaintainerCount,
+		CreatedAt:          data.CreatedAt,
+		LastUpdated:        data.LastUpdated,
+		VulnerabilityCount: len(data.Vulnerabilities),
+		MalwareReportCount: len(data.MalwareReports),
+	}
+	verifiedFlags := 0
+	for _, flag := range data.CommunityFlags {
+		if flag.Verified {
+			verifiedFlags++
+		}
+	}
+	input.VerifiedFlagCount = verifiedFlags
+
+	features := ml.ExtractFeatures(input)
+	maliciousProb, err := re.inferenceEngine.Predict(features)
+
+	if err == nil {
+		// Model success
+		// Model predicts probability of being MALICIOUS (0..1)
+		// ReputationScore represents TRUST (0..1), so we invert it.
+		data.ReputationScore = 1.0 - maliciousProb
+		data.Metadata["scoring_method"] = "ml_model"
+		data.Metadata["malicious_probability"] = maliciousProb
+
+		re.assignTrustLevel(data)
+		return
+	}
+
+	// Fallback to heuristic scoring if ML fails
+	re.calculateHeuristicScore(data)
+}
+
+func (re *ReputationEngine) assignTrustLevel(data *ReputationData) {
+	// Set trust level based on score
+	if data.ReputationScore >= 0.8 {
+		data.TrustLevel = "high"
+	} else if data.ReputationScore >= 0.6 {
+		data.TrustLevel = "medium"
+	} else if data.ReputationScore >= 0.4 {
+		data.TrustLevel = "low"
+	} else {
+		data.TrustLevel = "very_low"
+	}
+}
+
+// calculateHeuristicScore (legacy/fallback logic)
+func (re *ReputationEngine) calculateHeuristicScore(data *ReputationData) {
 	score := 0.5 // Base score
+	data.Metadata["scoring_method"] = "heuristic_fallback"
 
 	// Adjust based on download count
 	if data.DownloadCount > 100000 {
@@ -427,17 +526,7 @@ func (re *ReputationEngine) calculateReputationScore(data *ReputationData) {
 	}
 
 	data.ReputationScore = score
-
-	// Set trust level based on score
-	if score >= 0.8 {
-		data.TrustLevel = "high"
-	} else if score >= 0.6 {
-		data.TrustLevel = "medium"
-	} else if score >= 0.4 {
-		data.TrustLevel = "low"
-	} else {
-		data.TrustLevel = "very_low"
-	}
+	re.assignTrustLevel(data)
 }
 
 // isSuspiciousPackage checks for suspicious patterns
@@ -496,6 +585,8 @@ func (re *ReputationEngine) createReputationThreat(dep types.Dependency, data *R
 				"download_count":   data.DownloadCount,
 				"maintainer_count": data.MaintainerCount,
 				"age_days":         int(time.Since(data.CreatedAt).Hours() / 24),
+				"scoring_method":   data.Metadata["scoring_method"],
+				"ml_prob":          data.Metadata["malicious_probability"],
 			},
 			Score: confidence,
 		}},
@@ -690,71 +781,7 @@ func (re *ReputationEngine) compareSeverity(sev1, sev2 string) int {
 	return val1 - val2
 }
 
-// estimateNPMDownloads estimates NPM package download counts based on package characteristics
-func (re *ReputationEngine) estimateNPMDownloads(packageName string) int64 {
-	// Base download count
-	baseCount := int64(1000)
-
-	// Adjust based on package name length (shorter names tend to be more popular)
-	if len(packageName) < 5 {
-		baseCount *= 10
-	} else if len(packageName) < 10 {
-		baseCount *= 5
-	}
-
-	// Add some randomness based on package name hash
-	nameHash := 0
-	for _, char := range packageName {
-		nameHash += int(char)
-	}
-
-	// Vary between 0.1x to 10x the base count
-	multiplier := 1.0 + float64(nameHash%100)/10.0
-	return int64(float64(baseCount) * multiplier)
-}
-
-// estimatePyPIDownloads estimates PyPI package download counts
-func (re *ReputationEngine) estimatePyPIDownloads(packageName string) int64 {
-	// PyPI packages generally have higher download counts
-	baseCount := int64(5000)
-
-	// Adjust based on common Python package patterns
-	if strings.Contains(packageName, "django") || strings.Contains(packageName, "flask") {
-		baseCount *= 20
-	} else if strings.Contains(packageName, "test") || strings.Contains(packageName, "dev") {
-		baseCount /= 2
-	}
-
-	nameHash := 0
-	for _, char := range packageName {
-		nameHash += int(char)
-	}
-
-	multiplier := 1.0 + float64(nameHash%50)/10.0
-	return int64(float64(baseCount) * multiplier)
-}
-
-// estimateGoDownloads estimates Go module download counts
-func (re *ReputationEngine) estimateGoDownloads(packageName string) int64 {
-	// Go modules typically have lower download counts
-	baseCount := int64(500)
-
-	// Adjust based on common Go patterns
-	if strings.Contains(packageName, "github.com/") {
-		baseCount *= 3
-	}
-	if strings.Contains(packageName, "golang.org/") {
-		baseCount *= 10
-	}
-
-	nameHash := 0
-	for _, char := range packageName {
-		nameHash += int(char)
-	}
-
-	multiplier := 1.0 + float64(nameHash%30)/10.0
-	return int64(float64(baseCount) * multiplier)
-}
+// (Simulation functions removed)
 
 func (re *ReputationEngine) mapVulnSeverity(vulnSev string) types.Severity {
 	switch strings.ToLower(vulnSev) {

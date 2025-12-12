@@ -1,31 +1,21 @@
-# Multi-stage build for TypoSentinel Production
+# Multi-stage build for Falcn Production
 
 # Build stage
-FROM golang:1.23-alpine AS go-builder
+FROM golang:1.24-alpine AS go-builder
 
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-# Build API server binary
+# Build API server and CLI binary
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags='-w -s' \
     -a -installsuffix cgo \
-    -o typosentinel-api ./api/main.go && \
+    -o falcn-api ./api/main.go && \
     CGO_ENABLED=0 GOOS=linux go build \
     -ldflags='-w -s' \
     -a -installsuffix cgo \
-    -o typosentinel ./main.go
-
-# Stage 2: Final runtime image
-FROM alpine:latest
-
-# Install runtime dependencies
-RUN apk --no-cache add \
-    ca-certificates \
-    tzdata \
-    curl \
     -o falcn ./main.go
 
 # Stage 2: Final runtime image
@@ -45,7 +35,9 @@ RUN addgroup -g 1001 -S appgroup && \
 # Set working directory
 WORKDIR /app
 
-# Copy API server binary from builder
+# Copy binaries from builder
+COPY --from=go-builder /app/falcn-api /app/falcn-api
+COPY --from=go-builder /app/falcn /app/falcn
 
 # Switch to non-root user
 USER appuser
@@ -58,5 +50,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Default command - start the API server
-CMD ["./typosentinel-api"]
+CMD ["./falcn-api"]
 

@@ -42,12 +42,12 @@ type PyPIPackageInfo struct {
 
 // PyPIRelease represents a release file from PyPI
 type PyPIRelease struct {
-	Filename      string    `json:"filename"`
-	PackageType   string    `json:"packagetype"`
-	PythonVersion string    `json:"python_version"`
-	Size          int64     `json:"size"`
-	UploadTime    time.Time `json:"upload_time"`
-	URL           string    `json:"url"`
+	Filename      string `json:"filename"`
+	PackageType   string `json:"packagetype"`
+	PythonVersion string `json:"python_version"`
+	Size          int64  `json:"size"`
+	UploadTime    string `json:"upload_time"`
+	URL           string `json:"url"`
 	Digests       struct {
 		MD5    string `json:"md5"`
 		SHA256 string `json:"sha256"`
@@ -188,10 +188,15 @@ func (c *PyPIClient) EnrichPackage(pkg *types.Package) error {
 
 		for version, releases := range packageInfo.Releases {
 			if len(releases) > 0 {
-				uploadTime := releases[0].UploadTime
-				if uploadTime.After(latestTime) {
-					latestTime = uploadTime
-					latestVersion = version
+				uploadTimeStr := releases[0].UploadTime
+				if uploadTimeStr != "" {
+					// PyPI timestamps are ISO 8601 / RFC 3339
+					if uploadTime, err := time.Parse(time.RFC3339, uploadTimeStr); err == nil {
+						if uploadTime.After(latestTime) {
+							latestTime = uploadTime
+							latestVersion = version
+						}
+					}
 				}
 			}
 		}
