@@ -10,72 +10,45 @@
   <p>
     <img src="https://img.shields.io/badge/go-1.24+-blue?logo=go" alt="Go Version">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-    <img src="https://img.shields.io/github/v/release/falcn-io/falcn" alt="Release">
-    <img src="https://img.shields.io/badge/AI-Native-purple" alt="AI Native">
+    <img src="https://img.shields.io/badge/release-v2.0.0-blue" alt="Release">
   </p>
 </div>
 
 ---
 
-> **"See threats before they strike."**
+**Falcn** is an enterprise-grade, privacy-first supply chain security platform. It combines deterministic heuristics, behavioral analysis, and local AI to explanation threats.
 
-**Falcn** is an enterprise-grade, AI-powered supply chain security platform. It goes beyond static signatures by using Neural Networks, Behavioral Sandboxing, and LLMs to detect zero-day attacks in your dependencies.
+## 🚀 Key Features
 
-## 🚀 Why Falcn?
+### 🔍 Advanced Detection
+*   **Heuristics Engine**: Deterministic scoring based on edit distance and namespace patterns.
+*   **Behavioral Analysis**: (Optional) Sandbox execution to catch install-time malware.
+*   **Vulnerability Scanning**: Integrated checks against OSV and NVD.
 
-- **🧠 Neural Network Scoring**: Our `InferenceEngine` uses a trained MLP (Multi-Layer Perceptron) model to detect malicious packages with 99% accuracy.
-- **📦 Behavioral Sandboxing**: Safely executes suspicious packages in ephemeral **Docker** containers to observe network and file system behavior (install scripts, curls, shells).
-- **🤖 LLM Explainability**: Integrates with **OpenAI**, **Anthropic**, or **Local Ollama** to explain *why* a package is dangerous in plain English.
-- **⚡ Blazing Speed**: Single-pass analysis architecture delivers results in <60ms per package (static mode).
-
-## 🛠️ Key Features
-
-### 🔍 Next-Gen Detection
-*   **ML Engine**: Analyzes package metadata (maintainer age, release cadence, popularity) using an ONNX-runtime backed neural network.
-*   **Behavioral Engine**: Dynamically installs packages in a sandbox to catch "Trojan Horse" attacks that look safe statically but execute malware on install.
-*   **Typosquatting Engine**: Detects packages mimicing popular libraries using Edit Distance, Jaro-Winkler, and N-gram analysis.
-
-### 📦 Supply Chain Intelligence
-*   **Real-time Reputation**: Fetches live data from NPM/PyPI to verify download counts, maintainer history, and release dates.
-*   **Build Integrity**: Verifies signatures and checksums.
-
-### 🧩 Integrations & Reporting
-*   **LLM Reports**: "This package is 85% likely to be malicious because it downloads a script from a known C2 server."
-*   **Sinks**: Forward alerts to **Splunk**, **Slack**, **Email**, or generic **Webhooks**.
-*   **Formats**: Output results in **JSON**, **SARIF**, or **Futuristic CLI Tables**.
-
-## 📥 Installation
-
-### Go Install
-```bash
-go install github.com/falcn-io/falcn@latest
-```
-
-### Docker
-```bash
-docker pull vanali/falcn:latest
-```
+### 🤖 Privacy-First AI
+*   **Local Explanations**: Uses **Ollama** (Llama 3, Mistral) to explain threats without sending code to the cloud.
+*   **Privacy**: Airgap-compatible and fully self-hosted.
 
 ## 💻 Quick Start
 
-**1. Scan a project directory**
+**1. Scan a project**
 ```bash
-falcn scan .
+falcn scan . --check-vulnerabilities
 ```
 
-**2. Analyze a specific package name**
+**2. Configure AI (Ollama)**
+See [Enterprise Ollama Setup](docs/OLLAMA_SETUP.md).
 ```bash
-falcn analyze react --registry npm
+export FALCN_LLM_ENABLED=true
+export FALCN_LLM_PROVIDER=ollama
 ```
 
-**3. Run in CI/CD (Watch Mode)**
-```bash
-falcn watch --ci --fail-on-threats
-```
+## 🛠️ CLI Flags
+- `--check-vulnerabilities`: Enable vulnerability checks
+- `--no-llm`: **[NEW]** Disable AI explanations entirely
+- `--max-llm-calls <n>`: **[NEW]** Limit AI explanations (default: 10)
+- `--no-sandbox`: **[NEW]** Disable dynamic analysis
 
-## ⚙️ Configuration
-
-Falcn can be configured via `config.yaml`:
 
 ```yaml
 llm:

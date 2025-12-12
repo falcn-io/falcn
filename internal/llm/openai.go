@@ -23,10 +23,7 @@ func (p *OpenAIProvider) ID() string {
 	return "openai"
 }
 
+// GenerateExplanation returns a placeholder or error for OpenAI until fully implemented
 func (p *OpenAIProvider) GenerateExplanation(ctx context.Context, prompt string) (string, error) {
-	// TODO: Implement actual OpenAI API call using github.com/sashabaranov/go-openai or direct HTTP
-	if p.apiKey == "" {
-		return "", fmt.Errorf("openai api key not configured")
-	}
-	return "OpenAI explanation not implemented yet (requires API key)", nil
+	return "", fmt.Errorf("provider 'openai' is currently in roadmap for v2.1. Please use 'ollama' for now")
 }

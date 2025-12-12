@@ -23,10 +23,7 @@ func (p *AnthropicProvider) ID() string {
 	return "anthropic"
 }
 
+// GenerateExplanation returns a placeholder or error for Anthropic until fully implemented
 func (p *AnthropicProvider) GenerateExplanation(ctx context.Context, prompt string) (string, error) {
-	// TODO: Implement Anthropic API call
-	if p.apiKey == "" {
-		return "", fmt.Errorf("anthropic api key not configured")
-	}
-	return "Anthropic explanation not implemented yet (requires API key)", nil
+	return "", fmt.Errorf("provider 'anthropic' is currently in roadmap for v2.1. Please use 'ollama' for now")
 }

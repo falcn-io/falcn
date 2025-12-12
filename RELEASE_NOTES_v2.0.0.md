@@ -4,10 +4,10 @@ We are proud to announce the release of **Falcn v2.0.0**, transforming our stati
 
 ## 🌟 Major Features
 
-### 🧠 ML Engine (Inference)
-- **Neural Network Models**: Replaced heuristic scoring with an MLP (Multi-Layer Perceptron) trained on synthetic malicious datasets.
-- **ONNX Runtime**: Embedded high-performance inference engine using `onnx-go`.
-- **Zero-Latency**: Sub-millisecond inference times per package.
+### 🧠 Advanced Heuristics Engine (Detection)
+- **Deterministic Scoring**: New multi-variable scoring system based on Damerau-Levenshtein distance, keyboard layout analysis, and namespace confusion patterns.
+- **Why Heuristics?**: Provides deterministic, explainable results without the false positives inherent in black-box ML models.
+- **Performance**: Sub-millisecond analysis times per package.
 
 ### 📦 Behavioral Analysis (Sandboxing)
 - **Docker Integration**: Safely detonates suspicious packages in ephemeral containers.
@@ -18,7 +18,7 @@ We are proud to announce the release of **Falcn v2.0.0**, transforming our stati
 - **Human-Readable Reports**: "Why is this package dangerous?" - Falcn now tells you in plain English.
 - **Multi-Provider Support**:
   - **Ollama**: First-class support for airgapped/local models (Llama 3, Mistral).
-  - **OpenAI / Anthropic**: Plug-and-play support for cloud APIs.
+  - **OpenAI / Anthropic**: **[Roadmap]** Planned support for cloud APIs in v2.1.
 
 ### 📡 Real-Time Intelligence
 - **Live Data Fetching**: Removed simulation logic. Falcn now queries NPM and PyPI registries in real-time for authentic download counts, maintainer history, and release dates.

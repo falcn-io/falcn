@@ -21,7 +21,7 @@ var scanCmd = &cobra.Command{
 	Short: "Scan a project for typosquatting and malicious packages (auto-detects project types)",
 	Long: `Scan a project directory for typosquatting and malicious packages.
 
-Falcn automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
+TypoSentinel automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
 based on manifest files and creates appropriate registry connectors. Use --recursive for monorepos
 and multi-project directories. Specify --package-manager to limit scanning to specific ecosystems.`,
 	Args: cobra.MaximumNArgs(1),
@@ -58,6 +58,10 @@ func init() {
 	scanCmd.Flags().StringSlice("content-whitelist", []string{}, "Content scanning whitelist extensions")
 	scanCmd.Flags().Int("content-max-files", 0, "Content scanning max files to process")
 	scanCmd.Flags().Int("content-max-workers", 0, "Content scanning max workers")
+	// Reliability & Control flags
+	scanCmd.Flags().Bool("no-llm", false, "Disable LLM (AI) explanations")
+	scanCmd.Flags().Int("max-llm-calls", 10, "Maximum number of LLM explanations to generate")
+	scanCmd.Flags().Bool("no-sandbox", false, "Disable dynamic analysis (sandboxing)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -125,6 +129,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 		viper.Set("scanner.content.max_workers", v)
 	}
 
+	// Get reliability options
+	disableLLM, _ := cmd.Flags().GetBool("no-llm")
+	maxLLMCalls, _ := cmd.Flags().GetInt("max-llm-calls")
+	disableSandbox, _ := cmd.Flags().GetBool("no-sandbox")
+
 	options := &analyzer.ScanOptions{
 		OutputFormat:           outputFormat,
 		SpecificFile:           specificFile,
@@ -142,6 +151,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 		PackageManagers:        packageManagers,
 		EnableSupplyChain:      enableSupplyChain,
 		AdvancedAnalysis:       advancedAnalysis,
+		DisableLLM:             disableLLM,
+		MaxLLMCalls:            maxLLMCalls,
+		DisableSandbox:         disableSandbox,
 	}
 
 	// Map registry override to packageManagers if provided

@@ -19,7 +19,7 @@ func main() {
 	cfg := config.LLMConfig{
 		Enabled:  true,
 		Provider: "ollama",
-		Model:    "llama2", // Try generic model, user can change
+		Model:    "llama2", // Matching config.yaml
 		Endpoint: "http://localhost:11434",
 	}
 

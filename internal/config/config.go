@@ -1,4 +1,4 @@
-// Package config provides configuration management for Falcn
+// Package config provides configuration management for Typosentinel
 // This package implements structured configuration with validation and environment support
 package config
 
@@ -93,8 +93,20 @@ type Config struct {
 	// Supply Chain Security settings
 	SupplyChain *SupplyChainConfig `mapstructure:"supply_chain"`
 
+	// Detector settings
+	Detector *DetectorConfig `mapstructure:"detector"`
+
 	// LLM settings
-	LLM LLMConfig `mapstructure:"llm"`
+	LLM *LLMConfig `mapstructure:"llm"`
+}
+
+// LLMConfig contains LLM configuration
+type LLMConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Provider string `mapstructure:"provider" validate:"required_if=Enabled true,oneof=openai anthropic ollama"`
+	Model    string `mapstructure:"model" validate:"required_if=Enabled true"`
+	Endpoint string `mapstructure:"endpoint"` // For Ollama
+	APIKey   string `mapstructure:"api_key"`
 }
 
 // AppConfig contains application-level configuration
@@ -108,15 +120,6 @@ type AppConfig struct {
 	DataDir     string      `mapstructure:"data_dir" validate:"required,dir"`
 	TempDir     string      `mapstructure:"temp_dir" validate:"required"`
 	MaxWorkers  int         `mapstructure:"max_workers" validate:"required,min=1,max=100"`
-}
-
-// LLMConfig contains LLM configuration
-type LLMConfig struct {
-	Enabled  bool   `mapstructure:"enabled"`
-	Provider string `mapstructure:"provider" validate:"required_if=Enabled true,oneof=openai anthropic ollama"`
-	Model    string `mapstructure:"model" validate:"required_if=Enabled true"`
-	Endpoint string `mapstructure:"endpoint"` // For Ollama
-	APIKey   string `mapstructure:"api_key"`
 }
 
 // ServerConfig contains HTTP server configuration
@@ -350,7 +353,6 @@ type ScannerConfig struct {
 	IncludeDevDeps   bool             `mapstructure:"include_dev_deps"`
 	EnrichMetadata   bool             `mapstructure:"enrich_metadata"`
 	RespectGitignore bool             `mapstructure:"respect_gitignore"`
-	MaxDepth         int              `mapstructure:"max_depth" validate:"min=1,max=100"`
 	SkipPatterns     []string         `mapstructure:"skip_patterns"`
 	Registries       RegistriesConfig `mapstructure:"registries"`
 }
@@ -630,10 +632,10 @@ func (m *Manager) Load(configDir string) error {
 	viper.AddConfigPath(configDir)
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./config")
-	viper.AddConfigPath("/etc/Falcn")
+	viper.AddConfigPath("/etc/typosentinel")
 
 	// Environment variable configuration
-	viper.SetEnvPrefix("Falcn")
+	viper.SetEnvPrefix("TYPOSENTINEL")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
@@ -649,7 +651,7 @@ func (m *Manager) Load(configDir string) error {
 
 	// Load environment-specific configuration
 	// Check environment variable first, then fall back to config
-	envStr := os.Getenv("Falcn_APP_ENVIRONMENT")
+	envStr := os.Getenv("TYPOSENTINEL_APP_ENVIRONMENT")
 	if envStr == "" {
 		envStr = viper.GetString("app.environment")
 	}
@@ -670,6 +672,15 @@ func (m *Manager) Load(configDir string) error {
 	m.config = &Config{}
 	if err := viper.Unmarshal(m.config); err != nil {
 		return errors.Wrap(err, errors.ErrCodeConfig, "failed to unmarshal configuration")
+	}
+
+	// Manual fix for LLM config loading (viper unmarshal issue workaround)
+	var llmCfg LLMConfig
+	if err := viper.UnmarshalKey("llm", &llmCfg); err == nil {
+		// If manually loaded and enabled, or if fields are set
+		if llmCfg.Enabled || llmCfg.Provider != "" {
+			m.config.LLM = &llmCfg
+		}
 	}
 
 	// Validate configuration
@@ -718,7 +729,7 @@ func (m *Manager) Reload() error {
 // setDefaults sets default configuration values
 func (m *Manager) setDefaults() {
 	// App defaults
-	viper.SetDefault("app.name", "Falcn")
+	viper.SetDefault("app.name", "Typosentinel")
 	viper.SetDefault("app.version", "1.0.0")
 	viper.SetDefault("app.environment", "development")
 	viper.SetDefault("app.debug", false)
@@ -743,7 +754,7 @@ func (m *Manager) setDefaults() {
 
 	// Database defaults
 	viper.SetDefault("database.type", "sqlite")
-	viper.SetDefault("database.database", "./data/Falcn.db")
+	viper.SetDefault("database.database", "./data/typosentinel.db")
 	viper.SetDefault("database.max_open_conns", 25)
 	viper.SetDefault("database.max_idle_conns", 5)
 	viper.SetDefault("database.conn_max_lifetime", "5m")
@@ -774,7 +785,7 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("metrics.enabled", false)
 	viper.SetDefault("metrics.provider", "prometheus")
 	viper.SetDefault("metrics.address", ":9090")
-	viper.SetDefault("metrics.namespace", "Falcn")
+	viper.SetDefault("metrics.namespace", "typosentinel")
 	viper.SetDefault("metrics.interval", "15s")
 	viper.SetDefault("metrics.buckets", []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10})
 
@@ -804,21 +815,12 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("ml.model_config.type", "tensorflow")
 	viper.SetDefault("ml.model_config.preprocessing.scaling", "standard")
 
-	// LLM defaults
-	viper.SetDefault("llm.enabled", false)
-	viper.SetDefault("llm.provider", "ollama")
-	viper.SetDefault("llm.model", "llama3")
-	viper.SetDefault("llm.endpoint", "http://localhost:11434")
-
 	// Scanner defaults
 	viper.SetDefault("scanner.max_concurrency", 10)
 	viper.SetDefault("scanner.timeout", "30s")
 	viper.SetDefault("scanner.retry_attempts", 3)
 	viper.SetDefault("scanner.retry_delay", "1s")
-	viper.SetDefault("scanner.user_agent", "Falcn/1.0")
-	viper.SetDefault("scanner.respect_gitignore", true)
-	viper.SetDefault("scanner.max_depth", 10)
-	viper.SetDefault("scanner.skip_patterns", []string{"node_modules", ".git", "vendor", ".venv", "__pycache__", "real-actions-", "custom_test_workspace", "docker-test-"})
+	viper.SetDefault("scanner.user_agent", "Typosentinel/1.0")
 	viper.SetDefault("scanner.registries.npm.enabled", true)
 	viper.SetDefault("scanner.registries.npm.url", "https://registry.npmjs.org")
 	viper.SetDefault("scanner.registries.npm.timeout", "10s")
@@ -834,7 +836,7 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("api.version", "v1")
 	viper.SetDefault("api.documentation.enabled", true)
 	viper.SetDefault("api.documentation.path", "/docs")
-	viper.SetDefault("api.documentation.title", "Falcn API")
+	viper.SetDefault("api.documentation.title", "Typosentinel API")
 	viper.SetDefault("api.documentation.version", "1.0.0")
 	viper.SetDefault("api.rest.versioning.strategy", "path")
 	viper.SetDefault("api.rest.versioning.default_version", "v1")
@@ -857,6 +859,64 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("features.bulk_scanning", true)
 	viper.SetDefault("features.historical_data", false)
 	viper.SetDefault("features.experimental_apis", false)
+
+	// Detector defaults
+	viper.SetDefault("detector.max_popular_candidates", 25)
+	viper.SetDefault("detector.popular_ttl", "1h")
+	viper.SetDefault("detector.backoff_attempts", 3)
+	viper.SetDefault("detector.backoff_schedule", []string{"100ms", "250ms", "500ms"})
+	viper.SetDefault("detector.npm_quality_weight", 0.0)
+	viper.SetDefault("detector.npm_popularity_weight", 1.0)
+	viper.SetDefault("detector.npm_maintenance_weight", 0.0)
+	viper.SetDefault("detector.popular_sizes.npm", 20)
+	viper.SetDefault("detector.popular_sizes.pypi", 25)
+	viper.SetDefault("detector.popular_sizes.maven", 25)
+	viper.SetDefault("detector.popular_sizes.rubygems", 25)
+	viper.SetDefault("detector.popular_sizes.nuget", 25)
+	viper.SetDefault("detector.popular_sizes.composer", 20)
+	viper.SetDefault("detector.popular_sizes.cargo", 20)
+	viper.SetDefault("detector.endpoints.npm_search", "https://registry.npmjs.org/-/v1/search")
+	viper.SetDefault("detector.endpoints.packagist_popular", "https://packagist.org/explore/popular.json")
+	viper.SetDefault("detector.endpoints.nuget_popular", "https://azuresearch-usnc.nuget.org/query?q=&sortBy=totalDownloads")
+	viper.SetDefault("detector.endpoints.cargo_popular", "https://crates.io/api/v1/crates?sort=downloads")
+	viper.SetDefault("detector.endpoints.rubygems_popular", "https://rubygems.org/api/v1/search.json?query=&sort=downloads")
+	viper.SetDefault("detector.endpoints.maven_popular", "https://search.maven.org/solrsearch/select?q=%2A&rows=%d&wt=json&sort=popularity%20desc")
+	viper.SetDefault("detector.endpoints.pypi_popular", "")
+	viper.SetDefault("detector.require_multi_signal", false)
+	viper.SetDefault("detector.binary_legit_paths", []string{})
+	viper.SetDefault("policies.path", "policies")
+	viper.SetDefault("policies.hot_reload", false)
+	viper.SetDefault("scanner.content.max_file_size", 1048576)
+	viper.SetDefault("scanner.content.entropy_threshold", 7.0)
+	viper.SetDefault("scanner.content.entropy_window", 256)
+	viper.SetDefault("scanner.content.include_globs", []string{"**/*.js", "**/*.ts", "**/*.py", "**/*.rb", "**/*.sh", "**/*.json"})
+	viper.SetDefault("scanner.content.exclude_globs", []string{"**/node_modules/**", "**/vendor/**"})
+	viper.SetDefault("scanner.content.whitelist_extensions", []string{".js", ".ts", ".py", ".rb", ".sh", ".json"})
+	viper.SetDefault("scanner.content.max_files", 1000)
+	viper.SetDefault("scanner.content.max_workers", 4)
+	viper.SetDefault("scanner.content.allowlist_cidrs", []string{"127.0.0.0/8", "10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12"})
+	viper.SetDefault("scanner.content.denylist_cidrs", []string{"0.0.0.0/0"})
+	viper.SetDefault("scanner.content.asn_sources", []string{})
+	// Ecosystem presets for CIDR allow/deny (override or merge per registry)
+	viper.SetDefault("scanner.content.presets.npm.allow_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.npm.deny_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.pypi.allow_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.pypi.deny_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.rubygems.allow_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.rubygems.deny_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.maven.allow_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.maven.deny_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.nuget.allow_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.nuget.deny_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.cargo.allow_cidrs", []string{})
+	viper.SetDefault("scanner.content.presets.cargo.deny_cidrs", []string{})
+	viper.SetDefault("detector.registry.maven.same_group_similarity", 0.90)
+	viper.SetDefault("detector.registry.require_multi_signal.maven", false)
+	viper.SetDefault("detector.registry.require_multi_signal.npm", false)
+	viper.SetDefault("detector.registry.require_multi_signal.pypi", false)
+	viper.SetDefault("detector.registry.require_multi_signal.rubygems", false)
+	viper.SetDefault("detector.registry.require_multi_signal.nuget", false)
+	viper.SetDefault("detector.registry.require_multi_signal.cargo", false)
 
 	// Policies defaults
 	viper.SetDefault("policies.fail_on_threats", false)
@@ -1322,4 +1382,12 @@ func NewDefaultConfig() *Config {
 	}
 
 	return config
+}
+
+// DetectorConfig contains detector tuning configuration
+type DetectorConfig struct {
+	MaxPopularCandidates int             `mapstructure:"max_popular_candidates" validate:"min=1,max=1000"`
+	PopularTTL           time.Duration   `mapstructure:"popular_ttl" validate:"min=1m"`
+	BackoffAttempts      int             `mapstructure:"backoff_attempts" validate:"min=1,max=10"`
+	BackoffSchedule      []time.Duration `mapstructure:"backoff_schedule"`
 }

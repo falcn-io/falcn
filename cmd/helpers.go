@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/falcn-io/falcn/internal/analyzer"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/database"
@@ -71,6 +73,9 @@ func outputScanResult(result *analyzer.ScanResult, format string) {
 	switch format {
 	case "json":
 		data, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Println(string(data))
+	case "yaml":
+		data, _ := yaml.Marshal(result)
 		fmt.Println(string(data))
 	case "sarif":
 		f := output.NewSARIFFormatter("", "", "", "cli")

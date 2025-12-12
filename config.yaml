@@ -4,31 +4,109 @@ app:
   environment: "development"
   debug: true
   log_level: "info"
+  data_dir: "./data"
+  temp_dir: "./tmp"
+  max_workers: 10
 
 server:
   host: "0.0.0.0"
   port: 8080
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "60s"
+  shutdown_timeout: "30s"
+  tls:
+    enabled: false
+  cors:
+    enabled: true
+
+database:
+  type: "sqlite"
+  database: "./data/Falcn.db"
+  migrations_path: "./migrations"
 
 redis:
   enabled: false
 
 logging:
   level: "info"
+  format: "json"
   output: "stdout"
+  max_size: 100
+  max_backups: 3
+  max_age: 28
+  compress: true
+
+metrics:
+  enabled: false
 
 security:
   jwt:
-    enabled: false
+    enabled: true
+    secret: "01234567890123456789012345678901"
+    expiration: "1h"
+    refresh_expiration: "24h"
+    issuer: "falcn"
+    audience: "falcn-users"
   encryption:
-    key: "01234567890123456789012345678901"
     algorithm: "aes-256-gcm"
+    key: "01234567890123456789012345678901"
+  password_policy:
+    min_length: 8
+    require_upper: true
+    require_lower: true
+    require_digit: true
+  api_keys:
+    enabled: false
+  csrf:
+    enabled: false
+
+ml:
+  enabled: false
+  model_path: "" # Explicitly empty to avoid validation error if possible, or omitempty handles it
+  threshold: 0.7
+  batch_size: 32
+  timeout: "5s"
+  cache_size: 1000
+  update_interval: "24h"
 
 api:
-  rate_limit:
-    enabled: true
+  enabled: true
+  port: 8081
+  timeout: "30s"
+  debug: false
+
+rate_limit:
+  enabled: false
+  requests_per_second: 10
+  burst: 20
+
+features:
+  beta_features: false
+  experimental_features: false
+
+policies:
+  fail_on_threats: false
+  min_threat_level: "medium"
+
+typo_detection:
+  enabled: true
+  threshold: 0.8
+  similarity_threshold: 0.8
+  edit_distance_threshold: 2
+  max_distance: 3
+  phonetic_matching: true
+  check_similar_names: true
+  check_homoglyphs: true
+
+scanner:
+  registries:
+    npm:
+      enabled: true
+      url: "https://registry.npmjs.org"
 
 llm:
   enabled: true
   provider: "ollama"
-  model: "llama3"
+  model: "llama2"
   endpoint: "http://localhost:11434"

@@ -52,8 +52,13 @@ type ScanOptions struct {
 	ConsolidateReport bool
 	PackageManagers   []string
 	// Supply chain analysis options
+	// Supply chain analysis options
 	EnableSupplyChain bool
 	AdvancedAnalysis  bool
+	// Reliability & Control options
+	DisableLLM     bool // Force disable LLM even if configured
+	MaxLLMCalls    int  // Max number of explanations to generate (rate limit)
+	DisableSandbox bool // Force disable active sandboxing
 }
 
 // ScanResult contains the results of a security scan
@@ -100,8 +105,8 @@ func New(cfg *config.Config) (*Analyzer, error) {
 
 	// Initialize LLM provider with guardrails
 	var llmProvider llm.Provider
-	if cfg.LLM.Enabled {
-		rawProvider, err := llm.NewProvider(cfg.LLM)
+	if cfg.LLM != nil && cfg.LLM.Enabled {
+		rawProvider, err := llm.NewProvider(*cfg.LLM)
 		if err != nil {
 			logrus.Warnf("Failed to initialize LLM provider: %v. AI explanations disabled.", err)
 		} else {
@@ -638,11 +643,27 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 	}
 
 	// AI Explanation Step (Phase 5)
-	if a.llmProvider != nil && len(allThreats) > 0 {
-		logrus.Infof("Generating AI explanations for %d threats...", len(allThreats))
+	if a.llmProvider != nil && len(allThreats) > 0 && !options.DisableLLM {
+		// Set default limit if 0
+		limit := options.MaxLLMCalls
+		if limit == 0 {
+			limit = 10 // Safe default
+		}
+
+		logrus.Infof("Generating AI explanations for threats (limit: %d, active: %t)...", limit, !options.DisableLLM)
+		count := 0
+
 		for i := range allThreats {
+			if count >= limit {
+				logrus.Infof("Reached LLM explanation limit (%d). Skipping remaining items.", limit)
+				break
+			}
 			// Only explain High/Critical threats to save time/tokens
-			if allThreats[i].Severity == types.SeverityCritical || allThreats[i].Severity == types.SeverityHigh {
+			// Also including Medium for testing purposes
+			if allThreats[i].Severity == types.SeverityCritical ||
+				allThreats[i].Severity == types.SeverityHigh ||
+				allThreats[i].Severity == types.SeverityMedium {
+
 				prompt := fmt.Sprintf("Package: %s\nType: %s\nDescription: %s\nEvidence: %v",
 					allThreats[i].Package, allThreats[i].Type, allThreats[i].Description, allThreats[i].Metadata)
 
@@ -656,6 +677,7 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 					allThreats[i].Metadata = make(map[string]interface{})
 				}
 				allThreats[i].Metadata["ai_explanation"] = explanation
+				count++
 			}
 		}
 	}

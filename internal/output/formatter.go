@@ -106,6 +106,13 @@ func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
 			}
 			fmt.Printf("  \033[90m│\033[0m Risk Score: %.2f\n", threat.Confidence)
 			fmt.Printf("  \033[90m│\033[0m Action: %s\n", threat.Recommendation)
+
+			if threat.Metadata != nil {
+				if explanation, ok := threat.Metadata["ai_explanation"]; ok && explanation != nil {
+					fmt.Printf("  \033[90m│\033[0m AI Analysis: %s\n", explanation)
+				}
+			}
+
 			fmt.Println("  \033[90m│\033[0m")
 			fmt.Printf("  \033[90m└─\033[0m Evidence: %s\n", threat.Description)
 			fmt.Println()
