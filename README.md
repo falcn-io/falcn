@@ -12,6 +12,9 @@
     <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
     <img src="https://img.shields.io/badge/release-v2.0.0-blue" alt="Release">
   </p>
+  <p>
+    <a href="ROADMAP.md"><strong>Explore the Roadmap »</strong></a>
+  </p>
 </div>
 
 ---
