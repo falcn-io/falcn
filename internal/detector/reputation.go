@@ -1021,3 +1021,27 @@ func (re *ReputationEngine) detectEnterpriseSecurityViolations(dep types.Depende
 
 	return threats
 }
+
+// estimateNPMDownloads estimates npm downloads for a package
+func (re *ReputationEngine) estimateNPMDownloads(packageName string) int64 {
+	// Simplified estimation
+	if packageName == "express" || packageName == "react" || packageName == "lodash" {
+		return 10000000
+	}
+	return 1000
+}
+
+// estimatePyPIDownloads estimates PyPI downloads for a package
+func (re *ReputationEngine) estimatePyPIDownloads(packageName string) int64 {
+	// Simplified estimation
+	if strings.Contains(packageName, "django") || strings.Contains(packageName, "flask") {
+		return 5000000
+	}
+	return 500
+}
+
+// estimateGoDownloads estimates Go downloads for a package
+func (re *ReputationEngine) estimateGoDownloads(packageName string) int64 {
+	// Simplified estimation
+	return 2000
+}

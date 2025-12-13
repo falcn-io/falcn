@@ -74,7 +74,7 @@ func (d *DockerSandbox) Start(ctx context.Context, image string) error {
 		NetworkMode: container.NetworkMode(d.config.NetworkMode),
 	}
 
-	name := fmt.Sprintf("typosentinel-sandbox-%s", uuid.New().String())
+	name := fmt.Sprintf("falcn-sandbox-%s", uuid.New().String())
 	resp, err := d.cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, name)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %w", err)

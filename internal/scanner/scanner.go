@@ -36,6 +36,7 @@ type Scanner struct {
 	lastProjectPath  string
 	policyEngine     *policy.Engine
 	enhancedDetector *detector.EnhancedTyposquattingDetector
+	ignorePatterns   []string
 }
 
 // ProjectDetector interface for detecting different project types
@@ -151,6 +152,9 @@ func New(cfg *config.Config) (*Scanner, error) {
 // ScanProject scans a project for dependencies and security threats
 func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 	start := time.Now()
+
+	// Load .falcnignore patterns
+	s.loadIgnorePatterns(projectPath)
 
 	// Check cache first if enabled
 	if s.cache != nil {

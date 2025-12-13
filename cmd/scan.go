@@ -21,7 +21,7 @@ var scanCmd = &cobra.Command{
 	Short: "Scan a project for typosquatting and malicious packages (auto-detects project types)",
 	Long: `Scan a project directory for typosquatting and malicious packages.
 
-TypoSentinel automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
+Falcn automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
 based on manifest files and creates appropriate registry connectors. Use --recursive for monorepos
 and multi-project directories. Specify --package-manager to limit scanning to specific ecosystems.`,
 	Args: cobra.MaximumNArgs(1),

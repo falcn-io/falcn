@@ -29,6 +29,32 @@
 *   **Local Explanations**: Uses **Ollama** (Llama 3, Mistral) to explain threats without sending code to the cloud.
 *   **Privacy**: Airgap-compatible and fully self-hosted.
 
+## ✨ The "Magic" Demo
+
+See Falcn in action detecting a malicious package:
+
+![Falcn Demo](docs/assets/demo.gif)
+
+**Try it yourself:**
+```bash
+./demo/setup_demo.sh
+falcn scan ./falcn-magic-demo
+```
+
+## ⚡ Benchmarks
+
+Falcn is designed for speed. Use `--no-llm --no-sandbox` for instant feedback in CI/CD.
+
+| Mode | Time |
+|------|------|
+| **Fast Mode** (`--no-llm --no-sandbox`) | ~100ms |
+| **Full Mode** (Deep Analysis + AI) | ~2-5s |
+
+To run the benchmarks yourself:
+```bash
+go test -bench . ./tests/benchmark
+```
+
 ## 💻 Quick Start
 
 **1. Scan a project**

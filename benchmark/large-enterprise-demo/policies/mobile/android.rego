@@ -1,4 +1,4 @@
-package typosentinel.policy
+package falcn.policy
 
 violations[{"message": msg, "severity": "critical"}] {
   input.package.type == "binary_detection"

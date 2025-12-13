@@ -1,4 +1,4 @@
-package typosentinel.policy
+package falcn.policy
 
 violations[{"message": msg, "severity": "high"}] {
   input.package.type == "new_package"

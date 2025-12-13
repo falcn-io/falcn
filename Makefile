@@ -501,7 +501,7 @@ production: clean-all test lint security build
 # Help
 .PHONY: help
 help:
-	@echo "Typosentinel Makefile - Available targets:"
+	@echo "Falcn Makefile - Available targets:"
 	@echo ""
 	@echo "Build targets:"
 	@echo "  build           - Build the binary"

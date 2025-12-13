@@ -1,4 +1,4 @@
-package typosentinel.policy
+package falcn.policy
 
 # Platform team allows binaries if they are in bin/
 # We suppress the default binary detection threat if it matches our allowlist

@@ -1,0 +1,14 @@
+# Falcn default ignore patterns
+node_modules/
+.git/
+.svn/
+.hg/
+vendor/
+dist/
+build/
+coverage/
+.idea/
+.vscode/
+*.log
+tmp/
+temp/
