@@ -1,26 +1,24 @@
 package falcn.policy
 
-default violations := []
-
-violations[{"message": sprintf("binary in legitimate path for %s", [input.package.name]), "severity": "medium"}] {
-  some t
-  t := input.package.threats[_]
+violations[{"message": sprintf("binary in legitimate path for %s", [input["package"].name]), "severity": "medium"}] {
+  t := input["package"].threats[_]
   t.type == "binary_detection"
-  contains(t.evidence[_].value, "node_modules")
+  e := t.evidence[_]
+  contains(e.value, "node_modules")
 }
 
-violations[{"message": sprintf("binary in build path for %s", [input.package.name]), "severity": "medium"}] {
-  some t
-  t := input.package.threats[_]
+violations[{"message": sprintf("binary in build path for %s", [input["package"].name]), "severity": "medium"}] {
+  t := input["package"].threats[_]
   t.type == "binary_detection"
-  contains(t.evidence[_].value, "build/")
+  e := t.evidence[_]
+  contains(e.value, "build/")
 }
 
 # High severity when binary detection without legitimate paths
-violations[{"message": sprintf("binary in non-legitimate path for %s", [input.package.name]), "severity": "high"}] {
-  some t
-  t := input.package.threats[_]
+violations[{"message": sprintf("binary in non-legitimate path for %s", [input["package"].name]), "severity": "high"}] {
+  t := input["package"].threats[_]
   t.type == "binary_detection"
-  not contains(t.evidence[_].value, "node_modules")
-  not contains(t.evidence[_].value, "build/")
+  # Check if NO evidence contains node_modules or build/
+  count({e | e := t.evidence[_]; contains(e.value, "node_modules")}) == 0
+  count({e | e := t.evidence[_]; contains(e.value, "build/")}) == 0
 }

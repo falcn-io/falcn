@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/falcn-io/falcn/pkg/types"
+	"github.com/spf13/viper"
 )
 
 // BinaryDetector detects executable binaries in packages
@@ -141,14 +142,21 @@ func (bd *BinaryDetector) isExecutableFile(path string) (ExecutableFormat, bool)
 
 // calculateSeverity determines threat severity based on context
 func (bd *BinaryDetector) calculateSeverity(packagePath string, binaries []string) types.Severity {
-	// Check if binaries are in expected locations for legitimate use cases
 	legitimatePaths := []string{
 		"node_modules",
+		"node_modules/.bin",
 		"build/Release",
 		"build/",
+		"dist/",
+		"lib/",
 		"bin/",
 		"vendor/",
+		"target/",
 	}
+	if extra := viper.GetStringSlice("detector.binary_legit_paths"); len(extra) > 0 {
+		legitimatePaths = append(legitimatePaths, extra...)
+	}
+	cliDirs := []string{"bin/", "cmd/", "tools/"}
 
 	allInLegitPath := true
 	for _, binary := range binaries {
@@ -158,6 +166,14 @@ func (bd *BinaryDetector) calculateSeverity(packagePath string, binaries []strin
 			if strings.Contains(norm, legitPath) {
 				inLegitPath = true
 				break
+			}
+		}
+		if !inLegitPath {
+			for _, d := range cliDirs {
+				if strings.Contains(norm, d) {
+					inLegitPath = true
+					break
+				}
 			}
 		}
 		if !inLegitPath {

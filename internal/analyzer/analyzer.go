@@ -28,7 +28,7 @@ type Analyzer struct {
 	detector     *detector.Engine
 	registries   map[string]registry.Connector
 	resolver     *DependencyResolver
-	autoDetector *registry.AutoDetector
+	autoDetector *scanner.AutoDetector
 	factory      *registry.Factory
 	stubRepo     *StubRepo
 	llmProvider  llm.Provider
@@ -101,7 +101,7 @@ func New(cfg *config.Config) (*Analyzer, error) {
 
 	// Initialize registry factory and auto-detector
 	factory := registry.NewFactory()
-	autoDetector := registry.NewAutoDetector()
+	autoDetector := scanner.NewAutoDetector()
 
 	// Initialize LLM provider with guardrails
 	var llmProvider llm.Provider

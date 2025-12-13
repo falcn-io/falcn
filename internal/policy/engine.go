@@ -15,12 +15,14 @@ import (
 )
 
 type Engine struct {
-	modules   []string
+	modules   map[string]string
 	policyDir string
 }
 
 func NewEngine(policyDir string) (*Engine, error) {
-	e := &Engine{}
+	e := &Engine{
+		modules: make(map[string]string),
+	}
 	if policyDir == "" {
 		policyDir = viper.GetString("policies.path")
 	}
@@ -41,7 +43,7 @@ func NewEngine(policyDir string) (*Engine, error) {
 		}
 		b, err := os.ReadFile(filepath.Join(policyDir, entry.Name()))
 		if err == nil {
-			e.modules = append(e.modules, string(b))
+			e.modules[entry.Name()] = string(b)
 		}
 	}
 	if viper.GetBool("policies.hot_reload") {
@@ -56,13 +58,16 @@ func (e *Engine) Evaluate(ctx context.Context, pkg *types.Package) ([]*types.Thr
 		return nil, nil
 	}
 
-	r := rego.New(
-		rego.Query("data.Falcn.policy.violations"),
-		rego.Module("policy.rego", concatModules(e.modules)),
-		rego.Input(map[string]interface{}{
-			"package": pkg,
-		}),
-	)
+	var opts []func(*rego.Rego)
+	opts = append(opts, rego.Query("data.falcn.policy.violations"))
+	opts = append(opts, rego.Input(map[string]interface{}{
+		"package": pkg,
+	}))
+	for name, content := range e.modules {
+		opts = append(opts, rego.Module(name, content))
+	}
+
+	r := rego.New(opts...)
 	rs, err := r.Eval(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("policy eval: %w", err)
@@ -70,6 +75,7 @@ func (e *Engine) Evaluate(ctx context.Context, pkg *types.Package) ([]*types.Thr
 	if len(rs) == 0 || len(rs[0].Expressions) == 0 {
 		return nil, nil
 	}
+
 	val := rs[0].Expressions[0].Value
 	arr, ok := val.([]interface{})
 	if !ok {
@@ -106,14 +112,6 @@ func (e *Engine) Evaluate(ctx context.Context, pkg *types.Package) ([]*types.Thr
 	return threats, nil
 }
 
-func concatModules(mods []string) string {
-	s := ""
-	for _, m := range mods {
-		s += m + "\n"
-	}
-	return s
-}
-
 func (e *Engine) watch() error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -135,7 +133,7 @@ func (e *Engine) watch() error {
 }
 
 func (e *Engine) reload() {
-	var mods []string
+	mods := make(map[string]string)
 	entries, err := os.ReadDir(e.policyDir)
 	if err != nil {
 		return
@@ -149,7 +147,7 @@ func (e *Engine) reload() {
 		}
 		b, err := os.ReadFile(filepath.Join(e.policyDir, entry.Name()))
 		if err == nil {
-			mods = append(mods, string(b))
+			mods[entry.Name()] = string(b)
 		}
 	}
 	e.modules = mods

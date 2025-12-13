@@ -10,6 +10,7 @@ import (
 
 	"github.com/falcn-io/falcn/internal/cache"
 	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/detector"
 	"github.com/falcn-io/falcn/internal/events"
 	"github.com/falcn-io/falcn/internal/heuristics"
 	"github.com/falcn-io/falcn/internal/integrations/hub"
@@ -34,6 +35,7 @@ type Scanner struct {
 	metadataEnricher *MetadataEnricher
 	lastProjectPath  string
 	policyEngine     *policy.Engine
+	enhancedDetector *detector.EnhancedTyposquattingDetector
 }
 
 // ProjectDetector interface for detecting different project types
@@ -93,6 +95,7 @@ func New(cfg *config.Config) (*Scanner, error) {
 		analyzers:        make(map[string]DependencyAnalyzer),
 		analyzerRegistry: NewAnalyzerRegistry(cfg),
 		metadataEnricher: NewMetadataEnricher(),
+		enhancedDetector: detector.NewEnhancedTyposquattingDetector(),
 	}
 
 	// Initialize logger
@@ -421,11 +424,29 @@ func (s *Scanner) extractPackages(projectInfo *ProjectInfo) ([]*types.Package, e
 func (s *Scanner) analyzePackageThreats(pkg *types.Package) ([]*types.Threat, error) {
 	var threats []*types.Threat
 
+	// Preserve existing threats (e.g. from analyzers like BinaryDetector)
+	if len(pkg.Threats) > 0 {
+		for i := range pkg.Threats {
+			t := pkg.Threats[i]
+			threats = append(threats, &t)
+		}
+	}
+
 	// Basic rule-based threat detection
-	threats = append(threats, s.detectTyposquatting(pkg)...)
+	typoThreats := s.detectTyposquatting(pkg)
+	threats = append(threats, typoThreats...)
 	threats = append(threats, s.detectSuspiciousPatterns(pkg)...)
 	threats = append(threats, s.detectMaliciousIndicators(pkg)...)
 	threats = append(threats, s.detectVersionAnomalies(pkg)...)
+
+	// Populate pkg.Threats so policy engine can see them
+	var currentThreats []types.Threat
+	for _, t := range threats {
+		if t != nil {
+			currentThreats = append(currentThreats, *t)
+		}
+	}
+	pkg.Threats = currentThreats
 
 	// Policy engine evaluation
 	if s.policyEngine != nil {
@@ -1023,8 +1044,49 @@ func (s *Scanner) detectTyposquatting(pkg *types.Package) []*types.Threat {
 	// Popular package names to check against
 	popularPackages := s.getPopularPackages(pkg.Registry)
 
+	// Use EnhancedTyposquattingDetector if available
+	if s.enhancedDetector != nil {
+		dep := types.Dependency{
+			Name:     pkg.Name,
+			Version:  pkg.Version,
+			Registry: pkg.Registry,
+		}
+		if pkg.Metadata != nil {
+			dep.Metadata = *pkg.Metadata
+		}
+
+		// Use a lower threshold for enhanced detection as it has more signals
+		enhancedThreats := s.enhancedDetector.DetectEnhanced(dep, popularPackages, 0.6)
+
+		// Convert []types.Threat to []*types.Threat
+		for i := range enhancedThreats {
+			t := enhancedThreats[i]
+			// Ensure ID is unique
+			if t.ID == "" {
+				t.ID = fmt.Sprintf("typo_enhanced_%d_%d", time.Now().UnixNano(), i)
+			}
+			threats = append(threats, &t)
+		}
+	}
+
+	// Fallback to basic detection if enhanced detection found nothing
+	// or to catch simple cases that enhanced might miss (though unlikely)
+	// We check for duplicates to avoid reporting the same threat twice
+
 	for _, popular := range popularPackages {
 		if similarity := s.calculateSimilarity(pkg.Name, popular); similarity > 0.7 && similarity < 1.0 {
+			// Check if we already have a threat for this popular package
+			alreadyDetected := false
+			for _, t := range threats {
+				if t.SimilarTo == popular {
+					alreadyDetected = true
+					break
+				}
+			}
+			if alreadyDetected {
+				continue
+			}
+
 			threat := &types.Threat{
 				ID:          fmt.Sprintf("typo_%d", time.Now().UnixNano()),
 				Type:        "typosquatting",
@@ -1126,7 +1188,7 @@ func (s *Scanner) detectVersionAnomalies(pkg *types.Package) []*types.Threat {
 func (s *Scanner) getPopularPackages(registry string) []string {
 	switch strings.ToLower(registry) {
 	case "npm":
-		return []string{"react", "lodash", "express", "axios", "webpack", "babel", "eslint", "typescript", "jquery", "moment", "next", "vue", "angular", "rxjs", "vite", "rollup", "yarn", "pnpm", "mocha", "jest", "chai", "sinon", "cross-env", "nodemon", "pm2"}
+		return []string{"react", "react-dom", "lodash", "express", "axios", "webpack", "babel", "eslint", "typescript", "jquery", "moment", "next", "vue", "angular", "rxjs", "vite", "rollup", "yarn", "pnpm", "mocha", "jest", "chai", "sinon", "cross-env", "nodemon", "pm2"}
 	case "pypi":
 		return []string{"requests", "numpy", "pandas", "django", "flask", "tensorflow", "pytorch", "scikit-learn", "matplotlib", "pillow", "beautifulsoup4", "selenium", "pytest", "black", "flake8", "click", "jinja2", "sqlalchemy", "fastapi", "pydantic", "boto3", "redis", "celery", "gunicorn", "uvicorn", "httpx", "aiohttp", "typing-extensions", "setuptools", "wheel", "pip", "certifi", "urllib3", "charset-normalizer"}
 	case "rubygems":
