@@ -623,14 +623,14 @@ func main() {
 	}
 	r.HandleFunc("/v1/status", statusHandler).Methods("GET")
 	r.HandleFunc("/v1/stats", statsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/vulnerabilities", vulnerabilitiesHandler).Methods("GET")
+	r.HandleFunc("/v1/vulnerabilities", vulnerabilitiesHandler).Methods("GET")
 
 	// Dashboard endpoints
-	r.HandleFunc("/api/v1/dashboard/metrics", dashboardMetricsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/dashboard/performance", dashboardPerformanceHandler).Methods("GET")
+	r.HandleFunc("/v1/dashboard/metrics", dashboardMetricsHandler).Methods("GET")
+	r.HandleFunc("/v1/dashboard/performance", dashboardPerformanceHandler).Methods("GET")
 
 	// Planned scans listing
-	r.HandleFunc("/api/v1/scans", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/v1/scans", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotImplemented)
 		json.NewEncoder(w).Encode(map[string]string{

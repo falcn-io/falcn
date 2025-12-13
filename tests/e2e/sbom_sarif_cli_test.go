@@ -3,13 +3,38 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 )
 
 func TestCLI_ScanOutputsSBOMAndSARIF(t *testing.T) {
-	// NPM sample
-	cmd := exec.Command("go", "run", "c:\\Users\\aliko\\Desktop\\Typosentinel", "scan", "c:\\Users\\aliko\\Desktop\\Typosentinel\\tests\\e2e\\test-projects\\npm-vulnerable", "--output", "cyclonedx")
+	// Get current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get cwd: %v", err)
+	}
+
+	// Assuming we run this from the project root or tests/e2e dir
+	// We need to resolve the project root.
+	// If running from 'c:\Users\aliko\Desktop\Typosentinel', cwd is that.
+	// If running 'go test ./tests/e2e/...', cwd might be the root or the pkg dir.
+	// Let's assume the root is where go.mod is.
+
+	// Calculate root dir (assuming this test is in tests/e2e)
+	rootDir := filepath.Join(cwd, "../..")
+	// Note: if running from root via `go test ./tests/e2e/sbom_sarif_cli_test.go`, cwd is root.
+	// Let's check for go.mod
+	if _, err := os.Stat(filepath.Join(cwd, "go.mod")); err == nil {
+		rootDir = cwd
+	}
+
+	projectPath := filepath.Join(rootDir, "tests", "e2e", "test-projects", "npm-vulnerable")
+
+	// NPM sample - CycloneDX
+	cmd := exec.Command("go", "run", ".", "scan", projectPath, "--output", "cyclonedx")
+	cmd.Dir = rootDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("scan cyclonedx failed: %v: %s", err, string(out))
@@ -20,10 +45,12 @@ func TestCLI_ScanOutputsSBOMAndSARIF(t *testing.T) {
 		_ = json.Unmarshal(out[start:], &obj)
 	}
 	if _, ok := obj["components"]; !ok {
-		t.Fatalf("cyclonedx missing components")
+		t.Fatalf("cyclonedx missing components. Output: %s", string(out))
 	}
 
-	cmd2 := exec.Command("go", "run", "c:\\Users\\aliko\\Desktop\\Typosentinel", "scan", "c:\\Users\\aliko\\Desktop\\Typosentinel\\tests\\e2e\\test-projects\\npm-vulnerable", "--output", "sarif")
+	// NPM sample - SARIF
+	cmd2 := exec.Command("go", "run", ".", "scan", projectPath, "--output", "sarif")
+	cmd2.Dir = rootDir
 	out2, err := cmd2.CombinedOutput()
 	if err != nil {
 		t.Fatalf("scan sarif failed: %v: %s", err, string(out2))
@@ -34,6 +61,6 @@ func TestCLI_ScanOutputsSBOMAndSARIF(t *testing.T) {
 		_ = json.Unmarshal(out2[start2:], &obj2)
 	}
 	if _, ok := obj2["runs"]; !ok {
-		t.Fatalf("sarif missing runs")
+		t.Fatalf("sarif missing runs. Output: %s", string(out2))
 	}
 }

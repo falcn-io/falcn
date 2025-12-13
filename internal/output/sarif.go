@@ -1,8 +1,11 @@
 package output
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -408,12 +411,31 @@ func (f *SARIFFormatter) convertResults(scanResult *analyzer.ScanResult) []Resul
 		"SUSPICIOUS_PATTERN":  6,
 	}
 
+	// Sort threats for deterministic output
+	sort.Slice(scanResult.Threats, func(i, j int) bool {
+		t1 := scanResult.Threats[i]
+		t2 := scanResult.Threats[j]
+		if t1.Package != t2.Package {
+			return t1.Package < t2.Package
+		}
+		if t1.Version != t2.Version {
+			return t1.Version < t2.Version
+		}
+		return t1.Type < t2.Type
+	})
+
 	// Convert threats to SARIF results
 	for _, threat := range scanResult.Threats {
 		ruleID := f.determineRuleIDFromThreat(threat)
 		level := f.determineSeverityLevel(threat.Severity.String())
 
 		fileURI, region := f.extractFilePathAndRegion(threat)
+
+		// Generate stable fingerprint
+		fingerprintInput := fmt.Sprintf("%s:%s:%s:%s", threat.Package, threat.Version, threat.Type, threat.Description)
+		hash := sha256.Sum256([]byte(fingerprintInput))
+		stableHash := hex.EncodeToString(hash[:])
+
 		result := Result{
 			RuleID:    ruleID,
 			RuleIndex: ruleMap[ruleID],
@@ -423,7 +445,7 @@ func (f *SARIFFormatter) convertResults(scanResult *analyzer.ScanResult) []Resul
 			Level:     level,
 			Locations: f.buildLocations(threat, fileURI, region),
 			PartialFingerprints: &PartialFingerprints{
-				PrimaryLocationLineHash: fmt.Sprintf("%s:%s:%s", threat.Package, threat.Version, threat.ID),
+				PrimaryLocationLineHash: stableHash,
 			},
 			Properties: &ResultProperties{
 				Severity:        threat.Severity.String(),
