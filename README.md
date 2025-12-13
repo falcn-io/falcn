@@ -36,7 +36,7 @@
 
 See Falcn in action detecting a malicious package:
 
-![Falcn Demo](docs/assets/demo.gif)
+![Falcn Demo](docs/assets/demo.png)
 
 **Try it yourself:**
 ```bash
