@@ -1,0 +1,13 @@
+{
+  "name": "vulnerable-app",
+  "version": "1.0.0",
+  "description": "A demo application containing malicious packages for Falcn CLI demonstration",
+  "dependencies": {
+    "react": "18.2.0",
+    "react-don": "18.2.0",
+    "lodash": "4.17.21",
+    "loadsh": "4.17.21",
+    "chalk": "5.3.0",
+    "chalck": "5.3.0"
+  }
+}

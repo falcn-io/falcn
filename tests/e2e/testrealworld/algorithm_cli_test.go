@@ -126,5 +126,3 @@ func TestAlgorithmCLI(t *testing.T) {
 		assert.Contains(t, []string{"LOW", "MEDIUM"}, riskLevel)
 	})
 }
-
-

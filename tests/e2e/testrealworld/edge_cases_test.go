@@ -23,8 +23,8 @@ func TestE2EEdgeCases(t *testing.T) {
 	t.Run("Edge Case: Homoglyph Attack", func(t *testing.T) {
 		// "react" with Cyrillic 'a' (U+0430)
 		// react -> re\u0430ct
-		homoglyphName := "re\u0430ct" 
-		
+		homoglyphName := "re\u0430ct"
+
 		payload := map[string]string{
 			"package_name": homoglyphName,
 			"registry":     "npm",
@@ -47,7 +47,7 @@ func TestE2EEdgeCases(t *testing.T) {
 	t.Run("Edge Case: Deep Dependency Chain", func(t *testing.T) {
 		// We can't easily simulate a real deep chain without mocking the registry response or having a real deep repo.
 		// For this E2E test, we'll check if the batch analyzer handles a large list of "chained" dependencies without timeout/error.
-		
+
 		// Create a chain of 50 dependencies
 		packages := make([]map[string]string, 50)
 		for i := 0; i < 50; i++ {
@@ -65,10 +65,10 @@ func TestE2EEdgeCases(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		
+
 		var result BatchAnalysisResponse
 		json.NewDecoder(resp.Body).Decode(&result)
-		
+
 		assert.Equal(t, 50, result.Summary.Total)
 		t.Log("✓ Successfully processed batch of 50 packages (simulating depth/volume)")
 	})
@@ -91,10 +91,10 @@ func TestE2EEdgeCases(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		
+
 		var result BatchAnalysisResponse
 		json.NewDecoder(resp.Body).Decode(&result)
-		
+
 		assert.Equal(t, 5, result.Summary.Total)
 		t.Log("✓ Successfully handled mixed ecosystem batch")
 	})
@@ -123,5 +123,3 @@ func TestE2EEdgeCases(t *testing.T) {
 		t.Logf("✓ Detected zero-width obfuscation '%s' with risk level %d", obfuscatedName, result.RiskLevel)
 	})
 }
-
-

@@ -665,5 +665,3 @@ func TestConcurrentRequests(t *testing.T) {
 
 	assert.True(t, successCount > 0, "At least some concurrent requests should succeed")
 }
-
-

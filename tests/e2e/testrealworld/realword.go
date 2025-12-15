@@ -540,5 +540,3 @@ func parseRequirementsTxt(content string) []string {
 
 	return packages
 }
-
-
