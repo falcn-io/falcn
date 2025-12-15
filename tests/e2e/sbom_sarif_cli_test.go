@@ -33,6 +33,7 @@ func TestCLI_ScanOutputsSBOMAndSARIF(t *testing.T) {
 	projectPath := filepath.Join(rootDir, "tests", "e2e", "test-projects", "npm-vulnerable")
 
 	// NPM sample - CycloneDX
+	// Ensure we are in the root directory for go run .
 	cmd := exec.Command("go", "run", ".", "scan", projectPath, "--output", "cyclonedx")
 	cmd.Dir = rootDir
 	out, err := cmd.CombinedOutput()
@@ -42,7 +43,9 @@ func TestCLI_ScanOutputsSBOMAndSARIF(t *testing.T) {
 	start := bytes.IndexByte(out, '{')
 	var obj map[string]interface{}
 	if start >= 0 {
-		_ = json.Unmarshal(out[start:], &obj)
+		if err := json.Unmarshal(out[start:], &obj); err != nil {
+			t.Logf("Failed to unmarshal cycloneDX output: %v", err)
+		}
 	}
 	if _, ok := obj["components"]; !ok {
 		t.Fatalf("cyclonedx missing components. Output: %s", string(out))
@@ -58,7 +61,9 @@ func TestCLI_ScanOutputsSBOMAndSARIF(t *testing.T) {
 	start2 := bytes.IndexByte(out2, '{')
 	var obj2 map[string]interface{}
 	if start2 >= 0 {
-		_ = json.Unmarshal(out2[start2:], &obj2)
+		if err := json.Unmarshal(out2[start2:], &obj2); err != nil {
+			t.Logf("Failed to unmarshal SARIF output: %v", err)
+		}
 	}
 	if _, ok := obj2["runs"]; !ok {
 		t.Fatalf("sarif missing runs. Output: %s", string(out2))

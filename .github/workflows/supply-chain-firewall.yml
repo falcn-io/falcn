@@ -62,12 +62,12 @@ jobs:
         with:
           go-version: '1.24'
           
-      - name: Build Falcn
+      - name: Build falcn
         run: |
           go env
           go mod download || true
-          go build -o Falcn .
-          sudo mv Falcn /usr/local/bin/
+          go build -o falcn .
+          sudo mv falcn /usr/local/bin/
           
       - name: Detect package files
         id: detect
@@ -100,7 +100,7 @@ jobs:
         run: |
           echo "Running supply chain firewall analysis..."
 
-          Falcn scan . --output json --supply-chain --advanced 2>/dev/null | tee scan-result.json >/dev/null || echo '{}' > scan-result.json
+          falcn scan . --output json --supply-chain --advanced 2>/dev/null | tee scan-result.json >/dev/null || echo '{}' > scan-result.json
 
           THREATS=$(jq '.Threats | length // 0' scan-result.json 2>/dev/null || echo 0)
           TOTAL=$(jq '.TotalPackages // 0' scan-result.json 2>/dev/null || echo 0)

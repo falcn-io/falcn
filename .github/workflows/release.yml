@@ -21,7 +21,7 @@ jobs:
           mkdir -p dist
           echo Building ${{ matrix.goos }} ${{ matrix.goarch }}
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
-            go build -ldflags='-w -s' -o dist/Falcn-${{ matrix.goos }}-${{ matrix.goarch }} .
+            go build -ldflags='-w -s' -o dist/falcn-${{ matrix.goos }}-${{ matrix.goarch }} .
       - name: Checksums
         run: |
           cd dist
@@ -29,7 +29,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Falcn-binaries
+          name: falcn-binaries
           path: dist/*
 
   publish-release:
@@ -43,7 +43,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: Falcn-binaries
+          name: falcn-binaries
           path: dist
       - name: Generate SARIF from sample project
         run: |
@@ -115,7 +115,7 @@ EOF
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/Falcn-api:latest
-            ghcr.io/${{ github.repository_owner }}/Falcn-api:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/falcn-api:latest
+            ghcr.io/${{ github.repository_owner }}/falcn-api:${{ github.ref_name }}
 
 

@@ -37,8 +37,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ github.event_name == 'workflow_dispatch' && inputs.image_name || format('{0}/Falcn', secrets.DOCKERHUB_USERNAME) }}:${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-            ${{ github.event_name == 'workflow_dispatch' && inputs.image_name || format('{0}/Falcn', secrets.DOCKERHUB_USERNAME) }}:latest
+            ${{ github.event_name == 'workflow_dispatch' && inputs.image_name || format('{0}/falcn', secrets.DOCKERHUB_USERNAME) }}:${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+            ${{ github.event_name == 'workflow_dispatch' && inputs.image_name || format('{0}/falcn', secrets.DOCKERHUB_USERNAME) }}:latest
 
 
 
