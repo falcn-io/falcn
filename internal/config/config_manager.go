@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v2"
 
 	"github.com/falcn-io/falcn/pkg/logger"

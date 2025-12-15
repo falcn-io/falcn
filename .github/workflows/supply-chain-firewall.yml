@@ -173,6 +173,6 @@ jobs:
         run: |
           echo "✅ Supply chain firewall check passed"
           echo "Risk score: ${{ steps.analysis.outputs.risk-score }}"
-          echo "No policy violations detected.
+          echo "No policy violations detected."
 
 
