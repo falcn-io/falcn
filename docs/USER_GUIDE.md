@@ -7,9 +7,9 @@
 
 ### From Source
 ```bash
-git clone https://github.com/falcn-io/Falcn.git
-cd Falcn
-go build -o Falcn .
+git clone https://github.com/falcn-io/falcn.git
+cd falcn
+go build -o falcn .
 ```
 
 ### Docker
@@ -21,13 +21,13 @@ docker pull vanali/falcn:latest
 docker run --rm -v $(pwd):/scan vanali/falcn scan /scan
 
 # Or build from source
-docker build -t Falcn . && docker run --rm -v $(pwd):/scan Falcn scan /scan
+docker build -t falcn . && docker run --rm -v $(pwd):/scan falcn scan /scan
 ```
 
 ## CLI Usage
 ```bash
-./Falcn version
-./Falcn scan . --output json --supply-chain --advanced
+./falcn version
+./falcn scan . --output json --supply-chain --advanced
 ```
 
 ### CLI Flags

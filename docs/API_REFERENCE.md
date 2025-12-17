@@ -14,8 +14,8 @@ go run main.go
 
 ### Docker
 ```bash
-docker build -t typo sentinel-api ./api
-docker run -p 8080:8080 Falcn-api
+docker build -t falcn-api ./api
+docker run -p 8080:8080 falcn-api
 ```
 
 ### Environment Variables

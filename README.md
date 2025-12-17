@@ -21,6 +21,19 @@
 
 **Falcn** is an enterprise-grade, privacy-first supply chain security platform. It combines deterministic heuristics, behavioral analysis, and local AI to explanation threats.
 
+## ⚡ Quick Install
+
+**Docker**
+```bash
+docker pull vanali/falcn:latest
+docker run --rm -v $(pwd):/scan vanali/falcn scan /scan
+```
+
+**Go**
+```bash
+go install github.com/falcn-io/falcn@latest
+```
+
 ## 🚀 Key Features
 
 ### 🔍 Advanced Detection

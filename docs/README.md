@@ -25,14 +25,14 @@ Download the latest release from [GitHub Releases](https://github.com/falcn-io/F
 
 ```bash
 # Linux
-wget https://github.com/falcn-io/Falcn/releases/latest/download/Falcn-linux-amd64
+wget https://github.com/falcn-io/falcn/releases/latest/download/falcn-linux-amd64
 chmod +x Falcn-linux-amd64
-sudo mv Falcn-linux-amd64 /usr/local/bin/Falcn
+sudo mv falcn-linux-amd64 /usr/local/bin/falcn
 
 # macOS
-wget https://github.com/falcn-io/Falcn/releases/latest/download/Falcn-darwin-amd64
+wget https://github.com/falcn-io/falcn/releases/latest/download/falcn-darwin-amd64
 chmod +x Falcn-darwin-amd64
-sudo mv Falcn-darwin-amd64 /usr/local/bin/Falcn
+sudo mv falcn-darwin-amd64 /usr/local/bin/falcn
 
 # Windows
 # Download Falcn-windows-amd64.exe and add to PATH
@@ -42,16 +42,16 @@ sudo mv Falcn-darwin-amd64 /usr/local/bin/Falcn
 
 ```bash
 git clone https://github.com/falcn-io/Falcn.git
-cd Falcn
+cd falcn
 make build
-# Binary will be created as ./Falcn
+# Binary will be created as ./falcn
 ```
 
 ### Docker
 
 ```bash
-docker pull Falcn:latest
-docker run --rm -v $(pwd):/workspace Falcn:latest scan /workspace
+docker pull vanali/falcn:latest
+docker run --rm -v $(pwd):/workspace vanali/falcn:latest scan /workspace
 ```
 
 ## 🔧 Quick Start
