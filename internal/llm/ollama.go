@@ -19,8 +19,12 @@ type OllamaProvider struct {
 }
 
 func NewOllamaProvider(cfg config.LLMConfig) *OllamaProvider {
+	endpoint := cfg.Endpoint
+	if endpoint == "" {
+		endpoint = "http://localhost:11434"
+	}
 	return &OllamaProvider{
-		endpoint: cfg.Endpoint,
+		endpoint: endpoint,
 		model:    cfg.Model,
 		client: &http.Client{
 			Timeout: 60 * time.Second,

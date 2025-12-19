@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/falcn-io/falcn/internal/analyzer"
@@ -21,7 +23,7 @@ var scanCmd = &cobra.Command{
 	Short: "Scan a project for typosquatting and malicious packages (auto-detects project types)",
 	Long: `Scan a project directory for typosquatting and malicious packages.
 
-Falcn automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
+TypoSentinel automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
 based on manifest files and creates appropriate registry connectors. Use --recursive for monorepos
 and multi-project directories. Specify --package-manager to limit scanning to specific ecosystems.`,
 	Args: cobra.MaximumNArgs(1),
@@ -179,6 +181,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Save scan results to database if database is configured
 	if dbErr := saveScanToDatabase(result, path); dbErr != nil {
 		log.Printf("Warning: Failed to save scan to database: %v", dbErr)
+	}
+
+	// Always save to local JSON for report command
+	if jsonBytes, err := json.MarshalIndent(result, "", "  "); err == nil {
+		_ = os.WriteFile("falcn_report.json", jsonBytes, 0644)
 	}
 
 	// Handle SBOM generation if requested

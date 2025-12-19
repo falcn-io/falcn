@@ -24,6 +24,8 @@ type EnhancedDetectionConfig struct {
 	KeyboardProximityWeight  float64
 	VisualSimilarityWeight   float64
 	PhoneticSimilarityWeight float64
+	JaroWinklerWeight        float64
+	SorensenDiceWeight       float64
 	MinSimilarityThreshold   float64
 	MaxEditDistance          int
 	EnableKeyboardAnalysis   bool
@@ -38,6 +40,8 @@ func NewEnhancedTyposquattingDetector() *EnhancedTyposquattingDetector {
 			KeyboardProximityWeight:  0.3,
 			VisualSimilarityWeight:   0.4,
 			PhoneticSimilarityWeight: 0.3,
+			JaroWinklerWeight:        0.3,
+			SorensenDiceWeight:       0.3,
 			MinSimilarityThreshold:   0.75,
 			MaxEditDistance:          3,
 			EnableKeyboardAnalysis:   true,
@@ -83,6 +87,10 @@ func (etd *EnhancedTyposquattingDetector) DetectEnhanced(target types.Dependency
 			}
 		}
 
+		if similarity < threshold {
+			continue
+		}
+
 		ms := etd.collectSignals(target, pkg)
 		reglc := strings.ToLower(target.Registry)
 		requireMS := viper.GetBool("detector.registry.require_multi_signal."+reglc) || viper.GetBool("detector.require_multi_signal")
@@ -104,42 +112,41 @@ func (etd *EnhancedTyposquattingDetector) DetectEnhanced(target types.Dependency
 				continue
 			}
 		}
-		if similarity >= threshold {
-			// Analyze the type of typosquatting
-			analysis := etd.analyzeTyposquattingType(target.Name, pkg)
 
-			// Check for advanced attack patterns
-			advancedPatterns := etd.detectAdvancedPatterns(target.Name, pkg)
+		// Analyze the type of typosquatting
+		analysis := etd.analyzeTyposquattingType(target.Name, pkg)
 
-			severity := etd.calculateSeverityEnhanced(similarity, analysis)
+		// Check for advanced attack patterns
+		advancedPatterns := etd.detectAdvancedPatterns(target.Name, pkg)
 
-			// Adjust severity based on advanced patterns
-			if len(advancedPatterns) > 0 {
-				severity = etd.escalateSeverity(severity)
-			}
-			if ms.LegitimacyStrong {
-				if severity > 0 {
-					severity--
-				}
-			}
+		severity := etd.calculateSeverityEnhanced(similarity, analysis)
 
-			threat := types.Threat{
-				ID:              generateThreatID(),
-				Package:         target.Name,
-				Version:         target.Version,
-				Registry:        target.Registry,
-				Type:            types.ThreatTypeTyposquatting,
-				Severity:        severity,
-				Confidence:      similarity,
-				Description:     etd.generateThreatDescription(target.Name, pkg, analysis),
-				SimilarTo:       pkg,
-				Recommendation:  etd.generateRecommendation(target.Name, pkg, advancedPatterns),
-				DetectedAt:      time.Now(),
-				DetectionMethod: "enhanced_typosquatting",
-				Evidence:        etd.generateEvidenceWithSignals(target.Name, pkg, analysis, ms),
-			}
-			threats = append(threats, threat)
+		// Adjust severity based on advanced patterns
+		if len(advancedPatterns) > 0 {
+			severity = etd.escalateSeverity(severity)
 		}
+		if ms.LegitimacyStrong {
+			if severity > 0 {
+				severity--
+			}
+		}
+
+		threat := types.Threat{
+			ID:              generateThreatID(),
+			Package:         target.Name,
+			Version:         target.Version,
+			Registry:        target.Registry,
+			Type:            types.ThreatTypeTyposquatting,
+			Severity:        severity,
+			Confidence:      similarity,
+			Description:     etd.generateThreatDescription(target.Name, pkg, analysis),
+			SimilarTo:       pkg,
+			Recommendation:  etd.generateRecommendation(target.Name, pkg, advancedPatterns),
+			DetectedAt:      time.Now(),
+			DetectionMethod: "enhanced_typosquatting",
+			Evidence:        etd.generateEvidenceWithSignals(target.Name, pkg, analysis, ms),
+		}
+		threats = append(threats, threat)
 	}
 
 	return threats
@@ -348,6 +355,16 @@ func (etd *EnhancedTyposquattingDetector) calculateEnhancedSimilarity(s1, s2 str
 		scores = append(scores, phoneticSim)
 		weights = append(weights, etd.config.PhoneticSimilarityWeight)
 	}
+
+	// Jaro-Winkler similarity
+	jwSim := etd.jaroWinklerSimilarity(s1Lower, s2Lower)
+	scores = append(scores, jwSim)
+	weights = append(weights, etd.config.JaroWinklerWeight)
+
+	// Sorensen-Dice similarity
+	sdSim := etd.sorensenDiceSimilarity(s1Lower, s2Lower)
+	scores = append(scores, sdSim)
+	weights = append(weights, etd.config.SorensenDiceWeight)
 
 	// Calculate weighted average
 	return etd.weightedAverage(scores, weights)

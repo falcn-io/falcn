@@ -798,6 +798,11 @@ func (m *Manager) setDefaults() {
 	viper.SetDefault("security.password_policy.min_length", 8)
 	viper.SetDefault("security.password_policy.require_upper", true)
 	viper.SetDefault("security.password_policy.require_lower", true)
+
+	// LLM defaults
+	viper.SetDefault("llm.provider", "ollama")
+	viper.SetDefault("llm.model", "llama3") // Default to a common model
+	viper.SetDefault("llm.endpoint", "http://localhost:11434")
 	viper.SetDefault("security.password_policy.require_digit", true)
 	viper.SetDefault("security.password_policy.require_symbol", false)
 	viper.SetDefault("security.csrf.enabled", false)

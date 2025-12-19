@@ -33,6 +33,8 @@
     "chai",
     "cypress",
     "aws-sdk",
+    "azure-sdk",
+    "@azure/storage-blob",
     "firebase",
     "googleapis",
     "mongoose",

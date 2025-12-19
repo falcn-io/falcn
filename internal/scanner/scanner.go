@@ -251,21 +251,28 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 	// Phase 3: Content & Network Analysis (File Level)
 	// Run this once per project, not per package
 	cs := NewContentScanner()
-	root := s.lastProjectPath
+	root := projectPath
 	if root == "" {
 		root, _ = os.Getwd()
 	}
 
-	logrus.Infof("DEBUG: Starting ContentScanner on root: %s", root)
+	logrus.Debugf("Starting ContentScanner on root: %s", root)
 	contentThreats, err := cs.ScanDirectory(root)
 	if err != nil {
-		logrus.Errorf("DEBUG: ContentScanner error: %v", err)
+		logrus.Errorf("ContentScanner error: %v", err)
 	}
-	logrus.Infof("DEBUG: ContentScanner found %d threats", len(contentThreats))
+	logrus.Debugf("ContentScanner found %d threats", len(contentThreats))
 
 	// Phase 4: Static Network Analysis
 	sna := NewStaticNetworkAnalyzer(root)
 	networkThreats, err := sna.ScanDirectory(root)
+
+	// Phase 5: CI/CD Pipeline Analysis
+	cicd := NewCICDScanner(root)
+	cicdThreats, errCicd := cicd.ScanProject()
+	if errCicd != nil {
+		logrus.Warnf("CICDScanner error: %v", errCicd)
+	}
 
 	// Aggregate file-level threats
 	var projectThreats []types.Threat
@@ -277,10 +284,13 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 			projectThreats = append(projectThreats, nt)
 		}
 	}
+	for _, cicd := range cicdThreats {
+		projectThreats = append(projectThreats, cicd)
+	}
 
 	// If we found file-level threats, attach them to a synthetic package
 	if len(projectThreats) > 0 {
-		logrus.Infof("DEBUG: Creating synthetic package for %d project threats", len(projectThreats))
+		logrus.Debugf("Creating synthetic package for %d project threats", len(projectThreats))
 		filesPkg := &types.Package{
 			Name:      "project-files",
 			Version:   "current",
@@ -1173,14 +1183,27 @@ func (s *Scanner) detectVersionAnomalies(pkg *types.Package) []*types.Threat {
 	var threats []*types.Threat
 
 	// Check for suspicious version jumps (e.g., 1.0.0 to 999.0.0)
-	if strings.HasPrefix(pkg.Version, "999") || strings.HasPrefix(pkg.Version, "9999") {
+	if strings.HasPrefix(pkg.Version, "99.") || strings.HasPrefix(pkg.Version, "999") || strings.HasPrefix(pkg.Version, "9999") {
 		threat := &types.Threat{
 			ID:          fmt.Sprintf("anomaly_%d", time.Now().UnixNano()),
 			Type:        "version_anomaly",
 			Severity:    types.SeverityHigh,
 			Confidence:  0.8,
-			Description: "Package uses suspiciously high version number",
+			Description: "Package uses suspiciously high version number (indicative of Dependency Confusion)",
 			Evidence:    []types.Evidence{{Type: "version", Value: pkg.Version}},
+		}
+		threats = append(threats, threat)
+	}
+
+	// Check for internal scope confusion
+	if strings.HasPrefix(pkg.Name, "@internal/") || strings.HasPrefix(pkg.Name, "@private/") {
+		threat := &types.Threat{
+			ID:          fmt.Sprintf("conf_%d", time.Now().UnixNano()),
+			Type:        "dependency_confusion",
+			Severity:    types.SeverityHigh,
+			Confidence:  0.7,
+			Description: fmt.Sprintf("Package '%s' claims internal scope but is found in public dependency list", pkg.Name),
+			Evidence:    []types.Evidence{{Type: "package_name", Value: pkg.Name}},
 		}
 		threats = append(threats, threat)
 	}
@@ -1192,7 +1215,12 @@ func (s *Scanner) detectVersionAnomalies(pkg *types.Package) []*types.Threat {
 func (s *Scanner) getPopularPackages(registry string) []string {
 	switch strings.ToLower(registry) {
 	case "npm":
-		return []string{"react", "react-dom", "lodash", "express", "axios", "webpack", "babel", "eslint", "typescript", "jquery", "moment", "next", "vue", "angular", "rxjs", "vite", "rollup", "yarn", "pnpm", "mocha", "jest", "chai", "sinon", "cross-env", "nodemon", "pm2"}
+		return []string{
+			"react", "react-dom", "lodash", "express", "axios", "webpack", "babel", "eslint",
+			"typescript", "jquery", "moment", "next", "vue", "angular", "rxjs", "vite", "rollup",
+			"yarn", "pnpm", "mocha", "jest", "chai", "sinon", "cross-env", "nodemon", "pm2",
+			"aws-sdk", "azure-sdk", "@azure/storage-blob", "firebase", "googleapis",
+		}
 	case "pypi":
 		return []string{"requests", "numpy", "pandas", "django", "flask", "tensorflow", "pytorch", "scikit-learn", "matplotlib", "pillow", "beautifulsoup4", "selenium", "pytest", "black", "flake8", "click", "jinja2", "sqlalchemy", "fastapi", "pydantic", "boto3", "redis", "celery", "gunicorn", "uvicorn", "httpx", "aiohttp", "typing-extensions", "setuptools", "wheel", "pip", "certifi", "urllib3", "charset-normalizer"}
 	case "rubygems":

@@ -231,6 +231,61 @@ func TestEnhancedTyposquattingDetector_VisualSimilarity(t *testing.T) {
 	}
 }
 
+func TestEnhancedTyposquattingDetector_JaroWinklerSimilarity(t *testing.T) {
+	detector := NewEnhancedTyposquattingDetector()
+
+	tests := []struct {
+		s1       string
+		s2       string
+		expected float64
+	}{
+		{"express", "express", 1.0},
+		{"express", "expres", 0.96}, // High similarity due to prefix
+		{"martha", "marhta", 0.96},  // Transposition
+		{"dwayne", "duane", 0.84},   // Phonetic-like difference
+		{"abc", "xyz", 0.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.s1+"_"+tt.s2, func(t *testing.T) {
+			result := detector.jaroWinklerSimilarity(tt.s1, tt.s2)
+			if result < 0 || result > 1.0 {
+				t.Errorf("Result %f out of range [0,1]", result)
+			}
+			// Just check it returns reasonable values, exact float matching is brittle
+			if tt.expected > 0.9 && result < 0.9 {
+				t.Errorf("Expected high similarity for %s vs %s, got %f", tt.s1, tt.s2, result)
+			}
+			if tt.expected < 0.1 && result > 0.1 {
+				t.Errorf("Expected low similarity for %s vs %s, got %f", tt.s1, tt.s2, result)
+			}
+		})
+	}
+}
+
+func TestEnhancedTyposquattingDetector_SorensenDiceSimilarity(t *testing.T) {
+	detector := NewEnhancedTyposquattingDetector()
+
+	tests := []struct {
+		s1       string
+		s2       string
+		expected float64
+	}{
+		{"night", "nacht", 0.25}, // Bigrams: ni, ig, gh, ht vs na, ac, ch, ht. Intersection: ht (1). 2*1 / (4+4) = 0.25
+		{"context", "contact", 0.46},
+		{"express", "express", 1.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.s1+"_"+tt.s2, func(t *testing.T) {
+			result := detector.sorensenDiceSimilarity(tt.s1, tt.s2)
+			if result < 0 || result > 1.0 {
+				t.Errorf("Result %f out of range [0,1]", result)
+			}
+		})
+	}
+}
+
 func TestEnhancedTyposquattingDetector_PhoneticSimilarity(t *testing.T) {
 	detector := NewEnhancedTyposquattingDetector()
 

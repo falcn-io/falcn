@@ -165,6 +165,7 @@ func (e *MetadataEnricher) enrichNPMPackage(ctx context.Context, pkg *types.Pack
 
 	// Update metadata with fetched information
 	pkg.Metadata.Description = npmData.Description
+	pkg.Metadata.Author = npmData.Author.Name
 	pkg.Metadata.Homepage = npmData.Homepage
 	pkg.Metadata.Repository = npmData.Repository.URL
 
