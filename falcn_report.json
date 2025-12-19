@@ -1,0 +1,2042 @@
+{
+  "scan_id": "scan_1766073796",
+  "timestamp": "2025-12-18T17:03:16.6496981+01:00",
+  "duration": 13358817600,
+  "path": "examples/enterprise-demo",
+  "total_packages": 14,
+  "packages": [
+    {
+      "name": "react",
+      "version": "18.2.0",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "572d8b4ebc25ded0c77e858d4f152138",
+          "package": "react",
+          "version": "18.2.0",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 0,
+          "confidence": 0.6292397660818713,
+          "description": "Possible typosquatting detected: react-dom is similar to react (unknown)",
+          "similar_to": "react-dom",
+          "recommendation": "Verify if you intended to use react instead of react-dom",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:19.0769074+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "meta_1766073799078185400",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for react",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.4000000000000001,
+      "metadata": {
+        "name": "react",
+        "version": "18.2.0",
+        "registry": "npm",
+        "description": "React is a JavaScript library for building user interfaces.",
+        "maintainers": [
+          "fb",
+          "react-bot"
+        ],
+        "homepage": "https://react.dev/",
+        "repository": "git+https://github.com/facebook/react.git",
+        "license": "MIT",
+        "created_at": "2011-10-26T17:46:21.942Z",
+        "updated_at": "2025-12-17T16:21:26.552Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "axios",
+      "version": "1.6.0",
+      "type": "production",
+      "registry": "npm",
+      "risk_level": 0,
+      "risk_score": 0,
+      "metadata": {
+        "name": "axios",
+        "version": "1.6.0",
+        "registry": "npm",
+        "description": "Promise based HTTP client for the browser and node.js",
+        "author": "Matt Zabriskie",
+        "maintainers": [
+          "mzabriskie",
+          "nickuraltsev",
+          "emilyemorehouse",
+          "jasonsaayman"
+        ],
+        "homepage": "https://axios-http.com",
+        "repository": "git+https://github.com/axios/axios.git",
+        "license": "MIT",
+        "created_at": "2014-08-29T23:08:36.81Z",
+        "updated_at": "2025-11-04T20:01:20.484Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "rceact",
+      "version": "18.2.0",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "0a51340cd618dcd4d36f914dbce711c7",
+          "package": "rceact",
+          "version": "18.2.0",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 3,
+          "confidence": 0.8159649122807017,
+          "description": "Possible typosquatting detected: react is similar to rceact (unknown)",
+          "similar_to": "react",
+          "recommendation": "Review usage of react carefully. Detected patterns: insertion_deletion",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[] [fb react-bot] true false false false false false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:19.3696686+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "meta_1766073799369668600",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for rceact",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.6666666666666666,
+      "metadata": {
+        "name": "rceact",
+        "version": "18.2.0",
+        "registry": "npm",
+        "description": "Package metadata will be fetched during analysis",
+        "created_at": "2025-12-18T17:03:16.652961+01:00",
+        "updated_at": "2025-12-18T17:03:16.652961+01:00",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "moment",
+      "version": "2.29.4",
+      "type": "production",
+      "registry": "npm",
+      "risk_level": 0,
+      "risk_score": 0,
+      "metadata": {
+        "name": "moment",
+        "version": "2.29.4",
+        "registry": "npm",
+        "description": "Parse, validate, manipulate, and display dates",
+        "author": "Iskren Ivov Chernev",
+        "maintainers": [
+          "ichernev",
+          "timrwood",
+          "mj1856",
+          "maggiepint",
+          "marwahaha"
+        ],
+        "homepage": "https://momentjs.com",
+        "repository": "git+https://github.com/moment/moment.git",
+        "license": "MIT",
+        "created_at": "2011-10-17T20:04:22.876Z",
+        "updated_at": "2025-10-14T04:55:02.871Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "expres",
+      "version": "4.18.2",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "9580d030feb1bd3c5eafaa0e230a3250",
+          "package": "expres",
+          "version": "4.18.2",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 3,
+          "confidence": 0.8833902939166096,
+          "description": "Possible typosquatting detected: express is similar to expres (unknown)",
+          "similar_to": "express",
+          "recommendation": "Review usage of express carefully. Detected patterns: insertion_deletion",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[cpsubrian] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:19.4598024+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for expres",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.9,
+      "metadata": {
+        "name": "expres",
+        "version": "4.18.2",
+        "registry": "npm",
+        "description": "Add express compatible methods to your response object",
+        "author": "Brian Link",
+        "maintainers": [
+          "cpsubrian"
+        ],
+        "repository": "git://github.com/cpsubrian/node-expres.git",
+        "created_at": "2012-10-10T03:49:52.879Z",
+        "updated_at": "2022-06-17T22:06:27.898Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "@internal/billing-core",
+      "version": "99.9.9",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "meta_1766073799462740800",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "anomaly_1766073799462740800",
+          "package": "",
+          "registry": "",
+          "type": "version_anomaly",
+          "severity": 2,
+          "confidence": 0.8,
+          "description": "Package uses suspiciously high version number (indicative of Dependency Confusion)",
+          "evidence": [
+            {
+              "type": "version",
+              "description": "",
+              "value": "99.9.9"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "conf_1766073799462740800",
+          "package": "",
+          "registry": "",
+          "type": "dependency_confusion",
+          "severity": 2,
+          "confidence": 0.7,
+          "description": "Package '@internal/billing-core' claims internal scope but is found in public dependency list",
+          "evidence": [
+            {
+              "type": "package_name",
+              "description": "",
+              "value": "@internal/billing-core"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.6,
+      "metadata": {
+        "name": "@internal/billing-core",
+        "version": "99.9.9",
+        "registry": "npm",
+        "description": "Package metadata will be fetched during analysis",
+        "created_at": "2025-12-18T17:03:16.652961+01:00",
+        "updated_at": "2025-12-18T17:03:16.652961+01:00",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "azure-sdk-js",
+      "version": "1.0.0",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "2784aa9e329fa7b432d067fa2f530a96",
+          "package": "azure-sdk-js",
+          "version": "1.0.0",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 1,
+          "confidence": 0.7961218836565096,
+          "description": "Possible typosquatting detected: azure-sdk is similar to azure-sdk-js (unknown)",
+          "similar_to": "azure-sdk",
+          "recommendation": "Verify if you intended to use azure-sdk-js instead of azure-sdk",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[] [] true false false false false false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.1385808+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "meta_1766073800139112500",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for azure-sdk-js",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.5,
+      "metadata": {
+        "name": "azure-sdk-js",
+        "version": "1.0.0",
+        "registry": "npm",
+        "description": "Package metadata will be fetched during analysis",
+        "created_at": "2025-12-18T17:03:16.652961+01:00",
+        "updated_at": "2025-12-18T17:03:16.652961+01:00",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "react-dom",
+      "version": "18.2.0",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "085baa3c276d76bd69e5a29996b57105",
+          "package": "react-dom",
+          "version": "18.2.0",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 0,
+          "confidence": 0.6292397660818713,
+          "description": "Possible typosquatting detected: react is similar to react-dom (unknown)",
+          "similar_to": "react",
+          "recommendation": "Verify if you intended to use react-dom instead of react",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.5167913+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "meta_1766073800517792800",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for react-dom",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.4000000000000001,
+      "metadata": {
+        "name": "react-dom",
+        "version": "18.2.0",
+        "registry": "npm",
+        "description": "React package for working with the DOM.",
+        "maintainers": [
+          "fb",
+          "react-bot"
+        ],
+        "homepage": "https://react.dev/",
+        "repository": "git+https://github.com/facebook/react.git",
+        "license": "MIT",
+        "created_at": "2014-05-06T18:59:36.16Z",
+        "updated_at": "2025-12-17T16:21:35.07Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "lodash",
+      "version": "4.17.21",
+      "type": "production",
+      "registry": "npm",
+      "risk_level": 0,
+      "risk_score": 0,
+      "metadata": {
+        "name": "lodash",
+        "version": "4.17.21",
+        "registry": "npm",
+        "description": "Lodash modular utilities.",
+        "author": "John-David Dalton",
+        "maintainers": [
+          "mathias",
+          "jdalton",
+          "bnjmnt4n"
+        ],
+        "homepage": "https://lodash.com/",
+        "repository": "git+https://github.com/lodash/lodash.git",
+        "license": "MIT",
+        "created_at": "2012-04-23T16:37:11.912Z",
+        "updated_at": "2025-11-24T02:31:17.803Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "loadsh",
+      "version": "4.17.21",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "da19fa3a67233b3c58e4840668865fa7",
+          "package": "loadsh",
+          "version": "4.17.21",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 1,
+          "confidence": 0.6912280701754386,
+          "description": "Possible typosquatting detected: lodash is similar to loadsh (unknown)",
+          "similar_to": "lodash",
+          "recommendation": "Verify if you intended to use loadsh instead of lodash",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[npm] [mathias jdalton bnjmnt4n] true false false false false false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.5920852+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for loadsh",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.65,
+      "metadata": {
+        "name": "loadsh",
+        "version": "4.17.21",
+        "registry": "npm",
+        "description": "Lodash modular utilities.",
+        "author": "John-David Dalton",
+        "maintainers": [
+          "npm"
+        ],
+        "homepage": "https://lodash.com/",
+        "repository": "git+https://github.com/lodash/lodash.git",
+        "license": "MIT",
+        "created_at": "2018-09-13T06:41:39.649Z",
+        "updated_at": "2022-12-13T02:39:28.282Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "chalk",
+      "version": "4.1.2",
+      "type": "production",
+      "registry": "npm",
+      "threats": [
+        {
+          "id": "45c4febf3f7168d7d1ad4c62b7f7e724",
+          "package": "chalk",
+          "version": "4.1.2",
+          "registry": "npm",
+          "type": "typosquatting",
+          "severity": 1,
+          "confidence": 0.6989097744360903,
+          "description": "Possible typosquatting detected: chai is similar to chalk (unknown)",
+          "similar_to": "chai",
+          "recommendation": "Verify if you intended to use chalk instead of chai",
+          "evidence": [
+            {
+              "type": "similarity",
+              "description": "Typosquatting analysis result",
+              "value": "unknown"
+            },
+            {
+              "type": "signals",
+              "description": "Multi-signal analysis",
+              "value": "{[sindresorhus] [chaijs] true false false false false false}"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.6703505+01:00",
+          "detection_method": "enhanced_typosquatting"
+        },
+        {
+          "id": "meta_1766073800670350500",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "enterprise_policy",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "policy violation: typosquat requires multi-signal gating for chalk",
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": "opa_policy"
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.5,
+      "metadata": {
+        "name": "chalk",
+        "version": "4.1.2",
+        "registry": "npm",
+        "description": "Terminal string styling done right",
+        "maintainers": [
+          "sindresorhus"
+        ],
+        "homepage": "https://github.com/chalk/chalk#readme",
+        "repository": "git+https://github.com/chalk/chalk.git",
+        "license": "MIT",
+        "created_at": "2013-08-03T00:21:56.318Z",
+        "updated_at": "2025-10-29T23:18:03.554Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "express",
+      "version": "4.18.2",
+      "type": "production",
+      "registry": "npm",
+      "risk_level": 0,
+      "risk_score": 0,
+      "metadata": {
+        "name": "express",
+        "version": "4.18.2",
+        "registry": "npm",
+        "description": "Fast, unopinionated, minimalist web framework",
+        "author": "TJ Holowaychuk",
+        "maintainers": [
+          "wesleytodd",
+          "jonchurch",
+          "ctcpip",
+          "ulisesgascon",
+          "sheplu"
+        ],
+        "homepage": "https://expressjs.com/",
+        "repository": "git+https://github.com/expressjs/express.git",
+        "license": "MIT",
+        "created_at": "2010-12-29T19:38:25.45Z",
+        "updated_at": "2025-12-09T14:09:18.752Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "ci-cd-infrastructure",
+      "version": "latest",
+      "type": "infrastructure",
+      "registry": "internal",
+      "threats": [
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "self_hosted_runner",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
+          "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
+          "evidence": [
+            {
+              "type": "workflow_file",
+              "description": "GitHub Actions workflow",
+              "value": "deploy.yml"
+            },
+            {
+              "type": "runner_type",
+              "description": "Runner configuration",
+              "value": "self-hosted"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:16.6524015+01:00",
+          "detection_method": "cicd_analysis",
+          "metadata": {
+            "file_name": "deploy.yml",
+            "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "cicd_injection",
+          "severity": 3,
+          "confidence": 0.95,
+          "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
+          "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
+          "evidence": [
+            {
+              "type": "workflow_file",
+              "description": "GitHub Actions workflow",
+              "value": "deploy.yml"
+            },
+            {
+              "type": "injection_patterns",
+              "description": "Vulnerable expressions",
+              "value": "github.event.issue.title; github.event.comment.body"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:16.6524015+01:00",
+          "detection_method": "cicd_analysis",
+          "metadata": {
+            "file_name": "deploy.yml",
+            "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
+            "injections": [
+              "github.event.issue.title",
+              "github.event.comment.body"
+            ]
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "c2_channel",
+          "severity": 2,
+          "confidence": 0.8,
+          "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
+          "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
+          "evidence": [
+            {
+              "type": "workflow_file",
+              "description": "GitHub Actions workflow",
+              "value": "deploy.yml"
+            },
+            {
+              "type": "trigger_type",
+              "description": "Workflow trigger",
+              "value": "discussion/issues"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:16.6524015+01:00",
+          "detection_method": "cicd_analysis",
+          "metadata": {
+            "file_name": "deploy.yml",
+            "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+          }
+        },
+        {
+          "id": "meta_1766073800674696700",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.7000000000000001,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "project-files",
+      "version": "current",
+      "type": "source",
+      "registry": "internal",
+      "threats": [
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "runtime_exfiltration",
+          "severity": 2,
+          "confidence": 0.8,
+          "description": "File 'index.js' contains potential data exfiltration patterns",
+          "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+          "evidence": [
+            {
+              "type": "network_patterns",
+              "description": "Detected network indicators",
+              "value": "Connections to unknown domains: azur-cloud-storage.com"
+            },
+            {
+              "type": "file",
+              "description": "Source file",
+              "value": "index.js"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.6826789+01:00",
+          "detection_method": "static_network_analysis",
+          "metadata": {
+            "file_path": "node_modules\\azure-sdk-js\\index.js",
+            "indicators": [
+              "Connections to unknown domains: azur-cloud-storage.com"
+            ]
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "runtime_exfiltration",
+          "severity": 2,
+          "confidence": 0.8,
+          "description": "File 'analytics.js' contains potential data exfiltration patterns",
+          "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+          "evidence": [
+            {
+              "type": "network_patterns",
+              "description": "Detected network indicators",
+              "value": "Connections to unknown domains: malicious-site.com"
+            },
+            {
+              "type": "file",
+              "description": "Source file",
+              "value": "analytics.js"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.6826789+01:00",
+          "detection_method": "static_network_analysis",
+          "metadata": {
+            "file_path": "src\\analytics.js",
+            "indicators": [
+              "Connections to unknown domains: malicious-site.com"
+            ]
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "beacon_activity",
+          "severity": 2,
+          "confidence": 0.7,
+          "description": "File 'updater.js' contains potential beacon/C2 pattern (periodic network activity)",
+          "recommendation": "Packages should not make periodic network requests. This pattern is often used for command-and-control communication.",
+          "evidence": [
+            {
+              "type": "beacon_pattern",
+              "description": "setInterval + network calls",
+              "value": "Detected"
+            },
+            {
+              "type": "file",
+              "description": "Source file",
+              "value": "updater.js"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.683207+01:00",
+          "detection_method": "static_network_analysis",
+          "metadata": {
+            "file_path": "src\\lib\\updater.js"
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "self_hosted_runner",
+          "severity": 2,
+          "confidence": 0.9,
+          "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
+          "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
+          "evidence": [
+            {
+              "type": "workflow_file",
+              "description": "GitHub Actions workflow",
+              "value": "deploy.yml"
+            },
+            {
+              "type": "runner_type",
+              "description": "Runner configuration",
+              "value": "self-hosted"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.6837328+01:00",
+          "detection_method": "cicd_analysis",
+          "metadata": {
+            "file_name": "deploy.yml",
+            "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "cicd_injection",
+          "severity": 3,
+          "confidence": 0.95,
+          "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
+          "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
+          "evidence": [
+            {
+              "type": "workflow_file",
+              "description": "GitHub Actions workflow",
+              "value": "deploy.yml"
+            },
+            {
+              "type": "injection_patterns",
+              "description": "Vulnerable expressions",
+              "value": "github.event.issue.title; github.event.comment.body"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.6837328+01:00",
+          "detection_method": "cicd_analysis",
+          "metadata": {
+            "file_name": "deploy.yml",
+            "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
+            "injections": [
+              "github.event.issue.title",
+              "github.event.comment.body"
+            ]
+          }
+        },
+        {
+          "id": "",
+          "package": "",
+          "registry": "",
+          "type": "c2_channel",
+          "severity": 2,
+          "confidence": 0.8,
+          "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
+          "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
+          "evidence": [
+            {
+              "type": "workflow_file",
+              "description": "GitHub Actions workflow",
+              "value": "deploy.yml"
+            },
+            {
+              "type": "trigger_type",
+              "description": "Workflow trigger",
+              "value": "discussion/issues"
+            }
+          ],
+          "detected_at": "2025-12-18T17:03:20.6837328+01:00",
+          "detection_method": "cicd_analysis",
+          "metadata": {
+            "file_name": "deploy.yml",
+            "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+          }
+        }
+      ],
+      "risk_level": 2,
+      "risk_score": 0.8333333333333334,
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    }
+  ],
+  "threats": [
+    {
+      "id": "572d8b4ebc25ded0c77e858d4f152138",
+      "package": "react",
+      "version": "18.2.0",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 0,
+      "confidence": 0.6292397660818713,
+      "description": "Possible typosquatting detected: react-dom is similar to react (unknown)",
+      "similar_to": "react-dom",
+      "recommendation": "Verify if you intended to use react instead of react-dom",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:19.0769074+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "meta_1766073799078185400",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for react",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "0a51340cd618dcd4d36f914dbce711c7",
+      "package": "rceact",
+      "version": "18.2.0",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 3,
+      "confidence": 0.8159649122807017,
+      "description": "Possible typosquatting detected: react is similar to rceact (unknown)",
+      "similar_to": "react",
+      "recommendation": "Review usage of react carefully. Detected patterns: insertion_deletion",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[] [fb react-bot] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:19.3696686+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "meta_1766073799369668600",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for rceact",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "9580d030feb1bd3c5eafaa0e230a3250",
+      "package": "expres",
+      "version": "4.18.2",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 3,
+      "confidence": 0.8833902939166096,
+      "description": "Possible typosquatting detected: express is similar to expres (unknown)",
+      "similar_to": "express",
+      "recommendation": "Review usage of express carefully. Detected patterns: insertion_deletion",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[cpsubrian] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:19.4598024+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for expres",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "meta_1766073799462740800",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "anomaly_1766073799462740800",
+      "package": "",
+      "registry": "",
+      "type": "version_anomaly",
+      "severity": 2,
+      "confidence": 0.8,
+      "description": "Package uses suspiciously high version number (indicative of Dependency Confusion)",
+      "evidence": [
+        {
+          "type": "version",
+          "description": "",
+          "value": "99.9.9"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "conf_1766073799462740800",
+      "package": "",
+      "registry": "",
+      "type": "dependency_confusion",
+      "severity": 2,
+      "confidence": 0.7,
+      "description": "Package '@internal/billing-core' claims internal scope but is found in public dependency list",
+      "evidence": [
+        {
+          "type": "package_name",
+          "description": "",
+          "value": "@internal/billing-core"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "2784aa9e329fa7b432d067fa2f530a96",
+      "package": "azure-sdk-js",
+      "version": "1.0.0",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7961218836565096,
+      "description": "Possible typosquatting detected: azure-sdk is similar to azure-sdk-js (unknown)",
+      "similar_to": "azure-sdk",
+      "recommendation": "Verify if you intended to use azure-sdk-js instead of azure-sdk",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[] [] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.1385808+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "meta_1766073800139112500",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for azure-sdk-js",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "085baa3c276d76bd69e5a29996b57105",
+      "package": "react-dom",
+      "version": "18.2.0",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 0,
+      "confidence": 0.6292397660818713,
+      "description": "Possible typosquatting detected: react is similar to react-dom (unknown)",
+      "similar_to": "react",
+      "recommendation": "Verify if you intended to use react-dom instead of react",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.5167913+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "meta_1766073800517792800",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for react-dom",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "da19fa3a67233b3c58e4840668865fa7",
+      "package": "loadsh",
+      "version": "4.17.21",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.6912280701754386,
+      "description": "Possible typosquatting detected: lodash is similar to loadsh (unknown)",
+      "similar_to": "lodash",
+      "recommendation": "Verify if you intended to use loadsh instead of lodash",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[npm] [mathias jdalton bnjmnt4n] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.5920852+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for loadsh",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "45c4febf3f7168d7d1ad4c62b7f7e724",
+      "package": "chalk",
+      "version": "4.1.2",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.6989097744360903,
+      "description": "Possible typosquatting detected: chai is similar to chalk (unknown)",
+      "similar_to": "chai",
+      "recommendation": "Verify if you intended to use chalk instead of chai",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[sindresorhus] [chaijs] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.6703505+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "meta_1766073800670350500",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "enterprise_policy",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "policy violation: typosquat requires multi-signal gating for chalk",
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": "opa_policy"
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "self_hosted_runner",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
+      "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
+      "evidence": [
+        {
+          "type": "workflow_file",
+          "description": "GitHub Actions workflow",
+          "value": "deploy.yml"
+        },
+        {
+          "type": "runner_type",
+          "description": "Runner configuration",
+          "value": "self-hosted"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:16.6524015+01:00",
+      "detection_method": "cicd_analysis",
+      "metadata": {
+        "file_name": "deploy.yml",
+        "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "cicd_injection",
+      "severity": 3,
+      "confidence": 0.95,
+      "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
+      "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
+      "evidence": [
+        {
+          "type": "workflow_file",
+          "description": "GitHub Actions workflow",
+          "value": "deploy.yml"
+        },
+        {
+          "type": "injection_patterns",
+          "description": "Vulnerable expressions",
+          "value": "github.event.issue.title; github.event.comment.body"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:16.6524015+01:00",
+      "detection_method": "cicd_analysis",
+      "metadata": {
+        "file_name": "deploy.yml",
+        "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
+        "injections": [
+          "github.event.issue.title",
+          "github.event.comment.body"
+        ]
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "c2_channel",
+      "severity": 2,
+      "confidence": 0.8,
+      "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
+      "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
+      "evidence": [
+        {
+          "type": "workflow_file",
+          "description": "GitHub Actions workflow",
+          "value": "deploy.yml"
+        },
+        {
+          "type": "trigger_type",
+          "description": "Workflow trigger",
+          "value": "discussion/issues"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:16.6524015+01:00",
+      "detection_method": "cicd_analysis",
+      "metadata": {
+        "file_name": "deploy.yml",
+        "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+      }
+    },
+    {
+      "id": "meta_1766073800674696700",
+      "package": "",
+      "registry": "",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
+      "evidence": [
+        {
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
+        }
+      ],
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "runtime_exfiltration",
+      "severity": 2,
+      "confidence": 0.8,
+      "description": "File 'index.js' contains potential data exfiltration patterns",
+      "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+      "evidence": [
+        {
+          "type": "network_patterns",
+          "description": "Detected network indicators",
+          "value": "Connections to unknown domains: azur-cloud-storage.com"
+        },
+        {
+          "type": "file",
+          "description": "Source file",
+          "value": "index.js"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.6826789+01:00",
+      "detection_method": "static_network_analysis",
+      "metadata": {
+        "file_path": "node_modules\\azure-sdk-js\\index.js",
+        "indicators": [
+          "Connections to unknown domains: azur-cloud-storage.com"
+        ]
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "runtime_exfiltration",
+      "severity": 2,
+      "confidence": 0.8,
+      "description": "File 'analytics.js' contains potential data exfiltration patterns",
+      "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+      "evidence": [
+        {
+          "type": "network_patterns",
+          "description": "Detected network indicators",
+          "value": "Connections to unknown domains: malicious-site.com"
+        },
+        {
+          "type": "file",
+          "description": "Source file",
+          "value": "analytics.js"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.6826789+01:00",
+      "detection_method": "static_network_analysis",
+      "metadata": {
+        "file_path": "src\\analytics.js",
+        "indicators": [
+          "Connections to unknown domains: malicious-site.com"
+        ]
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "beacon_activity",
+      "severity": 2,
+      "confidence": 0.7,
+      "description": "File 'updater.js' contains potential beacon/C2 pattern (periodic network activity)",
+      "recommendation": "Packages should not make periodic network requests. This pattern is often used for command-and-control communication.",
+      "evidence": [
+        {
+          "type": "beacon_pattern",
+          "description": "setInterval + network calls",
+          "value": "Detected"
+        },
+        {
+          "type": "file",
+          "description": "Source file",
+          "value": "updater.js"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.683207+01:00",
+      "detection_method": "static_network_analysis",
+      "metadata": {
+        "file_path": "src\\lib\\updater.js"
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "self_hosted_runner",
+      "severity": 2,
+      "confidence": 0.9,
+      "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
+      "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
+      "evidence": [
+        {
+          "type": "workflow_file",
+          "description": "GitHub Actions workflow",
+          "value": "deploy.yml"
+        },
+        {
+          "type": "runner_type",
+          "description": "Runner configuration",
+          "value": "self-hosted"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.6837328+01:00",
+      "detection_method": "cicd_analysis",
+      "metadata": {
+        "file_name": "deploy.yml",
+        "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "cicd_injection",
+      "severity": 3,
+      "confidence": 0.95,
+      "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
+      "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
+      "evidence": [
+        {
+          "type": "workflow_file",
+          "description": "GitHub Actions workflow",
+          "value": "deploy.yml"
+        },
+        {
+          "type": "injection_patterns",
+          "description": "Vulnerable expressions",
+          "value": "github.event.issue.title; github.event.comment.body"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.6837328+01:00",
+      "detection_method": "cicd_analysis",
+      "metadata": {
+        "file_name": "deploy.yml",
+        "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
+        "injections": [
+          "github.event.issue.title",
+          "github.event.comment.body"
+        ]
+      }
+    },
+    {
+      "id": "",
+      "package": "",
+      "registry": "",
+      "type": "c2_channel",
+      "severity": 2,
+      "confidence": 0.8,
+      "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
+      "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
+      "evidence": [
+        {
+          "type": "workflow_file",
+          "description": "GitHub Actions workflow",
+          "value": "deploy.yml"
+        },
+        {
+          "type": "trigger_type",
+          "description": "Workflow trigger",
+          "value": "discussion/issues"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:20.6837328+01:00",
+      "detection_method": "cicd_analysis",
+      "metadata": {
+        "file_name": "deploy.yml",
+        "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
+      }
+    },
+    {
+      "id": "5a30bf375c3ae25da0794004443145ea",
+      "package": "rceact",
+      "version": "unknown",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 3,
+      "confidence": 0.8159649122807017,
+      "description": "Possible typosquatting detected: react is similar to rceact (unknown)",
+      "similar_to": "react",
+      "recommendation": "Review usage of react carefully. Detected patterns: insertion_deletion",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[] [fb react-bot] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:21.0788764+01:00",
+      "detection_method": "enhanced_typosquatting",
+      "metadata": {
+        "ai_explanation": "The threat evidence provided suggests that there may be a typosquatting attack on the popular React library, which could lead to an unauthorized package being installed in the software supply chain. This is dangerous because it allows an attacker to gain access to a trusted component of the application, such as React, and potentially inject malicious code or data. Once installed, this package could have unintended consequences, including stealing sensitive data, modifying application behavior, or even completely taking over the application. By installing a malicious package, an attacker can gain a foothold in the system and move laterally to other parts of the network, causing significant damage. Therefore, it is essential to verify the authenticity of all packages in the software supply chain to prevent such attacks."
+      }
+    },
+    {
+      "id": "41c77becbac31ed839c8d5aaeb3ffaa4",
+      "package": "expres",
+      "version": "unknown",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 3,
+      "confidence": 0.8833902939166096,
+      "description": "Possible typosquatting detected: express is similar to expres (unknown)",
+      "similar_to": "express",
+      "recommendation": "Review usage of express carefully. Detected patterns: insertion_deletion",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[cpsubrian] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:21.1552876+01:00",
+      "detection_method": "enhanced_typosquatting",
+      "metadata": {
+        "ai_explanation": "The potential software supply chain security threat posed by the \"expres\" package is dangerous because it leverages typosquatting, a common attack vector in which an attacker creates a malicious package with a similar name to a legitimate one. In this case, the malicious package \"expres\" is designed to resemble the popular package \"express\", which is likely to be trusted by users and organizations. If installed, the malicious package could potentially execute malicious code or steal sensitive information, compromising the security of the system or application. Additionally, the attacker could use this vulnerability to gain persistence on the target system, allowing them to maintain access even after the initial compromise."
+      }
+    },
+    {
+      "id": "c74b49a02576de42609858c6920f3c3b",
+      "package": "azure-sdk-js",
+      "version": "unknown",
+      "registry": "npm",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7961218836565096,
+      "description": "Possible typosquatting detected: azure-sdk is similar to azure-sdk-js (unknown)",
+      "similar_to": "azure-sdk",
+      "recommendation": "Verify if you intended to use azure-sdk-js instead of azure-sdk",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[] [] true false false false false false}"
+        }
+      ],
+      "detected_at": "2025-12-18T17:03:21.213403+01:00",
+      "detection_method": "enhanced_typosquatting",
+      "metadata": {
+        "ai_explanation": "This threat is dangerous because it exploits a common security vulnerability in software supply chains known as typosquatting. Typosquatting occurs when an attacker creates a malicious package with a similar name to a legitimate package, tricking users into installing the wrong package. In this case, the attacker created \"azure-sdk-js\" with a slight variation from the legitimate \"azure-sdk\", which could be confusing for developers who are used to the original package.\n\nIf installed, the malicious package \"azure-sdk-js\" could potentially expose sensitive data or system functionality to the attacker, as it masquerades as a trusted package. For example, it could steal login credentials, inject malware, or gain unauthorized access to sensitive data. This is particularly concerning in software supply chains where packages are often developed and maintained by multiple parties, making it difficult to track changes and ensure their integrity."
+      }
+    }
+  ],
+  "warnings": null,
+  "resolution": {
+    "resolved": [
+      {
+        "name": "@internal/billing-core",
+        "version": "99.9.9",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "axios",
+        "version": "1.6.0",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "azure-sdk-js",
+        "version": "1.0.0",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "chalk",
+        "version": "4.1.2",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "ci-cd-infrastructure",
+        "version": "latest",
+        "registry": "internal",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "expres",
+        "version": "4.18.2",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "express",
+        "version": "4.18.2",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "loadsh",
+        "version": "4.17.21",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "lodash",
+        "version": "4.17.21",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "moment",
+        "version": "2.29.4",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "project-files",
+        "version": "current",
+        "registry": "internal",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "rceact",
+        "version": "18.2.0",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "react",
+        "version": "18.2.0",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      },
+      {
+        "name": "react-dom",
+        "version": "18.2.0",
+        "registry": "npm",
+        "source": "scanner",
+        "direct": true,
+        "development": false,
+        "metadata": {
+          "name": "",
+          "version": "",
+          "registry": "",
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "0001-01-01T00:00:00Z",
+          "has_install_script": false
+        }
+      }
+    ],
+    "conflicts": [],
+    "warnings": []
+  },
+  "summary": {
+    "critical_threats": 6,
+    "high_threats": 16,
+    "medium_threats": 4,
+    "low_threats": 9,
+    "total_warnings": 0,
+    "clean_packages": -21,
+    "conflict_count": 0
+  },
+  "metadata": {}
+}

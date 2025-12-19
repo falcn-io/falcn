@@ -132,3 +132,5 @@ require (
 )
 
 replace github.com/falcn-io/falcn => .
+
+replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20240701130421-f6361c86f094
