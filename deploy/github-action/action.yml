@@ -1,0 +1,215 @@
+name: 'Falcn Supply Chain Security Scanner'
+description: 'Detect malicious packages, typosquatting, and supply chain threats in your dependency tree'
+author: 'Falcn Security'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  path:
+    description: 'Path to scan (defaults to repository root)'
+    required: false
+    default: '.'
+
+  threshold:
+    description: 'Minimum risk score to flag (0.0–1.0)'
+    required: false
+    default: '0.7'
+
+  fail-on:
+    description: 'Severity level that causes a non-zero exit (critical|high|medium|low)'
+    required: false
+    default: 'high'
+
+  output-format:
+    description: 'Report format (json|sarif|table)'
+    required: false
+    default: 'table'
+
+  output-file:
+    description: 'Write report to this file (optional)'
+    required: false
+    default: ''
+
+  no-llm:
+    description: 'Disable LLM-powered threat explanations'
+    required: false
+    default: 'true'
+
+  fast-mode:
+    description: 'Heuristics-only mode, target <100ms per package'
+    required: false
+    default: 'false'
+
+  version:
+    description: 'Falcn binary version to use (e.g. v0.5.0). Leave empty for latest.'
+    required: false
+    default: ''
+
+  token:
+    description: 'GitHub token for PR annotations (uses GITHUB_TOKEN by default)'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  threat-count:
+    description: 'Number of threats found'
+    value: ${{ steps.scan.outputs.threat-count }}
+
+  critical-count:
+    description: 'Number of critical-severity threats'
+    value: ${{ steps.scan.outputs.critical-count }}
+
+  high-count:
+    description: 'Number of high-severity threats'
+    value: ${{ steps.scan.outputs.high-count }}
+
+  report-path:
+    description: 'Path to the generated report file (if output-file was set)'
+    value: ${{ steps.scan.outputs.report-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache Falcn binary
+      id: cache-falcn
+      uses: actions/cache@v4
+      with:
+        path: ~/.falcn/bin
+        key: falcn-${{ inputs.version || 'latest' }}-${{ runner.os }}-${{ runner.arch }}
+
+    - name: Install Falcn
+      if: steps.cache-falcn.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        INSTALL_DIR="${HOME}/.falcn/bin"
+        mkdir -p "${INSTALL_DIR}"
+
+        VERSION="${{ inputs.version }}"
+        OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+        ARCH="$(uname -m)"
+        case "${ARCH}" in
+          x86_64)  ARCH="amd64" ;;
+          aarch64) ARCH="arm64" ;;
+          arm64)   ARCH="arm64" ;;
+        esac
+
+        if [ -z "${VERSION}" ]; then
+          VERSION="$(curl -fsSL https://api.github.com/repos/falcn-io/falcn/releases/latest \
+            | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')"
+        fi
+
+        BINARY="falcn_${VERSION}_${OS}_${ARCH}"
+        DOWNLOAD_URL="https://github.com/falcn-io/falcn/releases/download/${VERSION}/${BINARY}.tar.gz"
+
+        echo "Downloading Falcn ${VERSION} (${OS}/${ARCH})..."
+        curl -fsSL "${DOWNLOAD_URL}" | tar -xz -C "${INSTALL_DIR}"
+        chmod +x "${INSTALL_DIR}/falcn"
+        echo "Falcn ${VERSION} installed to ${INSTALL_DIR}"
+
+    - name: Add Falcn to PATH
+      shell: bash
+      run: echo "${HOME}/.falcn/bin" >> "$GITHUB_PATH"
+
+    - name: Run Falcn scan
+      id: scan
+      shell: bash
+      env:
+        FALCN_TOKEN: ${{ inputs.token }}
+        FALCN_OUTPUT_FORMAT: ${{ inputs.output-format }}
+      run: |
+        set -euo pipefail
+
+        SCAN_ARGS=("${{ inputs.path }}")
+        SCAN_ARGS+=("--threshold" "${{ inputs.threshold }}")
+        SCAN_ARGS+=("--output" "${{ inputs.output-format }}")
+
+        if [ "${{ inputs.no-llm }}" = "true" ]; then
+          SCAN_ARGS+=("--no-llm")
+        fi
+
+        if [ "${{ inputs.fast-mode }}" = "true" ]; then
+          SCAN_ARGS+=("--fast")
+        fi
+
+        OUTPUT_FILE="${{ inputs.output-file }}"
+        if [ -n "${OUTPUT_FILE}" ]; then
+          SCAN_ARGS+=("--report" "${OUTPUT_FILE}")
+        fi
+
+        # Run scan and capture exit code
+        set +e
+        falcn scan "${SCAN_ARGS[@]}" 2>&1 | tee /tmp/falcn-output.txt
+        SCAN_EXIT=$?
+        set -e
+
+        # Extract metrics from JSON report if available
+        THREAT_COUNT=0
+        CRITICAL_COUNT=0
+        HIGH_COUNT=0
+
+        if [ -n "${OUTPUT_FILE}" ] && [ -f "${OUTPUT_FILE}" ]; then
+          THREAT_COUNT=$(jq -r '.summary.total_threats // 0' "${OUTPUT_FILE}" 2>/dev/null || echo "0")
+          CRITICAL_COUNT=$(jq -r '.summary.critical_count // 0' "${OUTPUT_FILE}" 2>/dev/null || echo "0")
+          HIGH_COUNT=$(jq -r '.summary.high_count // 0' "${OUTPUT_FILE}" 2>/dev/null || echo "0")
+        fi
+
+        echo "threat-count=${THREAT_COUNT}" >> "$GITHUB_OUTPUT"
+        echo "critical-count=${CRITICAL_COUNT}" >> "$GITHUB_OUTPUT"
+        echo "high-count=${HIGH_COUNT}" >> "$GITHUB_OUTPUT"
+        echo "report-path=${OUTPUT_FILE}" >> "$GITHUB_OUTPUT"
+
+        # Fail check based on threshold
+        FAIL_ON="${{ inputs.fail-on }}"
+        case "${FAIL_ON}" in
+          critical)
+            [ "${CRITICAL_COUNT}" -eq 0 ] || exit 1 ;;
+          high)
+            [ "${CRITICAL_COUNT}" -eq 0 ] && [ "${HIGH_COUNT}" -eq 0 ] || exit 1 ;;
+          *)
+            exit ${SCAN_EXIT} ;;
+        esac
+
+    - name: Annotate PR with threats
+      if: github.event_name == 'pull_request' && steps.scan.outputs.threat-count != '0'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        OUTPUT_FILE="${{ inputs.output-file }}"
+        if [ -z "${OUTPUT_FILE}" ] || [ ! -f "${OUTPUT_FILE}" ]; then
+          echo "No report file available for PR annotation"
+          exit 0
+        fi
+
+        # Build PR comment body from JSON report
+        THREATS=$(jq -r '
+          .packages[]?
+          | select(.threats | length > 0)
+          | .threats[]
+          | "| \(.severity | ascii_upcase) | \(.type) | \(.package // "project") | \(.description[:80]) |"
+        ' "${OUTPUT_FILE}" 2>/dev/null | head -50)
+
+        if [ -z "${THREATS}" ]; then
+          exit 0
+        fi
+
+        BODY="## Falcn Supply Chain Security Report
+
+        **Threats found:** ${{ steps.scan.outputs.threat-count }} (${{ steps.scan.outputs.critical-count }} critical, ${{ steps.scan.outputs.high-count }} high)
+
+        | Severity | Type | Package | Description |
+        |----------|------|---------|-------------|
+        ${THREATS}
+
+        > Generated by [Falcn](https://github.com/falcn-io/falcn) supply chain security scanner."
+
+        gh pr comment "${{ github.event.pull_request.number }}" \
+          --repo "${{ github.repository }}" \
+          --body "${BODY}" \
+          --edit-last 2>/dev/null || \
+        gh pr comment "${{ github.event.pull_request.number }}" \
+          --repo "${{ github.repository }}" \
+          --body "${BODY}"

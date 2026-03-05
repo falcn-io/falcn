@@ -153,8 +153,24 @@ func (ci *CacheIntegration) CacheScanResult(key string, result *types.ScanResult
 
 // GenerateScanKey generates a cache key for scan results
 func (ci *CacheIntegration) GenerateScanKey(projectPath string, analyzers []string, config map[string]interface{}) (string, error) {
-	// Simple key generation - in a real implementation, this would be more sophisticated
 	return fmt.Sprintf("scan:%s:%v:%v", projectPath, analyzers, config), nil
+}
+
+// ExplanationKey returns the canonical cache key for an LLM explanation.
+// Format: explain:{package}:{version}:{threat_type}
+// Keeping the key stable means the same threat across different scans hits the same cache entry.
+func ExplanationKey(pkg, version, threatType string) string {
+	return fmt.Sprintf("explain:%s:%s:%s", pkg, version, threatType)
+}
+
+// GetExplanation retrieves a cached ThreatExplanation.
+func (ci *CacheIntegration) GetExplanation(pkg, version, threatType string) (interface{}, bool) {
+	return ci.cache.Get(ExplanationKey(pkg, version, threatType))
+}
+
+// SetExplanation stores a ThreatExplanation with a 24-hour TTL.
+func (ci *CacheIntegration) SetExplanation(pkg, version, threatType string, expl interface{}) {
+	ci.cache.Set(ExplanationKey(pkg, version, threatType), expl, 24*time.Hour)
 }
 
 // GetCacheStats returns cache statistics

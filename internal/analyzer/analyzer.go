@@ -22,6 +22,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// explanationCache is a minimal interface so we don't import the full cache package here.
+type explanationCache interface {
+	Get(key string) (interface{}, bool)
+	Set(key string, value interface{}, ttl time.Duration)
+}
+
 // Analyzer orchestrates the security scanning process
 type Analyzer struct {
 	config       *config.Config
@@ -32,6 +38,7 @@ type Analyzer struct {
 	factory      *registry.Factory
 	stubRepo     *StubRepo
 	llmProvider  llm.Provider
+	explainCache explanationCache // explanation cache keyed by {pkg}:{ver}:{type}
 }
 
 // ScanOptions contains options for scanning
@@ -642,43 +649,72 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 		}
 	}
 
-	// AI Explanation Step (Phase 5)
+	// AI Explanation Step — structured JSON explanations via prompts.go templates.
 	if a.llmProvider != nil && len(allThreats) > 0 && !options.DisableLLM {
-		// Set default limit if 0
 		limit := options.MaxLLMCalls
-		if limit == 0 {
-			limit = 10 // Safe default
+		if limit <= 0 {
+			limit = 10
 		}
-
-		logrus.Infof("Generating AI explanations for threats (limit: %d, active: %t)...", limit, !options.DisableLLM)
+		logrus.Infof("Generating AI explanations for threats (limit: %d)...", limit)
 		count := 0
 
 		for i := range allThreats {
 			if count >= limit {
-				logrus.Infof("Reached LLM explanation limit (%d). Skipping remaining items.", limit)
+				logrus.Infof("Reached LLM explanation limit (%d). Skipping remaining.", limit)
 				break
 			}
-			// Only explain High/Critical threats to save time/tokens
-			// Also including Medium for testing purposes
-			if allThreats[i].Severity == types.SeverityCritical ||
-				allThreats[i].Severity == types.SeverityHigh ||
-				allThreats[i].Severity == types.SeverityMedium {
-
-				prompt := fmt.Sprintf("Package: %s\nType: %s\nDescription: %s\nEvidence: %v",
-					allThreats[i].Package, allThreats[i].Type, allThreats[i].Description, allThreats[i].Metadata)
-
-				explanation, err := a.llmProvider.GenerateExplanation(ctx, prompt)
-				if err != nil {
-					logrus.Warnf("Failed to generate AI explanation for %s: %v", allThreats[i].Package, err)
-					continue
-				}
-
-				if allThreats[i].Metadata == nil {
-					allThreats[i].Metadata = make(map[string]interface{})
-				}
-				allThreats[i].Metadata["ai_explanation"] = explanation
-				count++
+			t := &allThreats[i]
+			// Only explain High/Critical/Medium threats to conserve tokens.
+			if t.Severity != types.SeverityCritical &&
+				t.Severity != types.SeverityHigh &&
+				t.Severity != types.SeverityMedium {
+				continue
 			}
+
+			// Cache key: {package}:{version}:{threat_type}
+			cacheKey := fmt.Sprintf("explain:%s:%s:%s", t.Package, t.Version, string(t.Type))
+			if a.explainCache != nil {
+				if cached, ok := a.explainCache.Get(cacheKey); ok {
+					if expl, ok := cached.(*types.ThreatExplanation); ok {
+						hit := *expl
+						hit.CacheHit = true
+						t.Explanation = &hit
+						count++
+						continue
+					}
+				}
+			}
+
+			// Build structured prompt with per-threat-type guidance and evidence.
+			req := llm.ExplanationRequest{
+				Threat:        *t,
+				DIRTScore:     0,   // populated by DIRT if available
+				PackageAge:    0,
+				DownloadCount: 0,
+			}
+			prompt := llm.BuildExplanationPrompt(req)
+
+			response, err := a.llmProvider.GenerateExplanation(ctx, prompt)
+			if err != nil {
+				logrus.Warnf("LLM explanation failed for %s: %v", t.Package, err)
+				continue
+			}
+
+			expl := llm.ParseStructuredExplanation(response, a.llmProvider.ID(), t.Confidence)
+			expl.GeneratedAt = time.Now()
+			t.Explanation = expl
+
+			// Also keep backward-compatible metadata field.
+			if t.Metadata == nil {
+				t.Metadata = make(map[string]interface{})
+			}
+			t.Metadata["ai_explanation"] = expl.What + " " + expl.Why
+
+			// Store in explanation cache.
+			if a.explainCache != nil {
+				a.explainCache.Set(cacheKey, expl, 24*time.Hour)
+			}
+			count++
 		}
 	}
 

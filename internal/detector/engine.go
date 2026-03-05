@@ -174,10 +174,33 @@ func maxPopularFromContext(ctx context.Context) int {
 var popularPackagesData map[string][]string
 var popularPackagesLoaded bool
 
+// embeddedPopularPackagesJSON is set by the main package via SetEmbeddedPopularPackages.
+// When non-empty it acts as the primary source, replacing the on-disk file lookup.
+var embeddedPopularPackagesJSON []byte
+
+// SetEmbeddedPopularPackages injects the compile-time embedded popular_packages.json.
+// Call this from an init() in package main before any scan runs.
+func SetEmbeddedPopularPackages(data []byte) {
+	if len(data) > 0 {
+		embeddedPopularPackagesJSON = data
+		popularPackagesLoaded = false // force reload from embedded data
+	}
+}
+
 // loadPopularPackages loads popular packages from the JSON file
 func loadPopularPackages() {
 	if popularPackagesLoaded {
 		return
+	}
+
+	// Try embedded data first (set by main package via SetEmbeddedPopularPackages).
+	if len(embeddedPopularPackagesJSON) > 0 {
+		var loadedData map[string][]string
+		if err := json.Unmarshal(embeddedPopularPackagesJSON, &loadedData); err == nil && len(loadedData) > 0 {
+			popularPackagesData = loadedData
+			popularPackagesLoaded = true
+			return
+		}
 	}
 
 	// Default hardcoded data as fallback

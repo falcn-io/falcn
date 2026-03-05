@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/falcn-io/falcn/internal/cache"
+	"github.com/google/uuid"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/detector"
 	"github.com/falcn-io/falcn/internal/events"
@@ -227,25 +229,56 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 		}
 	}
 
-	// Analyze threats for each package
-	for i, pkg := range packages {
-		threats, err := s.analyzePackageThreats(pkg)
-		if err != nil {
-			// Log error but continue with other packages
-			continue
+	// Analyze threats for each package using a bounded worker pool.
+	// Each package is independent so we can parallelize safely.
+	{
+		type pkgResult struct {
+			index   int
+			threats []*types.Threat
 		}
-		// Convert []*types.Threat to []types.Threat
-		var threatValues []types.Threat
-		for _, threat := range threats {
-			if threat != nil {
-				threatValues = append(threatValues, *threat)
-				// Emit security event for each threat detected
-				s.emitSecurityEvent(pkg, threat, projectInfo)
+		workCh := make(chan int, len(packages))
+		resCh := make(chan pkgResult, len(packages))
+		numWorkers := 4
+		if numWorkers > len(packages) {
+			numWorkers = len(packages)
+		}
+		if numWorkers < 1 {
+			numWorkers = 1
+		}
+		var wg sync.WaitGroup
+		for w := 0; w < numWorkers; w++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for i := range workCh {
+					pkg := packages[i]
+					threats, err := s.analyzePackageThreats(pkg)
+					if err != nil {
+						resCh <- pkgResult{index: i, threats: nil}
+						return
+					}
+					resCh <- pkgResult{index: i, threats: threats}
+				}
+			}()
+		}
+		for i := range packages {
+			workCh <- i
+		}
+		close(workCh)
+		go func() { wg.Wait(); close(resCh) }()
+
+		for r := range resCh {
+			var threatValues []types.Threat
+			for _, threat := range r.threats {
+				if threat != nil {
+					threatValues = append(threatValues, *threat)
+					s.emitSecurityEvent(packages[r.index], threat, projectInfo)
+				}
 			}
+			packages[r.index].Threats = threatValues
+			packages[r.index].RiskLevel = s.calculateRiskLevel(r.threats)
+			packages[r.index].RiskScore = s.calculateRiskScore(r.threats)
 		}
-		packages[i].Threats = threatValues
-		packages[i].RiskLevel = s.calculateRiskLevel(threats)
-		packages[i].RiskScore = s.calculateRiskScore(threats)
 	}
 
 	// Phase 3: Content & Network Analysis (File Level)
@@ -541,82 +574,233 @@ func (s *Scanner) findSuspiciousFiles(files []string) []string {
 	return suspicious
 }
 
-// calculateLinesOfCode calculates total lines of code
+// readFileContent reads file contents safely, returning empty string on error or size > 512KB.
+func readFileContent(path string) string {
+	info, err := os.Stat(path)
+	if err != nil || info.Size() > 512*1024 {
+		return ""
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
+// matchesAny returns true if content contains any of the given patterns.
+func matchesAny(content string, patterns []string) bool {
+	lower := strings.ToLower(content)
+	for _, p := range patterns {
+		if strings.Contains(lower, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// countPatternMatches counts how many files contain at least one match for any pattern.
+func countPatternMatches(files []string, patterns []string) int {
+	count := 0
+	for _, f := range files {
+		if matchesAny(readFileContent(f), patterns) {
+			count++
+		}
+	}
+	return count
+}
+
+// calculateLinesOfCode counts actual lines across all files (capped at 10MB total).
 func (s *Scanner) calculateLinesOfCode(files []string) int {
-	// Simplified calculation - in real implementation, would read files
-	return len(files) * 50 // Estimate 50 lines per file
+	total := 0
+	budget := 10 * 1024 * 1024 // 10 MB read budget
+	for _, f := range files {
+		if budget <= 0 {
+			break
+		}
+		info, err := os.Stat(f)
+		if err != nil {
+			continue
+		}
+		sz := int(info.Size())
+		if sz > budget {
+			sz = budget
+		}
+		budget -= sz
+		b := make([]byte, sz)
+		fh, err := os.Open(f)
+		if err != nil {
+			continue
+		}
+		n, _ := fh.Read(b)
+		fh.Close()
+		for _, c := range b[:n] {
+			if c == '\n' {
+				total++
+			}
+		}
+	}
+	return total
 }
 
-// calculateComplexityScore calculates code complexity score
+// calculateComplexityScore estimates code complexity by counting control-flow keywords.
 func (s *Scanner) calculateComplexityScore(files []string) float64 {
-	// Simplified calculation - in real implementation, would analyze code
-	return 0.5 // Default medium complexity
+	keywords := []string{"if ", "else ", "for ", "while ", "switch ", "case ", "catch ", "try "}
+	hits := countPatternMatches(files, keywords)
+	if hits == 0 {
+		return 0.1
+	}
+	score := float64(hits) / float64(len(files)+1)
+	if score > 1.0 {
+		score = 1.0
+	}
+	return score
 }
 
-// calculateObfuscationScore calculates code obfuscation score
+// calculateObfuscationScore returns a 0–1 score based on obfuscation patterns.
 func (s *Scanner) calculateObfuscationScore(files []string) float64 {
-	// Simplified calculation - in real implementation, would analyze code patterns
-	return 0.1 // Default low obfuscation
+	obfPatterns := []string{
+		"eval(", "fromcharcode", "unescape(", "atob(", "btoa(",
+		"string.fromcharcode", "\\x", "\\u00", "charcodeat",
+	}
+	hits := countPatternMatches(files, obfPatterns)
+	score := float64(hits) / float64(len(files)+1)
+	if score > 1.0 {
+		score = 1.0
+	}
+	return score
 }
 
-// hasObfuscatedCode checks if package has obfuscated code
+// hasObfuscatedCode returns true if any file contains obfuscation patterns.
 func (s *Scanner) hasObfuscatedCode(files []string) bool {
-	// Simplified check - in real implementation, would analyze code patterns
-	return false
+	return s.calculateObfuscationScore(files) > 0.1
 }
 
-// countNetworkCalls counts network-related calls in code
+// countNetworkCalls counts files that contain network call patterns.
 func (s *Scanner) countNetworkCalls(files []string) int {
-	// Simplified calculation - in real implementation, would analyze code
-	return 0
+	patterns := []string{
+		"http.get(", "http.post(", "https.get(", "https.post(",
+		"fetch(", "xmlhttprequest", "axios.", "request(",
+		"urllib.request", "requests.get", "requests.post",
+		"net/http", "socket.connect", "net.socket",
+	}
+	return countPatternMatches(files, patterns)
 }
 
-// countFileSystemAccess counts file system access calls
+// countFileSystemAccess counts files that contain file system access patterns.
 func (s *Scanner) countFileSystemAccess(files []string) int {
-	// Simplified calculation - in real implementation, would analyze code
-	return 0
+	patterns := []string{
+		"fs.readfile", "fs.writefile", "fs.appendfile", "fs.unlink",
+		"fs.mkdir", "fs.rmdir", "fs.createreadstream",
+		"open(", "os.open", "os.write", "os.remove",
+		"readfile", "writefile", "path.join", "shutil.",
+	}
+	return countPatternMatches(files, patterns)
 }
 
-// countProcessExecution counts process execution calls
+// countProcessExecution counts files that contain process execution patterns.
 func (s *Scanner) countProcessExecution(files []string) int {
-	// Simplified calculation - in real implementation, would analyze code
-	return 0
+	patterns := []string{
+		"child_process", "exec(", "execsync(", "spawn(",
+		"spawnSync", "subprocess.run", "subprocess.popen",
+		"os.system(", "os.popen(", "shell=true",
+	}
+	return countPatternMatches(files, patterns)
 }
 
-// hasInstallNetworkActivity checks for network activity during installation
+// hasInstallNetworkActivity checks install scripts for outbound network calls.
 func (s *Scanner) hasInstallNetworkActivity(pkg *types.Package) bool {
-	// Simplified check - in real implementation, would analyze install scripts
+	if pkg.Metadata == nil {
+		return false
+	}
+	// Look for common install script indicators in package metadata
+	for key, val := range pkg.Metadata.Metadata {
+		keyStr := strings.ToLower(fmt.Sprintf("%v", key))
+		valStr := strings.ToLower(fmt.Sprintf("%v", val))
+		if strings.Contains(keyStr, "install") || strings.Contains(keyStr, "preinstall") {
+			if matchesAny(valStr, []string{
+				"curl ", "wget ", "fetch(", "http.get", "https.get",
+				"urllib", "requests.", "axios.", "download",
+			}) {
+				return true
+			}
+		}
+	}
 	return false
 }
 
-// hasInstallFileModification checks for file modification during installation
+// hasInstallFileModification checks install scripts for file system write operations.
 func (s *Scanner) hasInstallFileModification(pkg *types.Package) bool {
-	// Simplified check - in real implementation, would analyze install scripts
+	if pkg.Metadata == nil {
+		return false
+	}
+	for key, val := range pkg.Metadata.Metadata {
+		keyStr := strings.ToLower(fmt.Sprintf("%v", key))
+		valStr := strings.ToLower(fmt.Sprintf("%v", val))
+		if strings.Contains(keyStr, "install") || strings.Contains(keyStr, "preinstall") {
+			if matchesAny(valStr, []string{
+				"fs.writefile", "fs.appendfile", "fs.mkdir",
+				"os.write", "open(", "shutil.", "copyfile",
+				"/etc/", "/usr/", "/bin/", "~/.bashrc", "~/.profile",
+			}) {
+				return true
+			}
+		}
+	}
 	return false
 }
 
-// hasAntiAnalysisTechniques checks for anti-analysis techniques
+// hasAntiAnalysisTechniques checks for sandbox detection and anti-analysis patterns.
 func (s *Scanner) hasAntiAnalysisTechniques(files []string) bool {
-	// Simplified check - in real implementation, would analyze code patterns
-	return false
+	patterns := []string{
+		"settimeout(", "setinterval(", "process.env.ci", "process.env.travis",
+		"process.env.github_actions", "is_ci", "ci_build",
+		"__file__", "getenv(\"ci\")", "timing", "performance.now",
+		"debugger", "v8debug", "firebug",
+	}
+	return countPatternMatches(files, patterns) > 0
 }
 
-// hasDataCollection checks for data collection behavior
+// hasDataCollection checks for environment variable harvesting.
 func (s *Scanner) hasDataCollection(files []string) bool {
-	// Simplified check - in real implementation, would analyze code patterns
-	return false
+	patterns := []string{
+		"process.env", "os.environ", "os.getenv(",
+		"home_dir", "user_home", "path.homedir",
+		"npm_token", "aws_access", "github_token",
+		"ssh_auth_sock", "private_key",
+	}
+	return countPatternMatches(files, patterns) > 1 // require ≥2 files to reduce false positives
 }
 
-// hasDataExfiltration checks for data exfiltration behavior
+// hasDataExfiltration checks for patterns that combine env harvesting with network sends.
 func (s *Scanner) hasDataExfiltration(files []string) bool {
-	// Simplified check - in real implementation, would analyze code patterns
+	exfilPatterns := []string{
+		"process.env", "os.environ", "os.getenv(",
+	}
+	netPatterns := []string{
+		"fetch(", "http.post", "https.post", "axios.post",
+		"requests.post", "urllib.request.urlopen",
+	}
+	// Both data collection AND network transmission in same file = exfiltration signal
+	for _, f := range files {
+		content := readFileContent(f)
+		if matchesAny(content, exfilPatterns) && matchesAny(content, netPatterns) {
+			return true
+		}
+	}
 	return false
 }
 
-// hasSuspiciousConnections checks for suspicious network connections
+// hasSuspiciousConnections checks for connections to suspicious endpoints.
 func (s *Scanner) hasSuspiciousConnections(files []string) bool {
-	// Simplified check - in real implementation, would analyze network patterns
-	return false
+	patterns := []string{
+		// Raw IP addresses in code (not localhost/private)
+		"http://1.", "http://2.", "http://3.", "http://4.",
+		"http://5.", "http://8.", "http://9.",
+		// ngrok, pastebin, requestbin and common C2 patterns
+		"ngrok.io", "pastebin.com", "requestbin", "webhook.site",
+		"burpcollaborator", ".onion", "dnslog.cn",
+	}
+	return countPatternMatches(files, patterns) > 0
 }
 
 // min returns the minimum of two integers
@@ -969,7 +1153,7 @@ func (s *Scanner) emitSecurityEvent(pkg *types.Package, threat *types.Threat, pr
 
 	// Convert types.Threat to pkgevents.SecurityEvent
 	event := &pkgevents.SecurityEvent{
-		ID:        fmt.Sprintf("event_%d", time.Now().UnixNano()),
+		ID:        fmt.Sprintf("event_%s", uuid.New().String()),
 		Timestamp: time.Now(),
 		Type:      s.convertThreatTypeToEventType(string(threat.Type)),
 		Severity:  s.convertSeverityToEventSeverity(threat.Severity.String()),
@@ -1077,7 +1261,7 @@ func (s *Scanner) detectTyposquatting(pkg *types.Package) []*types.Threat {
 			t := enhancedThreats[i]
 			// Ensure ID is unique
 			if t.ID == "" {
-				t.ID = fmt.Sprintf("typo_enhanced_%d_%d", time.Now().UnixNano(), i)
+				t.ID = fmt.Sprintf("typo_enhanced_%s", uuid.New().String())
 			}
 			threats = append(threats, &t)
 		}
@@ -1102,7 +1286,7 @@ func (s *Scanner) detectTyposquatting(pkg *types.Package) []*types.Threat {
 			}
 
 			threat := &types.Threat{
-				ID:          fmt.Sprintf("typo_%d", time.Now().UnixNano()),
+				ID:          fmt.Sprintf("typo_%s", uuid.New().String()),
 				Type:        "typosquatting",
 				Severity:    s.getSeverityFromSimilarity(similarity),
 				Confidence:  similarity,
@@ -1131,7 +1315,7 @@ func (s *Scanner) detectSuspiciousPatterns(pkg *types.Package) []*types.Threat {
 	for _, pattern := range suspiciousPatterns {
 		if strings.Contains(strings.ToLower(pkg.Name), pattern) {
 			threat := &types.Threat{
-				ID:          fmt.Sprintf("pattern_%d", time.Now().UnixNano()),
+				ID:          fmt.Sprintf("pattern_%s", uuid.New().String()),
 				Type:        "suspicious_pattern",
 				Severity:    types.SeverityMedium,
 				Confidence:  0.6,
@@ -1150,9 +1334,9 @@ func (s *Scanner) detectMaliciousIndicators(pkg *types.Package) []*types.Threat 
 	var threats []*types.Threat
 
 	// Check for suspicious metadata
-	if pkg.Metadata.Author == "" || pkg.Metadata.Description == "" {
+	if pkg.Metadata == nil || pkg.Metadata.Author == "" || pkg.Metadata.Description == "" {
 		threat := &types.Threat{
-			ID:          fmt.Sprintf("meta_%d", time.Now().UnixNano()),
+			ID:          fmt.Sprintf("meta_%s", uuid.New().String()),
 			Type:        "incomplete_metadata",
 			Severity:    types.SeverityLow,
 			Confidence:  0.4,
@@ -1165,7 +1349,7 @@ func (s *Scanner) detectMaliciousIndicators(pkg *types.Package) []*types.Threat 
 	// Check for suspicious version patterns
 	if strings.Contains(pkg.Version, "alpha") || strings.Contains(pkg.Version, "beta") {
 		threat := &types.Threat{
-			ID:          fmt.Sprintf("version_%d", time.Now().UnixNano()),
+			ID:          fmt.Sprintf("version_%s", uuid.New().String()),
 			Type:        "unstable_version",
 			Severity:    types.SeverityLow,
 			Confidence:  0.3,
@@ -1185,7 +1369,7 @@ func (s *Scanner) detectVersionAnomalies(pkg *types.Package) []*types.Threat {
 	// Check for suspicious version jumps (e.g., 1.0.0 to 999.0.0)
 	if strings.HasPrefix(pkg.Version, "99.") || strings.HasPrefix(pkg.Version, "999") || strings.HasPrefix(pkg.Version, "9999") {
 		threat := &types.Threat{
-			ID:          fmt.Sprintf("anomaly_%d", time.Now().UnixNano()),
+			ID:          fmt.Sprintf("anomaly_%s", uuid.New().String()),
 			Type:        "version_anomaly",
 			Severity:    types.SeverityHigh,
 			Confidence:  0.8,
@@ -1198,7 +1382,7 @@ func (s *Scanner) detectVersionAnomalies(pkg *types.Package) []*types.Threat {
 	// Check for internal scope confusion
 	if strings.HasPrefix(pkg.Name, "@internal/") || strings.HasPrefix(pkg.Name, "@private/") {
 		threat := &types.Threat{
-			ID:          fmt.Sprintf("conf_%d", time.Now().UnixNano()),
+			ID:          fmt.Sprintf("conf_%s", uuid.New().String()),
 			Type:        "dependency_confusion",
 			Severity:    types.SeverityHigh,
 			Confidence:  0.7,

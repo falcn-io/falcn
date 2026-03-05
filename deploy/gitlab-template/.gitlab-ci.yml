@@ -1,0 +1,138 @@
+# Falcn Supply Chain Security Scanner — GitLab CI Include Template
+#
+# Usage in your .gitlab-ci.yml:
+#
+#   include:
+#     - project: 'falcn-io/falcn'
+#       file: 'deploy/gitlab-template/.gitlab-ci.yml'
+#       ref: main
+#
+# Override variables in your own pipeline:
+#
+#   variables:
+#     FALCN_THRESHOLD: "0.8"
+#     FALCN_FAIL_ON: "critical"
+#     FALCN_VERSION: "v0.5.0"
+
+# ---------------------------------------------------------------------------
+# Variables — override any of these in your project's .gitlab-ci.yml
+# ---------------------------------------------------------------------------
+variables:
+  FALCN_VERSION: ""                     # empty = install latest release
+  FALCN_THRESHOLD: "0.7"               # risk score threshold (0.0–1.0)
+  FALCN_FAIL_ON: "high"               # fail pipeline on: critical|high|medium|low
+  FALCN_OUTPUT_FORMAT: "json"          # json|sarif|table
+  FALCN_REPORT_FILE: "falcn-report.json"
+  FALCN_SCAN_PATH: "."                 # path to scan
+  FALCN_NO_LLM: "true"                # disable LLM explanations by default
+  FALCN_FAST_MODE: "false"            # enable <100ms heuristics-only mode
+  FALCN_CACHE_DIR: "${CI_PROJECT_DIR}/.falcn-cache"
+
+# ---------------------------------------------------------------------------
+# Hidden job template — extend this in your pipeline stages
+# ---------------------------------------------------------------------------
+.falcn-scan-template:
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl jq tar gzip ca-certificates
+    - |
+      # Detect OS/Arch
+      OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+      ARCH="$(uname -m)"
+      case "${ARCH}" in
+        x86_64)  ARCH="amd64" ;;
+        aarch64) ARCH="arm64" ;;
+        arm64)   ARCH="arm64" ;;
+      esac
+
+      # Resolve version
+      VERSION="${FALCN_VERSION}"
+      if [ -z "${VERSION}" ]; then
+        VERSION="$(curl -fsSL https://api.github.com/repos/falcn-io/falcn/releases/latest \
+          | jq -r '.tag_name')"
+      fi
+
+      # Download binary (uses cache dir if available)
+      BINARY_PATH="${FALCN_CACHE_DIR}/falcn-${VERSION}"
+      if [ ! -x "${BINARY_PATH}" ]; then
+        mkdir -p "${FALCN_CACHE_DIR}"
+        TARBALL="falcn_${VERSION}_${OS}_${ARCH}.tar.gz"
+        DOWNLOAD_URL="https://github.com/falcn-io/falcn/releases/download/${VERSION}/${TARBALL}"
+        echo "Downloading Falcn ${VERSION} from ${DOWNLOAD_URL}..."
+        curl -fsSL "${DOWNLOAD_URL}" | tar -xz -C "${FALCN_CACHE_DIR}" falcn
+        mv "${FALCN_CACHE_DIR}/falcn" "${BINARY_PATH}"
+        chmod +x "${BINARY_PATH}"
+      fi
+      ln -sf "${BINARY_PATH}" /usr/local/bin/falcn
+      falcn version || true
+
+  script:
+    - |
+      SCAN_ARGS=("${FALCN_SCAN_PATH}")
+      SCAN_ARGS+=("--threshold" "${FALCN_THRESHOLD}")
+      SCAN_ARGS+=("--output" "${FALCN_OUTPUT_FORMAT}")
+      SCAN_ARGS+=("--report" "${FALCN_REPORT_FILE}")
+
+      [ "${FALCN_NO_LLM}" = "true" ] && SCAN_ARGS+=("--no-llm")
+      [ "${FALCN_FAST_MODE}" = "true" ] && SCAN_ARGS+=("--fast")
+
+      set +e
+      falcn scan "${SCAN_ARGS[@]}"
+      SCAN_EXIT=$?
+      set -e
+
+      # Summarize results
+      if [ -f "${FALCN_REPORT_FILE}" ]; then
+        TOTAL=$(jq -r '.summary.total_threats // 0' "${FALCN_REPORT_FILE}")
+        CRITICAL=$(jq -r '.summary.critical_count // 0' "${FALCN_REPORT_FILE}")
+        HIGH=$(jq -r '.summary.high_count // 0' "${FALCN_REPORT_FILE}")
+        echo "Falcn scan complete: ${TOTAL} threats (${CRITICAL} critical, ${HIGH} high)"
+      fi
+
+      # Gate on severity
+      case "${FALCN_FAIL_ON}" in
+        critical) [ "${CRITICAL:-0}" -eq 0 ] || exit 1 ;;
+        high)     [ "${CRITICAL:-0}" -eq 0 ] && [ "${HIGH:-0}" -eq 0 ] || exit 1 ;;
+        *)        exit "${SCAN_EXIT}" ;;
+      esac
+
+  artifacts:
+    name: "falcn-report-${CI_JOB_NAME}-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - "${FALCN_REPORT_FILE}"
+    reports:
+      # Expose as GitLab Security Dashboard artifact when format is SARIF
+      sast: "${FALCN_REPORT_FILE}"
+    expire_in: 30 days
+    when: always
+
+  cache:
+    key: "falcn-binary-${FALCN_VERSION}"
+    paths:
+      - "${FALCN_CACHE_DIR}"
+
+  allow_failure: false
+
+# ---------------------------------------------------------------------------
+# Ready-to-use jobs — include one or both in your pipeline
+# ---------------------------------------------------------------------------
+
+# Full scan: every push to MR/main
+falcn-dependency-scan:
+  extends: .falcn-scan-template
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    FALCN_FAIL_ON: "high"
+
+# Fast pre-merge gate: heuristics only, <100ms per package
+falcn-fast-gate:
+  extends: .falcn-scan-template
+  stage: test
+  variables:
+    FALCN_FAST_MODE: "true"
+    FALCN_FAIL_ON: "critical"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

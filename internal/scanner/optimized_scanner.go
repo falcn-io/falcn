@@ -307,17 +307,30 @@ func (os *OptimizedScanner) ScanPackageParallel(pkg *types.Package) (*types.Pack
 	errorChan := make(chan error, 1)
 
 	go func() {
-		// This would call the actual scanning logic
-		// For now, we'll simulate the scan
-		result := &types.Package{
-			Name:       pkg.Name,
-			Version:    pkg.Version,
-			Registry:   pkg.Registry,
-			RiskLevel:  types.SeverityLow,
-			RiskScore:  0.1,
-			AnalyzedAt: time.Now(),
+		// Delegate to the real scanner's threat analysis pipeline
+		threats, err := os.scanner.analyzePackageThreats(pkg)
+		if err != nil {
+			errorChan <- err
+			return
 		}
-		resultChan <- result
+		// Compute risk score from detected threats
+		var maxScore float64
+		maxSev := types.SeverityLow
+		for _, t := range threats {
+			if t != nil {
+				if t.Confidence > maxScore {
+					maxScore = t.Confidence
+				}
+				if t.Severity > maxSev {
+					maxSev = t.Severity
+				}
+				pkg.Threats = append(pkg.Threats, *t)
+			}
+		}
+		pkg.RiskScore = maxScore
+		pkg.RiskLevel = maxSev
+		pkg.AnalyzedAt = time.Now()
+		resultChan <- pkg
 	}()
 
 	select {

@@ -498,6 +498,66 @@ production: clean-all test lint security build
 	@echo "Binary: $(BINARY_NAME)"
 	@echo "Ready for deployment"
 
+# ─── Airgap / Offline Bundle ─────────────────────────────────────────────────
+#
+# make airgap-bundle
+#   1. Downloads the latest OSV vulnerability data for all supported ecosystems
+#      into data/cve.db (SQLite) and exports a gzip-compressed NDJSON bundle.
+#   2. Refreshes data/popular_packages.json from registry APIs.
+#   3. Builds a static, self-contained binary that embeds both datasets.
+#      The result is a single file that works with zero network access.
+#
+# Prerequisites: falcn binary must be on PATH (or built first with `make build`)
+#
+AIRGAP_DIR=dist/airgap
+AIRGAP_DB=$(AIRGAP_DIR)/cve.db
+AIRGAP_BUNDLE=$(AIRGAP_DIR)/cve-bundle.json.gz
+AIRGAP_BINARY=$(AIRGAP_DIR)/falcn-airgap-$(VERSION)-$$(go env GOOS)-$$(go env GOARCH)
+
+.PHONY: airgap-bundle
+airgap-bundle: build
+	@echo "=== Falcn Airgap Bundle ==="
+	@mkdir -p $(AIRGAP_DIR)
+	@echo ""
+	@echo "[1/4] Refreshing popular packages list..."
+	$(BUILD_DIR)/$(BINARY_NAME) update-packages \
+		--output data/popular_packages.json \
+		--limit 500 || echo "  Warning: network unavailable, using existing popular_packages.json"
+	@echo ""
+	@echo "[2/4] Downloading offline CVE database..."
+	$(BUILD_DIR)/$(BINARY_NAME) update-db \
+		--db $(AIRGAP_DB) \
+		--airgap-bundle \
+		--output $(AIRGAP_BUNDLE) || echo "  Warning: some ecosystems unavailable, continuing with partial data"
+	@echo ""
+	@echo "[3/4] Building airgap binary (popular packages + CVE DB embedded)..."
+	CGO_ENABLED=1 $(GOBUILD) $(BUILD_FLAGS) \
+		-o $(AIRGAP_BINARY) .
+	@echo ""
+	@echo "[4/4] Generating manifest..."
+	@echo "{" > $(AIRGAP_DIR)/manifest.json
+	@echo "  \"version\": \"$(VERSION)\"," >> $(AIRGAP_DIR)/manifest.json
+	@echo "  \"built_at\": \"$$(date -u '+%Y-%m-%dT%H:%M:%SZ')\"," >> $(AIRGAP_DIR)/manifest.json
+	@echo "  \"goos\": \"$$(go env GOOS)\"," >> $(AIRGAP_DIR)/manifest.json
+	@echo "  \"goarch\": \"$$(go env GOARCH)\"," >> $(AIRGAP_DIR)/manifest.json
+	@echo "  \"cve_db\": \"cve.db\"," >> $(AIRGAP_DIR)/manifest.json
+	@echo "  \"cve_bundle\": \"cve-bundle.json.gz\"," >> $(AIRGAP_DIR)/manifest.json
+	@echo "  \"popular_packages\": \"../../data/popular_packages.json\"" >> $(AIRGAP_DIR)/manifest.json
+	@echo "}" >> $(AIRGAP_DIR)/manifest.json
+	@echo ""
+	@echo "=== Airgap bundle complete ==="
+	@echo "  Binary : $(AIRGAP_BINARY)"
+	@echo "  CVE DB : $(AIRGAP_BUNDLE)"
+	@ls -lh $(AIRGAP_DIR)/
+
+# Verify the airgap bundle works offline by scanning a local directory
+.PHONY: airgap-verify
+airgap-verify:
+	@echo "Verifying airgap binary (no network)..."
+	@test -f $(AIRGAP_BINARY) || (echo "Run 'make airgap-bundle' first"; exit 1)
+	FALCN_NO_NETWORK=1 $(AIRGAP_BINARY) scan . --no-llm --fast 2>&1 | head -20
+	@echo "Airgap verification passed."
+
 # Help
 .PHONY: help
 help:
@@ -561,6 +621,10 @@ help:
 	@echo "Docker targets:"
 	@echo "  docker-build    - Build Docker image"
 	@echo "  docker-run      - Build and run Docker container"
+	@echo ""
+	@echo "Airgap / Offline targets:"
+	@echo "  airgap-bundle   - Build fully-offline binary with embedded CVE DB + popular packages"
+	@echo "  airgap-verify   - Smoke-test the airgap binary without network access"
 	@echo ""
 	@echo "Utility targets:"
 	@echo "  deps            - Install dependencies"

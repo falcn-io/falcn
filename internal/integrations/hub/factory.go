@@ -41,6 +41,12 @@ func (cf *ConnectorFactory) CreateConnector(connectorType, name string, settings
 	case "email":
 		return connectors.NewEmailConnector(name, settings, cf.logger)
 
+	case "teams":
+		return connectors.NewTeamsConnector(name, settings, cf.logger)
+
+	case "jira":
+		return connectors.NewJiraConnector(name, settings, cf.logger)
+
 	default:
 		return nil, fmt.Errorf("unsupported connector type: %s", connectorType)
 	}
@@ -55,5 +61,7 @@ func (cf *ConnectorFactory) GetSupportedTypes() []string {
 		"slack",
 		"webhook",
 		"email",
+		"teams",
+		"jira",
 	}
 }

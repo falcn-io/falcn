@@ -54,19 +54,32 @@ func (s *SafeProvider) GenerateExplanation(ctx context.Context, input string) (s
 	return response, nil
 }
 
-// sanitizeInput removes dangerous characters and limits length
+// sanitizeInput removes dangerous characters and limits length to defend against
+// prompt injection attacks via malicious package names, descriptions, or author fields.
 func (s *SafeProvider) sanitizeInput(input string) string {
+	// Strip Unicode control characters (incl. zero-width chars used to hide injections)
+	var sb strings.Builder
+	for _, r := range input {
+		if r >= 0x20 || r == '\n' || r == '\t' {
+			sb.WriteRune(r)
+		}
+	}
+	input = sb.String()
+
 	// Limit length to 2000 chars to prevent context exhaustion
 	if len(input) > 2000 {
 		input = input[:2000] + "...(truncated)"
 	}
 
-	// Remove potential prompt injection delimiters
-	// e.g., "Human:", "System:", "User:" which might confuse some models
-	re := regexp.MustCompile(`(?i)\b(system:|user:|human:|assistant:)\b`)
-	cleaned := re.ReplaceAllString(input, "[REDACTED]")
+	// Remove prompt injection role delimiters that confuse LLMs
+	re := regexp.MustCompile(`(?i)\b(system:|user:|human:|assistant:|<\|im_start\||<\|im_end\||<\|system\||<\|user\||<\|assistant\|)\b`)
+	input = re.ReplaceAllString(input, "[REDACTED]")
 
-	return cleaned
+	// Remove XML/HTML tags that could escape the <evidence> enclosure
+	tagRe := regexp.MustCompile(`<[^>]{0,200}>`)
+	input = tagRe.ReplaceAllString(input, "")
+
+	return input
 }
 
 // detectHallucination checks for common refusal or failure patterns

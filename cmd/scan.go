@@ -185,7 +185,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Always save to local JSON for report command
 	if jsonBytes, err := json.MarshalIndent(result, "", "  "); err == nil {
-		_ = os.WriteFile("falcn_report.json", jsonBytes, 0644)
+		_ = os.WriteFile("falcn_report.json", jsonBytes, 0600)
 	}
 
 	// Handle SBOM generation if requested

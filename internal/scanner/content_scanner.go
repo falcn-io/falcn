@@ -102,8 +102,6 @@ func (cs *ContentScanner) ScanDirectory(path string) ([]types.Threat, error) {
 			return nil
 		}
 		rel, _ := filepath.Rel(path, filePath)
-		// LOG ALL FILES
-		logrus.Infof("DEBUG: Checking file: %s (Rel: %s)", filePath, rel)
 
 		if len(cs.includeGlobs) > 0 {
 			matched := false

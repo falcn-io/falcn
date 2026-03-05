@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Falcn pre-commit hook — blocks installs of flagged packages
+#
+# Installation:
+#   cp deploy/pre-commit-hook/falcn-pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# Or with pre-commit framework (add to .pre-commit-config.yaml):
+#   repos:
+#     - repo: local
+#       hooks:
+#         - id: falcn
+#           name: Falcn supply chain scan
+#           entry: deploy/pre-commit-hook/falcn-pre-commit
+#           language: script
+#           pass_filenames: false
+
+set -euo pipefail
+
+# Configuration (override via environment)
+FALCN_THRESHOLD="${FALCN_THRESHOLD:-0.7}"
+FALCN_FAIL_ON="${FALCN_FAIL_ON:-high}"
+FALCN_FAST_MODE="${FALCN_FAST_MODE:-true}"
+FALCN_NO_LLM="${FALCN_NO_LLM:-true}"
+
+# Locate falcn binary
+FALCN_BIN=""
+for candidate in \
+    "${HOME}/.falcn/bin/falcn" \
+    "${HOME}/.local/bin/falcn" \
+    "/usr/local/bin/falcn" \
+    "$(git rev-parse --show-toplevel)/.falcn/bin/falcn"; do
+    if [ -x "${candidate}" ]; then
+        FALCN_BIN="${candidate}"
+        break
+    fi
+done
+
+if command -v falcn &>/dev/null; then
+    FALCN_BIN="$(command -v falcn)"
+fi
+
+if [ -z "${FALCN_BIN}" ]; then
+    echo "⚠  Falcn not found — skipping supply chain check."
+    echo "   Install: curl -fsSL https://raw.githubusercontent.com/falcn-io/falcn/main/install.sh | bash"
+    exit 0
+fi
+
+# Check if any dependency files changed
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CHANGED=$(git diff --cached --name-only 2>/dev/null || true)
+
+DEPENDENCY_FILES=(
+    "package.json" "package-lock.json" "yarn.lock" "pnpm-lock.yaml"
+    "requirements.txt" "Pipfile" "Pipfile.lock" "pyproject.toml" "poetry.lock"
+    "go.mod" "go.sum"
+    "pom.xml" "build.gradle" "build.gradle.kts"
+    "Gemfile" "Gemfile.lock"
+    "Cargo.toml" "Cargo.lock"
+    "composer.json" "composer.lock"
+)
+
+HAS_DEP_CHANGES=false
+for file in $CHANGED; do
+    basename_file="$(basename "${file}")"
+    for dep_file in "${DEPENDENCY_FILES[@]}"; do
+        if [ "${basename_file}" = "${dep_file}" ]; then
+            HAS_DEP_CHANGES=true
+            break 2
+        fi
+    done
+done
+
+if [ "${HAS_DEP_CHANGES}" = "false" ]; then
+    exit 0  # No dependency changes — skip scan
+fi
+
+echo "🔍 Falcn: dependency changes detected, running supply chain scan..."
+
+SCAN_ARGS=("${REPO_ROOT}" "--threshold" "${FALCN_THRESHOLD}")
+[ "${FALCN_NO_LLM}" = "true" ] && SCAN_ARGS+=("--no-llm")
+[ "${FALCN_FAST_MODE}" = "true" ] && SCAN_ARGS+=("--fast")
+
+REPORT_FILE="$(mktemp /tmp/falcn-report-XXXXXX.json)"
+trap 'rm -f "${REPORT_FILE}"' EXIT
+SCAN_ARGS+=("--output" "json" "--report" "${REPORT_FILE}")
+
+set +e
+"${FALCN_BIN}" scan "${SCAN_ARGS[@]}" 2>&1
+SCAN_EXIT=$?
+set -e
+
+if [ -f "${REPORT_FILE}" ]; then
+    TOTAL=$(jq -r '.summary.total_threats // 0' "${REPORT_FILE}" 2>/dev/null || echo "0")
+    CRITICAL=$(jq -r '.summary.critical_count // 0' "${REPORT_FILE}" 2>/dev/null || echo "0")
+    HIGH=$(jq -r '.summary.high_count // 0' "${REPORT_FILE}" 2>/dev/null || echo "0")
+
+    if [ "${TOTAL}" -gt 0 ]; then
+        echo ""
+        echo "⚠  Falcn found ${TOTAL} threat(s) (${CRITICAL} critical, ${HIGH} high)"
+        # Print top threats
+        jq -r '
+          .packages[]?
+          | select(.threats | length > 0)
+          | .threats[]
+          | "  [\(.severity | ascii_upcase)] \(.type): \(.package // "project-files") — \(.description[:80])"
+        ' "${REPORT_FILE}" 2>/dev/null | head -10
+    fi
+
+    # Gate on severity
+    BLOCKED=false
+    case "${FALCN_FAIL_ON}" in
+        critical) [ "${CRITICAL}" -eq 0 ] || BLOCKED=true ;;
+        high)     { [ "${CRITICAL}" -eq 0 ] && [ "${HIGH}" -eq 0 ]; } || BLOCKED=true ;;
+        *)        [ "${SCAN_EXIT}" -eq 0 ] || BLOCKED=true ;;
+    esac
+
+    if [ "${BLOCKED}" = "true" ]; then
+        echo ""
+        echo "❌ Commit blocked by Falcn: ${FALCN_FAIL_ON}-severity threats detected."
+        echo "   Review threats above and remediate before committing."
+        echo "   To bypass (not recommended): git commit --no-verify"
+        exit 1
+    fi
+fi
+
+echo "✅ Falcn: no ${FALCN_FAIL_ON}-severity threats detected."
+exit 0

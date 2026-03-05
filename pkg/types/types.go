@@ -141,6 +141,27 @@ type PackageMetadata struct {
 	Metadata         map[string]interface{} `json:"metadata,omitempty"`
 }
 
+// ThreatExplanation is the AI-generated structured explanation attached to a threat.
+// Every field is optional so threats without explanations (--no-llm) remain valid.
+type ThreatExplanation struct {
+	// What is a one-sentence executive summary.
+	What string `json:"what"`
+	// Why explains the technical evidence that triggered detection.
+	Why string `json:"why"`
+	// Impact describes the blast-radius if the package is installed.
+	Impact string `json:"impact"`
+	// Remediation gives a concrete fix: safe version, alternative package, removal command.
+	Remediation string `json:"remediation"`
+	// Confidence is the combined ML + heuristic score (0.0–1.0).
+	Confidence float64 `json:"confidence"`
+	// GeneratedBy identifies the LLM provider that produced this explanation.
+	GeneratedBy string `json:"generated_by,omitempty"`
+	// GeneratedAt is when the explanation was produced.
+	GeneratedAt time.Time `json:"generated_at"`
+	// CacheHit is true when served from the explanation cache.
+	CacheHit bool `json:"cache_hit,omitempty"`
+}
+
 // Threat represents a detected security threat
 type Threat struct {
 	ID                 string                 `json:"id"`
@@ -163,6 +184,8 @@ type Threat struct {
 	FixedVersion       string                 `json:"fixed_version,omitempty"`
 	ProposedCorrection string                 `json:"proposed_correction,omitempty"`
 	CVE                string                 `json:"cve,omitempty"`
+	// Explanation is the AI-generated structured explanation (nil when --no-llm).
+	Explanation *ThreatExplanation `json:"explanation,omitempty"`
 }
 
 // AnalysisResult represents the result of package analysis

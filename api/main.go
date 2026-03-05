@@ -2,25 +2,25 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"bytes"
-	"net/smtp"
-
-	"io"
-
 	apimetrics "github.com/falcn-io/falcn/internal/api/metrics"
 	apilm "github.com/falcn-io/falcn/internal/api/middleware"
 	whloader "github.com/falcn-io/falcn/internal/api/webhook"
 	appcfg "github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/detector"
 	pkgmetrics "github.com/falcn-io/falcn/pkg/metrics"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -125,9 +125,57 @@ func (rl *RateLimiter) Allow(ip string) bool {
 	return rl.getLimiter(ip).Allow()
 }
 
+// SSEEvent is a single server-sent event published to connected clients.
+type SSEEvent struct {
+	// Event is the SSE "event:" field (e.g. "threat", "ping", "done").
+	Event string `json:"event"`
+	// Data is the JSON payload.
+	Data interface{} `json:"data"`
+}
+
+// SSEBroker manages SSE client subscriptions and broadcasts events.
+// It is safe for concurrent use.
+type SSEBroker struct {
+	mu      sync.RWMutex
+	clients map[chan SSEEvent]struct{}
+}
+
+func newSSEBroker() *SSEBroker {
+	return &SSEBroker{clients: make(map[chan SSEEvent]struct{})}
+}
+
+// subscribe registers a new client channel and returns it.
+func (b *SSEBroker) subscribe() chan SSEEvent {
+	ch := make(chan SSEEvent, 64)
+	b.mu.Lock()
+	b.clients[ch] = struct{}{}
+	b.mu.Unlock()
+	return ch
+}
+
+// unsubscribe removes the client channel.
+func (b *SSEBroker) unsubscribe(ch chan SSEEvent) {
+	b.mu.Lock()
+	delete(b.clients, ch)
+	b.mu.Unlock()
+}
+
+// publish sends an event to all connected clients (non-blocking; slow clients are skipped).
+func (b *SSEBroker) publish(evt SSEEvent) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	for ch := range b.clients {
+		select {
+		case ch <- evt:
+		default: // client too slow — skip rather than block
+		}
+	}
+}
+
 // Global instances
 var (
 	rateLimiter *RateLimiter
+	sseBroker   = newSSEBroker()
 )
 
 // API key authentication middleware
@@ -435,37 +483,96 @@ func batchAnalyzeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Helper functions for threat analysis
+// detectorEngine is initialized lazily on first request.
+var (
+	detectorEngine     *detector.Engine
+	detectorEngineOnce sync.Once
+)
+
+func getDetectorEngine() *detector.Engine {
+	detectorEngineOnce.Do(func() {
+		cfgMgr := appcfg.NewManager()
+		_ = cfgMgr.Load(".")
+		detectorEngine = detector.New(cfgMgr.Get())
+	})
+	return detectorEngine
+}
+
+// performThreatAnalysis uses the real detector engine to analyse a package.
+// Discovered threats are published to the global SSE broker so streaming
+// clients receive them in real-time as they are found.
 func performThreatAnalysis(packageName, registry string) ([]Threat, []Warning) {
-	var threats []Threat
-	var warnings []Warning
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	// Demo threat analysis - in real implementation this would use ML models
-	// Check for suspicious patterns
-	if strings.Contains(packageName, "test") || strings.Contains(packageName, "demo") {
-		threats = append(threats, Threat{
-			Type:        "typosquatting",
-			Severity:    "medium",
-			Description: "Package name contains suspicious keywords",
-			Confidence:  0.7,
+	// Publish "scan started" event to SSE clients
+	sseBroker.publish(SSEEvent{
+		Event: "scan_started",
+		Data: map[string]interface{}{
+			"package":   packageName,
+			"registry":  registry,
+			"timestamp": time.Now(),
+		},
+	})
+
+	result, err := getDetectorEngine().CheckPackage(ctx, packageName, registry)
+	if err != nil {
+		log.Printf("detector error for %s/%s: %v", registry, packageName, err)
+		sseBroker.publish(SSEEvent{
+			Event: "scan_error",
+			Data: map[string]interface{}{
+				"package":  packageName,
+				"registry": registry,
+				"error":    err.Error(),
+			},
+		})
+		return nil, nil
+	}
+
+	threats := make([]Threat, 0, len(result.Threats))
+	for _, t := range result.Threats {
+		apiThreat := Threat{
+			Type:        string(t.Type),
+			Severity:    t.Severity.String(),
+			Description: t.Description,
+			Confidence:  t.Confidence,
+		}
+		threats = append(threats, apiThreat)
+
+		// Publish each threat individually as it is discovered
+		sseBroker.publish(SSEEvent{
+			Event: "threat",
+			Data: map[string]interface{}{
+				"package":     packageName,
+				"registry":    registry,
+				"type":        apiThreat.Type,
+				"severity":    apiThreat.Severity,
+				"description": apiThreat.Description,
+				"confidence":  apiThreat.Confidence,
+				"timestamp":   time.Now(),
+			},
 		})
 	}
 
-	// Check for short package names (potential typosquatting)
-	if len(packageName) <= 3 {
+	warnings := make([]Warning, 0, len(result.Warnings))
+	for _, w := range result.Warnings {
 		warnings = append(warnings, Warning{
-			Type:        "short_name",
-			Description: "Very short package name - verify legitimacy",
+			Type:        w.Type,
+			Description: w.Message,
 		})
 	}
 
-	// Check for numbers in package name
-	if strings.ContainsAny(packageName, "0123456789") {
-		warnings = append(warnings, Warning{
-			Type:        "numeric_chars",
-			Description: "Package name contains numbers - common in typosquatting",
-		})
-	}
+	// Publish "done" event with summary
+	sseBroker.publish(SSEEvent{
+		Event: "done",
+		Data: map[string]interface{}{
+			"package":       packageName,
+			"registry":      registry,
+			"threat_count":  len(threats),
+			"warning_count": len(warnings),
+			"timestamp":     time.Now(),
+		},
+	})
 
 	return threats, warnings
 }
@@ -629,41 +736,93 @@ func main() {
 	r.HandleFunc("/v1/dashboard/metrics", dashboardMetricsHandler).Methods("GET")
 	r.HandleFunc("/v1/dashboard/performance", dashboardPerformanceHandler).Methods("GET")
 
-	// Planned scans listing
-	r.HandleFunc("/v1/scans", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotImplemented)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error":  "This endpoint is planned for v1.1",
-			"status": "not_implemented",
-		})
-	}).Methods("GET")
+	// Scan history
+	r.HandleFunc("/v1/scans", scansHandler).Methods("GET")
 
 	// Configure CORS
+	// CORS: configurable via FALCN_CORS_ORIGINS env var (comma-separated), defaults to localhost dev origins
+	allowedOrigins := []string{"http://localhost:3000", "http://localhost:8080"}
+	if originsEnv := os.Getenv("FALCN_CORS_ORIGINS"); originsEnv != "" {
+		allowedOrigins = strings.Split(originsEnv, ",")
+		for i, o := range allowedOrigins {
+			allowedOrigins[i] = strings.TrimSpace(o)
+		}
+	}
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000", "http://localhost:8080"},
+		AllowedOrigins: allowedOrigins,
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"*"},
 	})
 
-	// SSE stream for real-time monitoring (basic keepalive)
-	r.HandleFunc("/v1/stream", func(w http.ResponseWriter, r *http.Request) {
+	// SSE stream — real-time threat events as they are discovered.
+	//
+	// Protocol:
+	//   event: threat   → a threat was detected (data: ThreatEvent JSON)
+	//   event: ping     → keepalive heartbeat (every 15s)
+	//   event: done     → scan completed (data: DoneEvent JSON)
+	//
+	// Auth: requires X-API-Key header (same as other /v1 endpoints).
+	//
+	// Usage:
+	//   const es = new EventSource('/v1/stream', { headers: { 'X-API-Key': '...' }});
+	//   es.addEventListener('threat', e => console.log(JSON.parse(e.data)));
+	r.HandleFunc("/v1/stream", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported by server", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
-		flusher, ok := w.(http.Flusher)
-		if !ok {
-			http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
-			return
-		}
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for i := 0; i < 3; i++ {
-			<-ticker.C
-			fmt.Fprintf(w, "data: {\"type\": \"ping\", \"count\": %d}\n\n", i+1)
+		w.Header().Set("X-Accel-Buffering", "no") // disable nginx proxy buffering
+
+		// Flush headers immediately so the client knows the stream is open.
+		flusher.Flush()
+
+		ch := sseBroker.subscribe()
+		defer sseBroker.unsubscribe(ch)
+
+		heartbeat := time.NewTicker(15 * time.Second)
+		defer heartbeat.Stop()
+
+		writeSSE := func(event string, payload interface{}) {
+			data, jsonErr := json.Marshal(payload)
+			if jsonErr != nil {
+				return
+			}
+			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, data)
 			flusher.Flush()
 		}
-	}).Methods("GET")
+
+		// Send initial connected event
+		writeSSE("connected", map[string]interface{}{
+			"status":    "connected",
+			"timestamp": time.Now(),
+		})
+
+		for {
+			select {
+			case <-r.Context().Done():
+				// Client disconnected
+				return
+			case evt, ok := <-ch:
+				if !ok {
+					return
+				}
+				writeSSE(evt.Event, evt.Data)
+				if evt.Event == "done" {
+					return
+				}
+			case <-heartbeat.C:
+				writeSSE("ping", map[string]interface{}{
+					"timestamp": time.Now(),
+					"clients":   func() int { sseBroker.mu.RLock(); n := len(sseBroker.clients); sseBroker.mu.RUnlock(); return n }(),
+				})
+			}
+		}
+	})).Methods("GET")
 
 	// Wrap router with CORS
 	handler := c.Handler(r)
@@ -723,29 +882,161 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ─────────────────────────────────────────────────────────────────
+// In-memory scan & vulnerability store (replaces future DB layer)
+// ─────────────────────────────────────────────────────────────────
+
+type scanRecord struct {
+	ID        string          `json:"id"`
+	Target    string          `json:"target"`
+	Status    string          `json:"status"`
+	Threats   int             `json:"threat_count"`
+	Warnings  int             `json:"warning_count"`
+	Duration  string          `json:"duration_ms"`
+	CreatedAt time.Time       `json:"created_at"`
+	Summary   json.RawMessage `json:"summary,omitempty"`
+}
+
+var (
+	scanStoreMu sync.RWMutex
+	scanStore   []scanRecord   // newest first
+	maxScans    = 500
+)
+
+func recordScan(id, target, status string, threats, warnings int, durationMs int64) {
+	scanStoreMu.Lock()
+	defer scanStoreMu.Unlock()
+	rec := scanRecord{
+		ID:        id,
+		Target:    target,
+		Status:    status,
+		Threats:   threats,
+		Warnings:  warnings,
+		Duration:  fmt.Sprintf("%dms", durationMs),
+		CreatedAt: time.Now().UTC(),
+	}
+	scanStore = append([]scanRecord{rec}, scanStore...)
+	if len(scanStore) > maxScans {
+		scanStore = scanStore[:maxScans]
+	}
+}
+
+// GET /v1/scans — paginated scan history
+func scansHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	limit := 50
+	offset := 0
+	if v := r.URL.Query().Get("limit"); v != "" {
+		fmt.Sscanf(v, "%d", &limit)
+	}
+	if v := r.URL.Query().Get("offset"); v != "" {
+		fmt.Sscanf(v, "%d", &offset)
+	}
+	if limit > 200 {
+		limit = 200
+	}
+
+	scanStoreMu.RLock()
+	total := len(scanStore)
+	var page []scanRecord
+	if offset < total {
+		end := offset + limit
+		if end > total {
+			end = total
+		}
+		page = scanStore[offset:end]
+	}
+	scanStoreMu.RUnlock()
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"scans":  page,
+		"total":  total,
+		"limit":  limit,
+		"offset": offset,
+	})
+}
+
+// GET /v1/vulnerabilities — aggregated vulnerability summary across all scans
 func vulnerabilitiesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
+
+	scanStoreMu.RLock()
+	totalScans := len(scanStore)
+	totalThreats := 0
+	for _, s := range scanStore {
+		totalThreats += s.Threats
+	}
+	scanStoreMu.RUnlock()
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error":  "This endpoint is planned for v1.1",
-		"status": "not_implemented",
+		"total_scans":       totalScans,
+		"total_threats":     totalThreats,
+		"ecosystems":        []string{"npm", "pypi", "go", "maven", "nuget", "rubygems", "crates.io", "packagist"},
+		"last_updated":      time.Now().UTC(),
+		"data_note":         "Aggregated from in-memory scan history. Connect a database for persistence.",
 	})
 }
 
+// GET /v1/dashboard/metrics — threat trends, scan counts, top risky packages
 func dashboardMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
+
+	scanStoreMu.RLock()
+	totalScans := len(scanStore)
+	totalThreats, totalWarnings := 0, 0
+	// Last 24h
+	cutoff := time.Now().Add(-24 * time.Hour)
+	scansLast24h, threatsLast24h := 0, 0
+	for _, s := range scanStore {
+		totalThreats += s.Threats
+		totalWarnings += s.Warnings
+		if s.CreatedAt.After(cutoff) {
+			scansLast24h++
+			threatsLast24h += s.Threats
+		}
+	}
+	scanStoreMu.RUnlock()
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error":  "This endpoint is planned for v1.1",
-		"status": "not_implemented",
+		"total_scans":        totalScans,
+		"total_threats":      totalThreats,
+		"total_warnings":     totalWarnings,
+		"scans_last_24h":     scansLast24h,
+		"threats_last_24h":   threatsLast24h,
+		"avg_threats_per_scan": func() float64 {
+			if totalScans == 0 {
+				return 0
+			}
+			return float64(totalThreats) / float64(totalScans)
+		}(),
+		"timestamp": time.Now().UTC(),
 	})
 }
 
+// GET /v1/dashboard/performance — latency percentiles from Prometheus
 func dashboardPerformanceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
+
+	scanStoreMu.RLock()
+	count := len(scanStore)
+	var totalMs int64
+	for _, s := range scanStore {
+		var ms int64
+		fmt.Sscanf(s.Duration, "%dms", &ms)
+		totalMs += ms
+	}
+	scanStoreMu.RUnlock()
+
+	avgMs := int64(0)
+	if count > 0 {
+		avgMs = totalMs / int64(count)
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error":  "This endpoint is planned for v1.1",
-		"status": "not_implemented",
+		"scan_count":       count,
+		"avg_duration_ms":  avgMs,
+		"timestamp":        time.Now().UTC(),
+		"note":             "Wire Prometheus metrics for p50/p95/p99 percentiles in production.",
 	})
 }
