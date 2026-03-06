@@ -1,6 +1,7 @@
 package scanner_test
 
 import (
+	"context"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,6 @@ func TestScannerHandlesMultipleLockfiles(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := scanner.New(cfg)
 	require.NoError(t, err)
-	_, err = s.ScanProject(dir)
+	_, err = s.ScanProject(context.Background(), dir)
 	require.NoError(t, err)
 }

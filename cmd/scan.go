@@ -14,6 +14,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Scan command constants — avoid magic numbers in flag definitions.
+const (
+	defaultSimilarityThreshold = 0.8 // typosquatting detection similarity threshold
+	defaultMaxLLMCalls         = 0   // 0 = unlimited LLM explanation calls
+)
+
 func init() {
 	RootCmd.AddCommand(scanCmd)
 }
@@ -23,7 +29,7 @@ var scanCmd = &cobra.Command{
 	Short: "Scan a project for typosquatting and malicious packages (auto-detects project types)",
 	Long: `Scan a project directory for typosquatting and malicious packages.
 
-TypoSentinel automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
+Falcn automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
 based on manifest files and creates appropriate registry connectors. Use --recursive for monorepos
 and multi-project directories. Specify --package-manager to limit scanning to specific ecosystems.`,
 	Args: cobra.MaximumNArgs(1),
@@ -34,7 +40,7 @@ func init() {
 	// Scan command flags
 	scanCmd.Flags().Bool("deep", false, "Enable deep analysis")
 	scanCmd.Flags().Bool("include-dev", false, "Include development dependencies")
-	scanCmd.Flags().Float64("threshold", 0.8, "Similarity threshold for detection")
+	scanCmd.Flags().Float64("threshold", defaultSimilarityThreshold, "Similarity threshold for detection")
 	scanCmd.Flags().StringSlice("exclude", []string{}, "Packages to exclude from scan")
 	scanCmd.Flags().String("file", "", "Specific dependency file to scan")
 	scanCmd.Flags().Bool("check-vulnerabilities", false, "Enable vulnerability checking")
@@ -64,6 +70,9 @@ func init() {
 	scanCmd.Flags().Bool("no-llm", false, "Disable LLM (AI) explanations")
 	scanCmd.Flags().Int("max-llm-calls", 10, "Maximum number of LLM explanations to generate")
 	scanCmd.Flags().Bool("no-sandbox", false, "Disable dynamic analysis (sandboxing)")
+	// Offline / air-gap flags
+	scanCmd.Flags().Bool("offline", false, "Use local SQLite CVE database instead of live network APIs (air-gap mode). Also activated by FALCN_OFFLINE=true env var.")
+	scanCmd.Flags().String("local-db", "", "Path to local CVE database for --offline mode (default: ~/.local/share/falcn/cve.db)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -136,6 +145,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	maxLLMCalls, _ := cmd.Flags().GetInt("max-llm-calls")
 	disableSandbox, _ := cmd.Flags().GetBool("no-sandbox")
 
+	// Get offline / air-gap options
+	offlineMode, _ := cmd.Flags().GetBool("offline")
+	localDBPath, _ := cmd.Flags().GetString("local-db")
+
 	options := &analyzer.ScanOptions{
 		OutputFormat:           outputFormat,
 		SpecificFile:           specificFile,
@@ -156,6 +169,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 		DisableLLM:             disableLLM,
 		MaxLLMCalls:            maxLLMCalls,
 		DisableSandbox:         disableSandbox,
+		OfflineMode:            offlineMode,
+		LocalDBPath:            localDBPath,
 	}
 
 	// Map registry override to packageManagers if provided

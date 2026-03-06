@@ -98,9 +98,9 @@ func (pg *PDFGenerator) GenerateReportPDF(templateName string, data interface{},
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	// Write PDF to file
+	// Write PDF to file (0600 — report contains security-sensitive findings)
 	outputPath := filepath.Join(pg.OutputDir, outputFilename)
-	if err := os.WriteFile(outputPath, pdfBytes, 0644); err != nil {
+	if err := os.WriteFile(outputPath, pdfBytes, 0600); err != nil {
 		return fmt.Errorf("failed to write PDF file: %w", err)
 	}
 
@@ -186,9 +186,9 @@ func (pg *PDFGenerator) GeneratePDFFromHTML(htmlContent string, outputFilename s
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	// Write PDF to file
+	// Write PDF to file (0600 — report contains security-sensitive findings)
 	outputPath := filepath.Join(pg.OutputDir, outputFilename)
-	if err := os.WriteFile(outputPath, pdfBytes, 0644); err != nil {
+	if err := os.WriteFile(outputPath, pdfBytes, 0600); err != nil {
 		return fmt.Errorf("failed to write PDF file: %w", err)
 	}
 

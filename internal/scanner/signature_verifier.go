@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -77,32 +78,47 @@ func (sv *SignatureVerifier) verifyPESignature(filePath string) (*types.Threat, 
 	return nil, nil // No threat
 }
 
-// verifyMacOSSignature verifies macOS code signatures
+// verifyMacOSSignature verifies macOS code signatures.
+// On non-Darwin platforms the check is skipped because the codesign tool
+// is only available on macOS.
 func (sv *SignatureVerifier) verifyMacOSSignature(filePath string) (*types.Threat, error) {
-	// Use codesign command if available
-	cmd := exec.Command("codesign", "-dvv", filePath)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		// Binary is not signed
-		return sv.createUnsignedThreat(filePath), nil
+	switch runtime.GOOS {
+	case "darwin":
+		// Use codesign command to verify the binary signature.
+		cmd := exec.Command("codesign", "-dvv", filePath)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			// Binary is not signed.
+			return sv.createUnsignedThreat(filePath), nil
+		}
+
+		outputStr := string(output)
+
+		// Parse codesign output for certificate info.
+		certInfo := sv.parseMacOSCertInfo(outputStr)
+
+		// Check if certificate is recent.
+		if certInfo.IsRecent(sv.recentCertThreshold) {
+			return sv.createRecentCertThreat(filePath, certInfo), nil
+		}
+
+		// Check if self-signed (ad-hoc signature).
+		if strings.Contains(outputStr, "adhoc") || certInfo.IsSelfSigned {
+			return sv.createSelfSignedThreat(filePath, certInfo), nil
+		}
+
+		return nil, nil
+
+	case "linux":
+		// codesign is not available on Linux. GPG-based verification could be
+		// added here in the future; for now we skip with a diagnostic note.
+		logrus.Debugf("Signature verification via codesign not available on Linux; skipping for %s", filePath)
+		return nil, nil
+
+	default:
+		logrus.Debugf("Signature verification not supported on %s; skipping for %s", runtime.GOOS, filePath)
+		return nil, nil
 	}
-
-	outputStr := string(output)
-
-	// Parse codesign output for certificate info
-	certInfo := sv.parseMacOSCertInfo(outputStr)
-
-	// Check if certificate is recent
-	if certInfo.IsRecent(sv.recentCertThreshold) {
-		return sv.createRecentCertThreat(filePath, certInfo), nil
-	}
-
-	// Check if self-signed (ad-hoc signature)
-	if strings.Contains(outputStr, "adhoc") || certInfo.IsSelfSigned {
-		return sv.createSelfSignedThreat(filePath, certInfo), nil
-	}
-
-	return nil, nil
 }
 
 // CertInfo contains certificate information

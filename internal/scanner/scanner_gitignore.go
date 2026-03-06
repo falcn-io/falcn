@@ -33,8 +33,11 @@ func (s *Scanner) shouldSkipPath(path string) bool {
 	}
 
 	// Check .falcnignore patterns
-	if s.ignorePatterns != nil {
-		for _, pattern := range s.ignorePatterns {
+	s.ignorePatternsMu.RLock()
+	patterns := s.ignorePatterns
+	s.ignorePatternsMu.RUnlock()
+	if patterns != nil {
+		for _, pattern := range patterns {
 			// Handle directory matches (pattern ends with /)
 			if strings.HasSuffix(pattern, "/") {
 				// Match directory name or path prefix
@@ -94,14 +97,16 @@ func (s *Scanner) shouldSkipPath(path string) bool {
 func (s *Scanner) loadIgnorePatterns(projectRoot string) {
 	ignoreFile := filepath.Join(projectRoot, ".falcnignore")
 
-	// Create or append to ignore list
-	s.ignorePatterns = make([]string, 0)
+	newPatterns := make([]string, 0)
 
 	file, err := os.Open(ignoreFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			logrus.Debugf("Failed to open .falcnignore: %v", err)
 		}
+		s.ignorePatternsMu.Lock()
+		s.ignorePatterns = newPatterns
+		s.ignorePatternsMu.Unlock()
 		return
 	}
 	defer file.Close()
@@ -112,10 +117,14 @@ func (s *Scanner) loadIgnorePatterns(projectRoot string) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		s.ignorePatterns = append(s.ignorePatterns, line)
+		newPatterns = append(newPatterns, line)
 	}
 
-	if len(s.ignorePatterns) > 0 {
-		logrus.Debugf("Loaded %d patterns from .falcnignore", len(s.ignorePatterns))
+	s.ignorePatternsMu.Lock()
+	s.ignorePatterns = newPatterns
+	s.ignorePatternsMu.Unlock()
+
+	if len(newPatterns) > 0 {
+		logrus.Debugf("Loaded %d patterns from .falcnignore", len(newPatterns))
 	}
 }

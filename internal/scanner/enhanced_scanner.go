@@ -306,7 +306,7 @@ func (es *EnhancedScanner) ScanWithSupplyChainAnalysis(ctx context.Context, proj
 	}
 
 	// Perform base scan first
-	baseScanResult, err := es.baseScanner.ScanProject(projectPath)
+	baseScanResult, err := es.baseScanner.ScanProject(ctx, projectPath)
 	if err != nil {
 		return nil, fmt.Errorf("base scan failed: %w", err)
 	}

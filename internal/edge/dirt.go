@@ -13,7 +13,16 @@ import (
 	"github.com/falcn-io/falcn/pkg/types"
 )
 
-// AssetCriticality definitions moved to pkg/types
+// AssetCriticality definitions moved to pkg/types.
+// Re-exported here so callers that import only this package can reference them.
+type AssetCriticality = types.AssetCriticality
+
+const (
+	CriticalityUnknown  = types.CriticalityUnknown
+	CriticalityPublic   = types.CriticalityPublic
+	CriticalityInternal = types.CriticalityInternal
+	CriticalityCritical = types.CriticalityCritical
+)
 
 // DIRTConfig holds configuration for the DIRT algorithm with business context
 type DIRTConfig struct {

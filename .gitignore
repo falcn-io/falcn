@@ -71,3 +71,24 @@ config/local.yaml
 
 # Redis
 dump.rdb
+
+# Compiled binaries at repo root
+/falcn
+/falcn-api
+/main
+/veryllm
+
+# SQLite databases (runtime data — not source)
+*.db
+*.db-shm
+*.db-wal
+# Keep test fixture DBs
+!tests/reallife/data/Falcn.db
+
+# Runtime output files
+falcn_report.json
+falcn.yaml.example
+
+# Node modules (web frontend)
+web/node_modules/
+web/dist/

@@ -9,6 +9,7 @@ import (
 
 	reg "github.com/falcn-io/falcn/internal/registry"
 	"github.com/falcn-io/falcn/pkg/types"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -65,13 +66,23 @@ func (etd *EnhancedTyposquattingDetector) DetectEnhanced(target types.Dependency
 			continue
 		}
 
+		// For Go module paths (e.g. "github.com/gorilla/mux") all entries share a
+		// VCS-host prefix such as "github.com/".  Comparing full paths inflates
+		// Jaro-Winkler scores dramatically between completely unrelated modules
+		// because of the long common prefix.  We therefore compare only the
+		// path-after-host component when BOTH sides look like Go module paths.
+		// A real typosquat ("github.com/g0rilla/mux") will still be caught because
+		// the stripped names ("g0rilla/mux" vs "gorilla/mux") remain similar.
+		compareTarget := stripGoModuleHost(target.Name)
+		comparePkg := stripGoModuleHost(pkg)
+
 		// Skip if packages are too different in length (optimization)
-		if etd.shouldSkipLengthCheck(target.Name, pkg) {
+		if etd.shouldSkipLengthCheck(compareTarget, comparePkg) {
 			continue
 		}
 
 		// Calculate enhanced similarity score
-		similarity := etd.calculateEnhancedSimilarity(target.Name, pkg)
+		similarity := etd.calculateEnhancedSimilarity(compareTarget, comparePkg)
 
 		// Same-group threshold per registry (default for Maven 0.90)
 		if g1, _, ok1 := parseGroupArtifact(target.Name); ok1 {
@@ -201,80 +212,97 @@ func (etd *EnhancedTyposquattingDetector) collectSignals(target types.Dependency
 		g2, a2, ok2 := parseGroupArtifact(candidate)
 		if ok1 && ok2 {
 			mc := reg.NewMavenClient()
-			v1 := ""
-			v2 := ""
-			docs1, _ := mc.SearchPackages(ctx, fmt.Sprintf("%s:%s", g1, a1))
-			if len(docs1) > 0 {
+			v1, v2 := "", ""
+			if docs1, err := mc.SearchPackages(ctx, fmt.Sprintf("%s:%s", g1, a1)); err != nil {
+				logrus.Debugf("collectSignals: maven search %s:%s: %v", g1, a1, err)
+			} else if len(docs1) > 0 {
 				v1 = docs1[0].Version
 			}
-			docs2, _ := mc.SearchPackages(ctx, fmt.Sprintf("%s:%s", g2, a2))
-			if len(docs2) > 0 {
+			if docs2, err := mc.SearchPackages(ctx, fmt.Sprintf("%s:%s", g2, a2)); err != nil {
+				logrus.Debugf("collectSignals: maven search %s:%s: %v", g2, a2, err)
+			} else if len(docs2) > 0 {
 				v2 = docs2[0].Version
 			}
-			m1, _ := mc.GetPackageInfo(ctx, g1, a1, v1)
-			m2, _ := mc.GetPackageInfo(ctx, g2, a2, v2)
-			s.MaintainersTarget = m1.Maintainers
-			s.MaintainersCandidate = m2.Maintainers
+			if m1, err := mc.GetPackageInfo(ctx, g1, a1, v1); err != nil {
+				logrus.Debugf("collectSignals: maven info %s:%s@%s: %v", g1, a1, v1, err)
+			} else if m1 != nil {
+				s.MaintainersTarget = m1.Maintainers
+			}
+			if m2, err := mc.GetPackageInfo(ctx, g2, a2, v2); err != nil {
+				logrus.Debugf("collectSignals: maven info %s:%s@%s: %v", g2, a2, v2, err)
+			} else if m2 != nil {
+				s.MaintainersCandidate = m2.Maintainers
+			}
 			s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 			s.SameGroup = strings.EqualFold(g1, g2)
 			s.LegitimacyStrong = s.SameGroup && hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 		}
 	case "npm":
 		nc := reg.NewNPMClient()
-		tinfo, _ := nc.GetPackageInfo(ctx, target.Name)
-		cinfo, _ := nc.GetPackageInfo(ctx, candidate)
-		if tinfo != nil {
+		if tinfo, err := nc.GetPackageInfo(ctx, target.Name); err != nil {
+			logrus.Debugf("collectSignals: npm info %s: %v", target.Name, err)
+		} else if tinfo != nil {
 			s.MaintainersTarget = toStrings(tinfo.Maintainers)
 		}
-		if cinfo != nil {
+		if cinfo, err := nc.GetPackageInfo(ctx, candidate); err != nil {
+			logrus.Debugf("collectSignals: npm info %s: %v", candidate, err)
+		} else if cinfo != nil {
 			s.MaintainersCandidate = toStrings(cinfo.Maintainers)
 		}
 		s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 		s.LegitimacyStrong = hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 	case "pypi":
 		pc := reg.NewPyPIClient()
-		tinfo, _ := pc.GetPackageInfo(target.Name)
-		cinfo, _ := pc.GetPackageInfo(candidate)
-		if tinfo != nil {
+		if tinfo, err := pc.GetPackageInfo(target.Name); err != nil {
+			logrus.Debugf("collectSignals: pypi info %s: %v", target.Name, err)
+		} else if tinfo != nil {
 			s.MaintainersTarget = []string{tinfo.Info.Author, tinfo.Info.Maintainer}
 		}
-		if cinfo != nil {
+		if cinfo, err := pc.GetPackageInfo(candidate); err != nil {
+			logrus.Debugf("collectSignals: pypi info %s: %v", candidate, err)
+		} else if cinfo != nil {
 			s.MaintainersCandidate = []string{cinfo.Info.Author, cinfo.Info.Maintainer}
 		}
 		s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 		s.LegitimacyStrong = hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 	case "rubygems":
 		rc := reg.NewRubyGemsClient()
-		tinfo, _ := rc.GetPackageInfo(ctx, target.Name, "")
-		cinfo, _ := rc.GetPackageInfo(ctx, candidate, "")
-		if tinfo != nil {
+		if tinfo, err := rc.GetPackageInfo(ctx, target.Name, ""); err != nil {
+			logrus.Debugf("collectSignals: rubygems info %s: %v", target.Name, err)
+		} else if tinfo != nil {
 			s.MaintainersTarget = tinfo.Maintainers
 		}
-		if cinfo != nil {
+		if cinfo, err := rc.GetPackageInfo(ctx, candidate, ""); err != nil {
+			logrus.Debugf("collectSignals: rubygems info %s: %v", candidate, err)
+		} else if cinfo != nil {
 			s.MaintainersCandidate = cinfo.Maintainers
 		}
 		s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 		s.LegitimacyStrong = hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 	case "nuget":
 		uc := reg.NewNuGetClient()
-		sr1, _ := uc.SearchPackages(ctx, target.Name)
-		sr2, _ := uc.SearchPackages(ctx, candidate)
-		if len(sr1) > 0 {
+		if sr1, err := uc.SearchPackages(ctx, target.Name); err != nil {
+			logrus.Debugf("collectSignals: nuget search %s: %v", target.Name, err)
+		} else if len(sr1) > 0 {
 			s.MaintainersTarget = sr1[0].Maintainers
 		}
-		if len(sr2) > 0 {
+		if sr2, err := uc.SearchPackages(ctx, candidate); err != nil {
+			logrus.Debugf("collectSignals: nuget search %s: %v", candidate, err)
+		} else if len(sr2) > 0 {
 			s.MaintainersCandidate = sr2[0].Maintainers
 		}
 		s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 		s.LegitimacyStrong = hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 	case "cargo":
 		cc := reg.NewCargoClient()
-		tmeta, _ := cc.GetPackageInfo(ctx, target.Name, "latest")
-		cmeta, _ := cc.GetPackageInfo(ctx, candidate, "latest")
-		if tmeta != nil {
+		if tmeta, err := cc.GetPackageInfo(ctx, target.Name, "latest"); err != nil {
+			logrus.Debugf("collectSignals: cargo info %s: %v", target.Name, err)
+		} else if tmeta != nil {
 			s.MaintainersTarget = tmeta.Maintainers
 		}
-		if cmeta != nil {
+		if cmeta, err := cc.GetPackageInfo(ctx, candidate, "latest"); err != nil {
+			logrus.Debugf("collectSignals: cargo info %s: %v", candidate, err)
+		} else if cmeta != nil {
 			s.MaintainersCandidate = cmeta.Maintainers
 		}
 		s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
@@ -722,4 +750,45 @@ func (etd *EnhancedTyposquattingDetector) calculateSeverityEnhanced(sim float64,
 		return types.SeverityHigh
 	}
 	return types.SeverityMedium
+}
+
+// stripGoModuleHost returns only the path component of a Go module path,
+// stripping the VCS-host prefix so that similarity comparisons are not
+// inflated by a shared "github.com/" or "go.uber.org/" prefix.
+//
+//	"github.com/gorilla/mux"   → "gorilla/mux"
+//	"go.uber.org/zap"          → "zap"
+//	"gorm.io/gorm"             → "gorm"
+//	"lodash"                   → "lodash"   (unchanged – plain package name)
+//
+// A genuine typosquat such as "github.com/g0rilla/mux" is still detected
+// because the stripped form "g0rilla/mux" remains similar to "gorilla/mux".
+func stripGoModuleHost(name string) string {
+	lower := strings.ToLower(name)
+	// Common VCS / vanity-domain prefixes used in Go modules.
+	prefixes := []string{
+		"github.com/",
+		"gitlab.com/",
+		"bitbucket.org/",
+		"code.google.com/",
+		"gopkg.in/",
+		"go.uber.org/",
+		"go.opencensus.io/",
+		"go.opentelemetry.io/",
+		"cloud.google.com/",
+		"google.golang.org/",
+		"gorm.io/",
+		"k8s.io/",
+		"sigs.k8s.io/",
+		"mvdan.cc/",
+		"honnef.co/",
+		"modernc.org/",
+	}
+	for _, pfx := range prefixes {
+		if strings.HasPrefix(lower, pfx) {
+			// Preserve original casing of the retained portion.
+			return name[len(pfx):]
+		}
+	}
+	return name
 }

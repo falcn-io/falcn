@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -493,18 +494,29 @@ func APIKeyMiddleware(lookupKey func(hash string) (userID, orgID, role string, o
 }
 
 // RequireEnvJWTKey loads the JWT private key from the FALCN_JWT_PRIVATE_KEY_FILE env var.
-// Falls back to auto-generating a key (logs a warning — not suitable for production).
+// In production, both the env var and the file it points to must be present; the server
+// will call log.Fatalf and exit immediately if either condition is not met.
+// In development/testing mode an ephemeral key is generated and a notice is logged at Info level.
 func RequireEnvJWTKey() (*JWTService, error) {
 	keyFile := os.Getenv("FALCN_JWT_PRIVATE_KEY_FILE")
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = os.Getenv("FALCN_APP_ENVIRONMENT")
+	}
+	isDevOrTest := env == "development" || env == "testing" || env == ""
+
 	pemBytes := ""
 	if keyFile != "" {
 		b, err := os.ReadFile(keyFile)
 		if err != nil {
-			return nil, fmt.Errorf("auth: read JWT key file %s: %w", keyFile, err)
+			log.Fatalf("FALCN_JWT_PRIVATE_KEY_FILE is set to %q but the file could not be read: %v", keyFile, err)
 		}
 		pemBytes = string(b)
 	} else {
-		logrus.Warn("FALCN_JWT_PRIVATE_KEY_FILE not set — generating ephemeral JWT key (not suitable for production)")
+		if !isDevOrTest {
+			log.Fatalf("FALCN_JWT_PRIVATE_KEY_FILE must be set in production")
+		}
+		logrus.Info("FALCN_JWT_PRIVATE_KEY_FILE not set — generating ephemeral JWT key (development/testing mode only)")
 	}
 	issuer := os.Getenv("FALCN_JWT_ISSUER")
 	if issuer == "" {

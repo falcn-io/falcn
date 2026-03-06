@@ -39,6 +39,7 @@ type Scanner struct {
 	policyEngine     *policy.Engine
 	enhancedDetector *detector.EnhancedTyposquattingDetector
 	ignorePatterns   []string
+	ignorePatternsMu sync.RWMutex
 }
 
 // ProjectDetector interface for detecting different project types
@@ -152,7 +153,7 @@ func New(cfg *config.Config) (*Scanner, error) {
 }
 
 // ScanProject scans a project for dependencies and security threats
-func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
+func (s *Scanner) ScanProject(ctx context.Context, projectPath string) (*types.ScanResult, error) {
 	start := time.Now()
 
 	// Load .falcnignore patterns
@@ -204,7 +205,10 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract packages: %w", err)
 	}
-	logrus.Infof("DEBUG: Extracted %d packages from %s", len(packages), projectInfo.Path)
+	logrus.WithFields(logrus.Fields{
+		"package_count": len(packages),
+		"path":          projectInfo.Path,
+	}).Debug("Packages extracted")
 
 	// Append infrastructure package if it exists
 	if infraPkg != nil {
@@ -214,18 +218,27 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 	// Removing that redundant check which might have been confusing.
 
 	// Enrich package metadata
-	ctx := context.Background()
 	for _, pkg := range packages {
 		// Initialize metadata if nil
 		if pkg.Metadata == nil {
 			pkg.Metadata = &types.PackageMetadata{}
 		}
-		logrus.Debugf("Enriching package %s (registry: %s, description: %s)", pkg.Name, pkg.Registry, pkg.Metadata.Description)
-		if err := s.metadataEnricher.enrichPackage(ctx, pkg); err != nil {
+		logrus.WithFields(logrus.Fields{
+		"package":     pkg.Name,
+		"registry":    pkg.Registry,
+		"description": pkg.Metadata.Description,
+	}).Debug("Enriching package")
+		enrichCtx, enrichCancel := context.WithTimeout(ctx, 15*time.Second)
+		enrichErr := s.metadataEnricher.enrichPackage(enrichCtx, pkg)
+		enrichCancel()
+		if enrichErr != nil {
 			// Log error but continue with other packages
-			logrus.Warnf("Failed to enrich package %s: %v", pkg.Name, err)
+			logrus.Warnf("Failed to enrich package %s: %v", pkg.Name, enrichErr)
 		} else {
-			logrus.Debugf("Enriched package %s - new description: %s", pkg.Name, pkg.Metadata.Description)
+			logrus.WithFields(logrus.Fields{
+			"package":     pkg.Name,
+			"description": pkg.Metadata.Description,
+		}).Debug("Package enriched")
 		}
 	}
 
@@ -289,12 +302,12 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 		root, _ = os.Getwd()
 	}
 
-	logrus.Debugf("Starting ContentScanner on root: %s", root)
+	logrus.WithField("root", root).Debug("Starting ContentScanner")
 	contentThreats, err := cs.ScanDirectory(root)
 	if err != nil {
 		logrus.Errorf("ContentScanner error: %v", err)
 	}
-	logrus.Debugf("ContentScanner found %d threats", len(contentThreats))
+	logrus.WithField("threat_count", len(contentThreats)).Debug("ContentScanner completed")
 
 	// Phase 4: Static Network Analysis
 	sna := NewStaticNetworkAnalyzer(root)
@@ -323,7 +336,7 @@ func (s *Scanner) ScanProject(projectPath string) (*types.ScanResult, error) {
 
 	// If we found file-level threats, attach them to a synthetic package
 	if len(projectThreats) > 0 {
-		logrus.Debugf("Creating synthetic package for %d project threats", len(projectThreats))
+		logrus.WithField("threat_count", len(projectThreats)).Debug("Creating synthetic package for project threats")
 		filesPkg := &types.Package{
 			Name:      "project-files",
 			Version:   "current",
@@ -904,18 +917,20 @@ func (s *Scanner) watchWithInterval(projectPath string, interval time.Duration) 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	logrus.Infof("Starting interval-based watching (every %v)", interval)
+	logrus.WithField("interval", interval).Info("Starting interval-based watching")
 
 	for {
 		select {
 		case <-ticker.C:
-			result, err := s.ScanProject(projectPath)
+			result, err := s.ScanProject(context.Background(), projectPath)
 			if err != nil {
 				logrus.Errorf("Scan error: %v", err)
 				continue
 			}
-			logrus.Infof("Scan completed: %d packages, %d threats",
-				result.Summary.TotalPackages, result.Summary.ThreatsFound)
+			logrus.WithFields(logrus.Fields{
+				"packages": result.Summary.TotalPackages,
+				"threats":  result.Summary.ThreatsFound,
+			}).Info("Scan completed")
 		}
 	}
 }
@@ -945,14 +960,16 @@ func (s *Scanner) watchWithFileEvents(projectPath string) error {
 
 			// Check if it's a manifest file change
 			if s.isManifestFile(event.Name) {
-				logrus.Infof("Manifest file changed: %s", event.Name)
-				result, err := s.ScanProject(projectPath)
+				logrus.WithField("file", event.Name).Info("Manifest file changed")
+				result, err := s.ScanProject(context.Background(), projectPath)
 				if err != nil {
 					logrus.Errorf("Scan error: %v", err)
 					continue
 				}
-				logrus.Infof("Scan completed: %d packages, %d threats",
-					result.Summary.TotalPackages, result.Summary.ThreatsFound)
+				logrus.WithFields(logrus.Fields{
+					"packages": result.Summary.TotalPackages,
+					"threats":  result.Summary.ThreatsFound,
+				}).Info("Scan completed")
 			}
 
 		case err, ok := <-watcher.Errors:

@@ -78,7 +78,7 @@ func runUpdatePackages(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("update-packages: marshal: %w", err)
 	}
 
-	if err := os.WriteFile(updatePkgOut, data, 0o644); err != nil {
+	if err := os.WriteFile(updatePkgOut, data, 0o600); err != nil {
 		return fmt.Errorf("update-packages: write: %w", err)
 	}
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/falcn-io/falcn/internal/cache"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/detector"
 	"github.com/falcn-io/falcn/internal/edge"
@@ -66,6 +67,9 @@ type ScanOptions struct {
 	DisableLLM     bool // Force disable LLM even if configured
 	MaxLLMCalls    int  // Max number of explanations to generate (rate limit)
 	DisableSandbox bool // Force disable active sandboxing
+	// Offline / air-gap options
+	OfflineMode bool   // Use local SQLite CVE database instead of network calls
+	LocalDBPath string // Path to local CVE database; DefaultLocalDBPath() used if empty
 }
 
 // ScanResult contains the results of a security scan
@@ -129,7 +133,8 @@ func New(cfg *config.Config) (*Analyzer, error) {
 		autoDetector: autoDetector,
 		factory:      factory,
 		registries:   make(map[string]registry.Connector),
-		llmProvider:  llmProvider,
+		llmProvider:    llmProvider,
+		explainCache:  cache.NewMemoryCache(),
 	}, nil
 }
 
@@ -176,7 +181,7 @@ func (a *Analyzer) Scan(path string, options *ScanOptions) (*ScanResult, error) 
 	}
 
 	// Run ScanProject to get packages
-	scanRes, err := scannerInstance.ScanProject(path)
+	scanRes, err := scannerInstance.ScanProject(context.Background(), path)
 	if err != nil {
 		return nil, fmt.Errorf("scanner failed: %w", err)
 	}
@@ -458,53 +463,82 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 		enhancedDetector = detector.NewEnhancedSupplyChainDetector()
 	}
 
+	// Determine whether to run in offline mode.
+	// Offline mode is activated by --offline flag OR the FALCN_OFFLINE=true env var.
+	offlineMode := options.OfflineMode || os.Getenv("FALCN_OFFLINE") == "true"
+
 	// Initialize vulnerability manager if vulnerability checking is enabled
 	var vulnManager *vulnerability.Manager
 	if options.CheckVulnerabilities {
-		logrus.Info("Vulnerability checking enabled, initializing vulnerability manager")
-
-		// Validate vulnerability database names
-		validDBs := map[string]bool{
-			"osv":    true,
-			"github": true,
-			"nvd":    true,
-		}
-
-		var validatedDBs []string
-		for _, dbName := range options.VulnerabilityDBs {
-			if validDBs[dbName] {
-				validatedDBs = append(validatedDBs, dbName)
+		if offlineMode {
+			// Offline path: use the local SQLite CVE database only — no HTTP calls.
+			logrus.Info("Offline mode: using local CVE database for vulnerability checking")
+			managerConfig := &vulnerability.ManagerConfig{
+				ParallelQueries: false,
+				Timeout:         10 * time.Second,
+				CacheEnabled:    true,
+				CacheTTL:        1 * time.Hour,
+				MergeResults:    false,
+				DeduplicateByID: true,
+				Priority:        []string{"local"},
+			}
+			vulnManager = vulnerability.NewManager(managerConfig)
+			dbPath := options.LocalDBPath
+			if dbPath == "" {
+				dbPath = vulnerability.DefaultLocalDBPath()
+			}
+			if err := vulnManager.UseLocalDB(dbPath); err != nil {
+				logrus.Warnf("Failed to open local CVE database at %s: %v — vulnerability checking skipped", dbPath, err)
+				vulnManager = nil
 			} else {
-				return nil, nil, fmt.Errorf("invalid vulnerability database: %s. Valid options are: osv, github, nvd", dbName)
+				logrus.Infof("Local CVE database opened: %s", dbPath)
 			}
-		}
+		} else {
+			logrus.Info("Vulnerability checking enabled, initializing vulnerability manager")
 
-		if len(validatedDBs) == 0 {
-			return nil, nil, fmt.Errorf("no valid vulnerability databases specified")
-		}
-
-		// Create manager configuration
-		managerConfig := &vulnerability.ManagerConfig{
-			ParallelQueries: true,
-			Timeout:         30 * time.Second,
-			CacheEnabled:    true,
-			CacheTTL:        1 * time.Hour,
-			MergeResults:    true,
-			DeduplicateByID: true,
-			Priority:        validatedDBs,
-		}
-
-		// Create database configurations based on user selection
-		for _, dbName := range validatedDBs {
-			dbConfig := types.VulnerabilityDatabaseConfig{
-				Type:    dbName,
-				Enabled: true,
+			// Validate vulnerability database names
+			validDBs := map[string]bool{
+				"osv":    true,
+				"github": true,
+				"nvd":    true,
 			}
-			managerConfig.Databases = append(managerConfig.Databases, dbConfig)
-		}
 
-		vulnManager = vulnerability.NewManager(managerConfig)
-		logrus.Infof("Vulnerability manager initialized with %d databases", len(validatedDBs))
+			var validatedDBs []string
+			for _, dbName := range options.VulnerabilityDBs {
+				if validDBs[dbName] {
+					validatedDBs = append(validatedDBs, dbName)
+				} else {
+					return nil, nil, fmt.Errorf("invalid vulnerability database: %s. Valid options are: osv, github, nvd", dbName)
+				}
+			}
+
+			if len(validatedDBs) == 0 {
+				return nil, nil, fmt.Errorf("no valid vulnerability databases specified")
+			}
+
+			// Create manager configuration
+			managerConfig := &vulnerability.ManagerConfig{
+				ParallelQueries: true,
+				Timeout:         30 * time.Second,
+				CacheEnabled:    true,
+				CacheTTL:        1 * time.Hour,
+				MergeResults:    true,
+				DeduplicateByID: true,
+				Priority:        validatedDBs,
+			}
+
+			// Create database configurations based on user selection
+			for _, dbName := range validatedDBs {
+				dbConfig := types.VulnerabilityDatabaseConfig{
+					Type:    dbName,
+					Enabled: true,
+				}
+				managerConfig.Databases = append(managerConfig.Databases, dbConfig)
+			}
+
+			vulnManager = vulnerability.NewManager(managerConfig)
+			logrus.Infof("Vulnerability manager initialized with %d databases", len(validatedDBs))
+		}
 	}
 
 	// Analyze each dependency individually using CheckPackage for better threat detection
@@ -651,16 +685,12 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 
 	// AI Explanation Step — structured JSON explanations via prompts.go templates.
 	if a.llmProvider != nil && len(allThreats) > 0 && !options.DisableLLM {
-		limit := options.MaxLLMCalls
-		if limit <= 0 {
-			limit = 10
-		}
-		logrus.Infof("Generating AI explanations for threats (limit: %d)...", limit)
-		count := 0
+		logrus.Infof("Generating AI explanations for threats (max LLM calls: %d)...", options.MaxLLMCalls)
+		llmCallCount := 0
 
 		for i := range allThreats {
-			if count >= limit {
-				logrus.Infof("Reached LLM explanation limit (%d). Skipping remaining.", limit)
+			if options.MaxLLMCalls > 0 && llmCallCount >= options.MaxLLMCalls {
+				logrus.Debugf("Max LLM calls (%d) reached, skipping remaining explanations", options.MaxLLMCalls)
 				break
 			}
 			t := &allThreats[i]
@@ -679,7 +709,7 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 						hit := *expl
 						hit.CacheHit = true
 						t.Explanation = &hit
-						count++
+						// Cache hits do not count against the LLM call limit.
 						continue
 					}
 				}
@@ -699,6 +729,7 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 				logrus.Warnf("LLM explanation failed for %s: %v", t.Package, err)
 				continue
 			}
+			llmCallCount++
 
 			expl := llm.ParseStructuredExplanation(response, a.llmProvider.ID(), t.Confidence)
 			expl.GeneratedAt = time.Now()
@@ -714,7 +745,6 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 			if a.explainCache != nil {
 				a.explainCache.Set(cacheKey, expl, 24*time.Hour)
 			}
-			count++
 		}
 	}
 
@@ -1071,7 +1101,7 @@ func (a *Analyzer) scanWithSupplyChain(path string, options *ScanOptions) (*Scan
 }
 
 func generateScanID() string {
-	return fmt.Sprintf("scan_%d", time.Now().Unix())
+	return fmt.Sprintf("scan_%d", time.Now().UnixNano())
 }
 
 // OutputJSON outputs scan results in JSON format

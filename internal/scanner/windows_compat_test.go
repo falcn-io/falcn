@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -49,7 +50,7 @@ func TestWindowsDirectoryScanning(t *testing.T) {
 	require.NoError(t, err)
 
 	// Scan
-	result, err := scanner.ScanProject(tmpDir)
+	result, err := scanner.ScanProject(context.Background(), tmpDir)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 }

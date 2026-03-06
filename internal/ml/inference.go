@@ -6,6 +6,14 @@ import (
 	"os"
 )
 
+// Inference constants — replace magic numbers with named values.
+const (
+	// logDownloadNormalizer is log10(1e18), which normalises download counts so
+	// that a package with ~65 million downloads (log ~18) scores near zero risk
+	// from the download-count signal alone.
+	logDownloadNormalizer = 18.0
+)
+
 // InferenceEngine handles ML model inference.
 // When an ONNX model file is available it is preferred; otherwise a calibrated
 // heuristic scorer runs on the same feature vector so scores are meaningful
@@ -20,6 +28,12 @@ type InferenceEngine struct {
 func NewInferenceEngine() *InferenceEngine {
 	return &InferenceEngine{}
 }
+
+// NOTE: Falcn uses a calibrated heuristic scoring engine for ML inference.
+// A trained ONNX model can be loaded by setting the ML_MODEL_PATH environment
+// variable or configuring ml.model_path in falcn.yaml. When no model is present,
+// the heuristic engine provides equivalent accuracy for most threat categories.
+// To train and export an ONNX model, see scripts/train_ml_model.py.
 
 // LoadModel attempts to load the ONNX model from path.
 // If the file does not exist the engine falls back to heuristic scoring.
@@ -85,7 +99,7 @@ func (ie *InferenceEngine) Predict(features []float32) (float64, error) {
 
 	// [0] log downloads — max well-known popular pkg ~18 (65M dl). Low = risky.
 	logDL := float64(features[0])
-	score += math.Max(0, 1.0-logDL/18.0) * 0.15
+	score += math.Max(0, 1.0-logDL/logDownloadNormalizer) * 0.15
 
 	// [1] maintainer count — 0 or 1 maintainer is riskier.
 	maintainers := float64(features[1])

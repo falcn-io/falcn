@@ -82,6 +82,21 @@ type statusRecorder struct {
 
 func (s *statusRecorder) WriteHeader(code int) { s.status = code; s.ResponseWriter.WriteHeader(code) }
 
+// Flush delegates to the underlying ResponseWriter's Flusher so that SSE / streaming
+// endpoints that do w.(http.Flusher) or http.NewResponseController(w).Flush() work
+// correctly even when wrapped by this middleware.
+func (s *statusRecorder) Flush() {
+	if f, ok := s.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Unwrap lets http.NewResponseController (Go 1.20+) peel back this wrapper and
+// reach the net/http response writer that implements all extended interfaces.
+func (s *statusRecorder) Unwrap() http.ResponseWriter {
+	return s.ResponseWriter
+}
+
 func RecordRateLimitHit(path string) {
 	rateLimitHitsTotal.WithLabelValues(path).Inc()
 }

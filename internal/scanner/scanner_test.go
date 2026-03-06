@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"context"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,7 @@ func TestScanner_ScanProject_NpmClean(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := New(cfg)
 	require.NoError(t, err)
-	res, err := s.ScanProject("../../examples/npm-clean")
+	res, err := s.ScanProject(context.Background(), "../../examples/npm-clean")
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(res.Packages), 2)
 }
@@ -20,7 +21,7 @@ func TestScanner_ScanProject_NpmVulnerable(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := New(cfg)
 	require.NoError(t, err)
-	res, err := s.ScanProject("../../examples/npm-vulnerable")
+	res, err := s.ScanProject(context.Background(), "../../examples/npm-vulnerable")
 	require.NoError(t, err)
 	hasThreat := false
 	for _, p := range res.Packages {
@@ -36,7 +37,7 @@ func TestScanner_ScanProject_GoMinimal(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := New(cfg)
 	require.NoError(t, err)
-	res, err := s.ScanProject("../../examples/go-minimal")
+	res, err := s.ScanProject(context.Background(), "../../examples/go-minimal")
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(res.Packages), 1)
 }
@@ -45,7 +46,7 @@ func TestScanner_ScanProject_MavenMinimal(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := New(cfg)
 	require.NoError(t, err)
-	res, err := s.ScanProject("../../examples/maven-minimal")
+	res, err := s.ScanProject(context.Background(), "../../examples/maven-minimal")
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(res.Packages), 1)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -389,7 +388,7 @@ func (m *Manager) scanSingleRepository(ctx context.Context, request *ScanRequest
 	}
 
 	// Perform actual scanning
-	scanResult, err := scanner.ScanProject(tempDir)
+	scanResult, err := scanner.ScanProject(context.Background(), tempDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan project: %w", err)
 	}
@@ -478,7 +477,7 @@ func (m *Manager) downloadDependencyFiles(ctx context.Context, connector Connect
 		filePath := filepath.Join(tempDir, filepath.Base(file))
 
 		// Write file content
-		if err := ioutil.WriteFile(filePath, content, 0644); err != nil {
+		if err := os.WriteFile(filePath, content, 0600); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", filePath, err)
 		}
 
@@ -594,7 +593,7 @@ func (m *Manager) LoadConfig(configPath string) error {
 	}
 
 	// Read configuration file
-	data, err := ioutil.ReadFile(configPath)
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to read configuration file: %w", err)
 	}

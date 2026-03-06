@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,7 @@ type NPMClient struct {
 	baseURL           string
 	httpClient        *http.Client
 	cache             map[string]*CacheEntry
+	cacheMu           sync.RWMutex
 	cacheTTL          time.Duration
 	qualityWeight     float64
 	popularityWeight  float64
@@ -93,15 +95,14 @@ func (c *NPMClient) GetPackageInfo(ctx context.Context, packageName string) (*NP
 
 	// Check cache first
 	cacheKey := fmt.Sprintf("package:%s", packageName)
-	if entry, exists := c.cache[cacheKey]; exists {
-		if time.Since(entry.Timestamp) < c.cacheTTL {
-			if info, ok := entry.Data.(*NPMPackageInfo); ok {
-				logrus.Debugf("Cache hit for package: %s", packageName)
-				return info, nil
-			}
+	c.cacheMu.RLock()
+	entry, exists := c.cache[cacheKey]
+	c.cacheMu.RUnlock()
+	if exists && time.Since(entry.Timestamp) < c.cacheTTL {
+		if info, ok := entry.Data.(*NPMPackageInfo); ok {
+			logrus.Debugf("Cache hit for package: %s", packageName)
+			return info, nil
 		}
-		// Remove expired entry
-		delete(c.cache, cacheKey)
 	}
 
 	// Encode package name for URL
@@ -137,10 +138,20 @@ func (c *NPMClient) GetPackageInfo(ctx context.Context, packageName string) (*NP
 	}
 
 	// Cache the result
+	c.cacheMu.Lock()
+	if len(c.cache) >= 1000 {
+		now := time.Now()
+		for k, v := range c.cache {
+			if now.Sub(v.Timestamp) > c.cacheTTL {
+				delete(c.cache, k)
+			}
+		}
+	}
 	c.cache[cacheKey] = &CacheEntry{
 		Data:      &packageInfo,
 		Timestamp: time.Now(),
 	}
+	c.cacheMu.Unlock()
 
 	logrus.Debugf("Successfully fetched package info for: %s", packageName)
 	return &packageInfo, nil
@@ -171,15 +182,14 @@ func (c *NPMClient) GetDownloadStats(ctx context.Context, packageName string, pe
 
 	// Check cache first
 	cacheKey := fmt.Sprintf("downloads:%s:%s", packageName, period)
-	if entry, exists := c.cache[cacheKey]; exists {
-		if time.Since(entry.Timestamp) < c.cacheTTL {
-			if stats, ok := entry.Data.(*NPMDownloadStats); ok {
-				logrus.Debugf("Cache hit for download stats: %s (%s)", packageName, period)
-				return stats, nil
-			}
+	c.cacheMu.RLock()
+	entry, exists := c.cache[cacheKey]
+	c.cacheMu.RUnlock()
+	if exists && time.Since(entry.Timestamp) < c.cacheTTL {
+		if stats, ok := entry.Data.(*NPMDownloadStats); ok {
+			logrus.Debugf("Cache hit for download stats: %s (%s)", packageName, period)
+			return stats, nil
 		}
-		// Remove expired entry
-		delete(c.cache, cacheKey)
 	}
 
 	// Encode package name for URL
@@ -215,10 +225,20 @@ func (c *NPMClient) GetDownloadStats(ctx context.Context, packageName string, pe
 	}
 
 	// Cache the result
+	c.cacheMu.Lock()
+	if len(c.cache) >= 1000 {
+		now := time.Now()
+		for k, v := range c.cache {
+			if now.Sub(v.Timestamp) > c.cacheTTL {
+				delete(c.cache, k)
+			}
+		}
+	}
 	c.cache[cacheKey] = &CacheEntry{
 		Data:      &downloadStats,
 		Timestamp: time.Now(),
 	}
+	c.cacheMu.Unlock()
 
 	logrus.Debugf("Successfully fetched download stats for: %s (%s): %d downloads", packageName, period, downloadStats.Downloads)
 	return &downloadStats, nil
@@ -241,7 +261,9 @@ func (c *NPMClient) GetPackageVersions(ctx context.Context, packageName string) 
 
 // ClearCache clears the internal cache
 func (c *NPMClient) ClearCache() {
+	c.cacheMu.Lock()
 	c.cache = make(map[string]*CacheEntry)
+	c.cacheMu.Unlock()
 	logrus.Debug("NPM client cache cleared")
 }
 

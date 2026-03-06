@@ -2,7 +2,6 @@ package secrets
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -47,7 +46,7 @@ func NewFileProvider(path string) (*FileProvider, error) {
 
 // Get retrieves a secret from a file
 func (f *FileProvider) Get(key string) (string, error) {
-	data, err := ioutil.ReadFile(f.path)
+	data, err := os.ReadFile(f.path)
 	if err != nil {
 		return "", fmt.Errorf("failed to read secrets file: %w", err)
 	}

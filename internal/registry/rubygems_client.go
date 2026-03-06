@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/falcn-io/falcn/pkg/types"
@@ -18,6 +19,7 @@ type RubyGemsClient struct {
 	baseURL    string
 	httpClient *http.Client
 	cache      map[string]*CacheEntry
+	cacheMu    sync.RWMutex
 	cacheTTL   time.Duration
 }
 
@@ -111,11 +113,12 @@ func (c *RubyGemsClient) GetPackageInfo(ctx context.Context, gemName, version st
 	cacheKey := fmt.Sprintf("%s:%s", gemName, version)
 
 	// Check cache first
-	if entry, exists := c.cache[cacheKey]; exists {
-		if time.Since(entry.Timestamp) < c.cacheTTL {
-			if metadata, ok := entry.Data.(*types.PackageMetadata); ok {
-				return metadata, nil
-			}
+	c.cacheMu.RLock()
+	entry, exists := c.cache[cacheKey]
+	c.cacheMu.RUnlock()
+	if exists && time.Since(entry.Timestamp) < c.cacheTTL {
+		if metadata, ok := entry.Data.(*types.PackageMetadata); ok {
+			return metadata, nil
 		}
 	}
 
@@ -224,10 +227,20 @@ func (c *RubyGemsClient) GetPackageInfo(ctx context.Context, gemName, version st
 	}
 
 	// Cache the result
+	c.cacheMu.Lock()
+	if len(c.cache) >= 1000 {
+		now := time.Now()
+		for k, v := range c.cache {
+			if now.Sub(v.Timestamp) > c.cacheTTL {
+				delete(c.cache, k)
+			}
+		}
+	}
 	c.cache[cacheKey] = &CacheEntry{
 		Data:      metadata,
 		Timestamp: time.Now(),
 	}
+	c.cacheMu.Unlock()
 
 	return metadata, nil
 }
@@ -362,7 +375,9 @@ func (c *RubyGemsClient) GetPopularNames(ctx context.Context, limit int) ([]stri
 
 // ClearCache clears the client cache
 func (c *RubyGemsClient) ClearCache() {
+	c.cacheMu.Lock()
 	c.cache = make(map[string]*CacheEntry)
+	c.cacheMu.Unlock()
 }
 
 // SetCacheTTL sets the cache TTL

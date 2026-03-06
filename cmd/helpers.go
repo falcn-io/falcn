@@ -346,7 +346,7 @@ func outputSBOMWithFile(result *analyzer.ScanResult, format, outputFile string) 
 	}
 
 	if outputFile != "" {
-		err = os.WriteFile(outputFile, sbomData, 0644)
+		err = os.WriteFile(outputFile, sbomData, 0600)
 		if err != nil {
 			fmt.Printf("Error writing SBOM to file %s: %v\n", outputFile, err)
 			return

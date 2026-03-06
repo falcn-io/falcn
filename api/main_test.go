@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/falcn-io/falcn/pkg/metrics"
 )
 
 func TestValidatePackageInput_NPM(t *testing.T) {
@@ -83,6 +85,9 @@ func TestSSEStreamEndpoint(t *testing.T) {
 	}
 }
 func TestOpenAPIJSONEndpoint(t *testing.T) {
+	if _, err := os.Stat("docs/openapi.json"); os.IsNotExist(err) {
+		t.Skip("docs/openapi.json not present; skipping OpenAPI endpoint test")
+	}
 	req, _ := http.NewRequest("GET", "/openapi.json", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

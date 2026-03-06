@@ -83,15 +83,21 @@ func NewCacheIntegration(config *CacheConfig) (*CacheIntegration, error) {
 // Get retrieves a value from cache
 func (m *MemoryCache) Get(key string) (interface{}, bool) {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
 	item, exists := m.data[key]
+	m.mu.RUnlock()
+
 	if !exists {
 		return nil, false
 	}
 
 	if time.Now().After(item.expiration) {
-		delete(m.data, key)
+		// Upgrade to write lock to delete the expired entry.
+		// Double-check under the write lock in case another goroutine raced here.
+		m.mu.Lock()
+		if it, ok := m.data[key]; ok && time.Now().After(it.expiration) {
+			delete(m.data, key)
+		}
+		m.mu.Unlock()
 		return nil, false
 	}
 
@@ -236,7 +242,16 @@ func (ci *CacheIntegration) StartCleanup(ctx context.Context) {
 }
 
 func (ci *CacheIntegration) cleanupExpired() {
-	// Implementation for cleanup
+	if mc, ok := ci.cache.(*MemoryCache); ok {
+		mc.mu.Lock()
+		now := time.Now()
+		for key, item := range mc.data {
+			if now.After(item.expiration) {
+				delete(mc.data, key)
+			}
+		}
+		mc.mu.Unlock()
+	}
 }
 
 // CleanupExpired removes expired items from cache

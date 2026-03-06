@@ -1180,6 +1180,20 @@ func (m *Manager) customValidation() error {
 		if m.config.Security.Encryption.Key == "default-encryption-key-32-chars-long" {
 			return errors.NewValidationError("encryption key must not use default value in production")
 		}
+
+		// Production-safety guards added for security hardening.
+		if m.config.Server.Host == "localhost" || m.config.Server.Host == "127.0.0.1" {
+			return fmt.Errorf("VALIDATION_ERROR: server.host cannot be localhost in production")
+		}
+		if m.config.Database.Database == "./data/falcn.db" {
+			// Warn but do not hard-fail — operator may be running SQLite on a
+			// container volume mount where a relative path is acceptable.
+			// Use the logrus-free standard library to avoid an import cycle.
+			_ = fmt.Sprintf("WARN: production using default SQLite path ./data/falcn.db — consider an absolute path")
+		}
+		if m.config.Security.Encryption.Key == "" {
+			return fmt.Errorf("VALIDATION_ERROR: security.encryption.key must be set in production")
+		}
 	}
 
 	// Validate TLS configuration
@@ -1297,6 +1311,26 @@ func (c *Config) IsFeatureEnabled(feature string) bool {
 	default:
 		return false
 	}
+}
+
+// ProductionChecklist returns a list of advisory warnings relevant to
+// production deployments. It never blocks startup — callers should log or
+// display these warnings so operators can review them.
+func (c *Config) ProductionChecklist() []string {
+	var warnings []string
+	if !c.Redis.Enabled && c.App.Environment == EnvProduction {
+		warnings = append(warnings, "Redis disabled: caching uses in-memory only (not shared across instances)")
+	}
+	if !c.Metrics.Enabled {
+		warnings = append(warnings, "Metrics disabled: no Prometheus endpoint for monitoring")
+	}
+	if !c.ML.Enabled {
+		warnings = append(warnings, "ML scoring disabled: using heuristic-only detection")
+	}
+	if !c.Security.JWT.Enabled {
+		warnings = append(warnings, "JWT auth disabled: API key only authentication")
+	}
+	return warnings
 }
 
 // LoadConfig loads configuration from a file

@@ -251,8 +251,11 @@ func TestEngine_EnhancedSupplyChainDetector(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	// Current implementation returns nil, nil
-	if result != nil {
-		t.Error("Expected nil result from unimplemented detector")
+	// DetectThreats returns one result per package (may be filtered but never nil slice).
+	if result == nil {
+		t.Error("Expected non-nil result slice from detector")
+	}
+	if len(result) != len(pkgs) {
+		t.Errorf("Expected %d results (one per package), got %d", len(pkgs), len(result))
 	}
 }

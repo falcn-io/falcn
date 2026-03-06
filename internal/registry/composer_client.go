@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/falcn-io/falcn/pkg/types"
@@ -16,7 +17,8 @@ import (
 type ComposerClient struct {
 	httpClient *http.Client
 	baseURL    string
-	cache      map[string]*types.PackageMetadata
+	cache      map[string]*CacheEntry
+	cacheMu    sync.RWMutex
 	cacheTTL   time.Duration
 }
 
@@ -87,7 +89,7 @@ func NewComposerClient() *ComposerClient {
 			Timeout: 30 * time.Second,
 		},
 		baseURL:  "https://packagist.org",
-		cache:    make(map[string]*types.PackageMetadata),
+		cache:    make(map[string]*CacheEntry),
 		cacheTTL: 5 * time.Minute,
 	}
 }
@@ -95,8 +97,14 @@ func NewComposerClient() *ComposerClient {
 // GetPackageInfo retrieves package information from Packagist
 func (c *ComposerClient) GetPackageInfo(ctx context.Context, name, version string) (*types.PackageMetadata, error) {
 	cacheKey := fmt.Sprintf("%s@%s", name, version)
-	if cached, exists := c.cache[cacheKey]; exists {
-		return cached, nil
+
+	c.cacheMu.RLock()
+	entry, exists := c.cache[cacheKey]
+	c.cacheMu.RUnlock()
+	if exists && time.Since(entry.Timestamp) < c.cacheTTL {
+		if cached, ok := entry.Data.(*types.PackageMetadata); ok {
+			return cached, nil
+		}
 	}
 
 	url := fmt.Sprintf("%s/packages/%s.json", c.baseURL, name)
@@ -167,7 +175,18 @@ func (c *ComposerClient) GetPackageInfo(ctx context.Context, name, version strin
 		LastUpdated: publishTime,
 	}
 
-	c.cache[cacheKey] = metadata
+	c.cacheMu.Lock()
+	if len(c.cache) >= 1000 {
+		now := time.Now()
+		for k, v := range c.cache {
+			if now.Sub(v.Timestamp) > c.cacheTTL {
+				delete(c.cache, k)
+			}
+		}
+	}
+	c.cache[cacheKey] = &CacheEntry{Data: metadata, Timestamp: time.Now()}
+	c.cacheMu.Unlock()
+
 	return metadata, nil
 }
 
@@ -304,7 +323,9 @@ func (c *ComposerClient) GetPopularNames(ctx context.Context, limit int) ([]stri
 
 // ClearCache clears the package cache
 func (c *ComposerClient) ClearCache() {
-	c.cache = make(map[string]*types.PackageMetadata)
+	c.cacheMu.Lock()
+	c.cache = make(map[string]*CacheEntry)
+	c.cacheMu.Unlock()
 }
 
 // SetCacheTTL sets the cache TTL

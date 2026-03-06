@@ -1,6 +1,7 @@
 package scanner_test
 
 import (
+	"context"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,7 @@ func TestScannerHandlesYarnLock(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := scanner.New(cfg)
 	require.NoError(t, err)
-	_, err = s.ScanProject(dir)
+	_, err = s.ScanProject(context.Background(), dir)
 	require.NoError(t, err)
 }
 
@@ -27,7 +28,7 @@ func TestScannerHandlesPnpmLock(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	s, err := scanner.New(cfg)
 	require.NoError(t, err)
-	_, err = s.ScanProject(dir)
+	_, err = s.ScanProject(context.Background(), dir)
 	require.NoError(t, err)
 }
 
@@ -41,6 +42,6 @@ dependencies = ["requests==2.32.0", "numpy>=1.24.0"]
 	cfg := config.NewDefaultConfig()
 	s, err := scanner.New(cfg)
 	require.NoError(t, err)
-	_, err = s.ScanProject(dir)
+	_, err = s.ScanProject(context.Background(), dir)
 	require.NoError(t, err)
 }

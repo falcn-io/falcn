@@ -133,7 +133,15 @@ func (eb *EventBus) Start(ctx context.Context) {
 
 	for {
 		select {
-		case event := <-eb.eventQueue:
+		case event, ok := <-eb.eventQueue:
+			if !ok {
+				// Channel was closed by Stop() — exit cleanly.
+				eb.mu.Lock()
+				eb.running = false
+				eb.mu.Unlock()
+				eb.logger.Info("Event bus stopped (channel closed)", nil)
+				return
+			}
 			eb.processEvent(ctx, event)
 
 		case <-ctx.Done():
@@ -148,8 +156,13 @@ func (eb *EventBus) Start(ctx context.Context) {
 
 // processEvent processes a single event and delivers it to subscribers
 func (eb *EventBus) processEvent(ctx context.Context, event *events.SecurityEvent) {
+	// Deep-copy the subscriber slice under the read lock so that a concurrent
+	// Unsubscribe (which modifies the underlying array via append) cannot race
+	// with the goroutines we're about to spawn.
 	eb.mu.RLock()
-	subscribers := eb.subscribers[event.Type]
+	raw := eb.subscribers[event.Type]
+	subscribers := make([]events.EventSubscriber, len(raw))
+	copy(subscribers, raw)
 	eb.mu.RUnlock()
 
 	if len(subscribers) == 0 {

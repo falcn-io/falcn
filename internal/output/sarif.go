@@ -11,6 +11,8 @@ import (
 
 	"github.com/falcn-io/falcn/internal/analyzer"
 	"github.com/falcn-io/falcn/pkg/types"
+
+	"github.com/sirupsen/logrus"
 )
 
 // SARIF represents the Static Analysis Results Interchange Format
@@ -295,6 +297,9 @@ func (f *SARIFFormatter) Format(results *analyzer.ScanResult) ([]byte, error) {
 		},
 	}
 
+	if errs := ValidateSARIF(sarif); errs.HasErrors() {
+		logrus.Warnf("SARIF document validation: %v", errs)
+	}
 	return json.MarshalIndent(sarif, "", "  ")
 }
 
@@ -640,9 +645,9 @@ func (f *SARIFFormatter) getMimeType(filePath string) string {
 	}
 }
 
-// contains checks if a string contains a substring
+// contains checks if s contains substr as a substring.
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[len(s)-len(substr):] == substr
+	return strings.Contains(s, substr)
 }
 
 // extractVulnerabilityID extracts vulnerability ID from threat CVEs

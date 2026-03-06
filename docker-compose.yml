@@ -30,17 +30,22 @@ services:
     environment:
       - PORT=8080
       - ENV=production
-      - Falcn_JWT_SECRET=${Falcn_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - FALCN_APP_ENVIRONMENT=production
+      # SECURITY: set API_KEYS or FALCN_JWT_PRIVATE_KEY_FILE before deploying.
+      # Copy .env.example → .env and fill in all REQUIRED values.
+      - API_AUTH_ENABLED=${API_AUTH_ENABLED:-true}
+      - API_KEYS=${API_KEYS:-}
+      - FALCN_JWT_PRIVATE_KEY_FILE=${FALCN_JWT_PRIVATE_KEY_FILE:-}
       - Falcn_DB_TYPE=${Falcn_DB_TYPE:-sqlite}
       - Falcn_DB_HOST=${Falcn_DB_HOST:-postgres}
       - Falcn_DB_PORT=${Falcn_DB_PORT:-5432}
       - Falcn_DB_NAME=${Falcn_DB_NAME:-/app/data/Falcn.db}
       - Falcn_DB_USER=${Falcn_DB_USER:-Falcn}
-      - Falcn_DB_PASSWORD=${Falcn_DB_PASSWORD:-Falcn123}
+      - Falcn_DB_PASSWORD=${Falcn_DB_PASSWORD:-}
       - Falcn_DB_SSLMODE=${Falcn_DB_SSLMODE:-disable}
       - Falcn_LOG_LEVEL=${Falcn_LOG_LEVEL:-info}
       - Falcn_CORS_ORIGINS=${Falcn_CORS_ORIGINS:-http://localhost:3000}
-      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-true}
+      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-false}
     volumes:
       - Falcn_data:/app/data
       - Falcn_logs:/app/logs
@@ -86,12 +91,15 @@ services:
     environment:
       - PORT=8080
       - ENV=production
+      - FALCN_APP_ENVIRONMENT=production
+      - API_AUTH_ENABLED=${API_AUTH_ENABLED:-true}
+      - API_KEYS=${API_KEYS:-}
+      - FALCN_JWT_PRIVATE_KEY_FILE=${FALCN_JWT_PRIVATE_KEY_FILE:-}
       - Falcn_DB_TYPE=sqlite
       - Falcn_DB_NAME=/app/data/Falcn.db
-      - Falcn_JWT_SECRET=${Falcn_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       - Falcn_LOG_LEVEL=${Falcn_LOG_LEVEL:-info}
       - Falcn_CORS_ORIGINS=${Falcn_CORS_ORIGINS:-http://localhost:3000}
-      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-true}
+      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-false}
     volumes:
       - Falcn_data:/app/data
       - Falcn_logs:/app/logs
@@ -134,17 +142,20 @@ services:
     environment:
       - PORT=8080
       - ENV=production
+      - FALCN_APP_ENVIRONMENT=production
+      - API_AUTH_ENABLED=${API_AUTH_ENABLED:-true}
+      - API_KEYS=${API_KEYS:-}
+      - FALCN_JWT_PRIVATE_KEY_FILE=${FALCN_JWT_PRIVATE_KEY_FILE:-}
       - Falcn_DB_TYPE=postgres
       - Falcn_DB_HOST=postgres
       - Falcn_DB_PORT=5432
       - Falcn_DB_NAME=Falcn
       - Falcn_DB_USER=Falcn
-      - Falcn_DB_PASSWORD=Falcn123
-      - Falcn_DB_SSLMODE=disable
-      - Falcn_JWT_SECRET=${Falcn_JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - Falcn_DB_PASSWORD=${Falcn_DB_PASSWORD:?FALCN_DB_PASSWORD must be set}
+      - Falcn_DB_SSLMODE=${Falcn_DB_SSLMODE:-require}
       - Falcn_LOG_LEVEL=${Falcn_LOG_LEVEL:-info}
       - Falcn_CORS_ORIGINS=${Falcn_CORS_ORIGINS:-http://localhost:3000}
-      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-true}
+      - Falcn_DISABLE_AUTH=${Falcn_DISABLE_AUTH:-false}
     volumes:
       - Falcn_data:/app/data
       - Falcn_logs:/app/logs
@@ -183,7 +194,7 @@ services:
     environment:
       - POSTGRES_DB=Falcn
       - POSTGRES_USER=Falcn
-      - POSTGRES_PASSWORD=Falcn123
+      - POSTGRES_PASSWORD=${Falcn_DB_PASSWORD:?FALCN_DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -226,7 +237,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana

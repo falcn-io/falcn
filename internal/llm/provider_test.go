@@ -59,7 +59,7 @@ func TestNewProvider_Factory(t *testing.T) {
 			name: "Unknown Provider",
 			cfg: config.LLMConfig{
 				Enabled:  true,
-				Provider: "deepmind", // Not supported yet :)
+				Provider: "deepmind", // Not supported
 			},
 			wantErr: true,
 		},
@@ -79,30 +79,60 @@ func TestNewProvider_Factory(t *testing.T) {
 	}
 }
 
-func TestOpenAIProvider_GenerateExplanation_Stub(t *testing.T) {
+// TestOpenAIProvider_NoAPIKey verifies that an empty API key is rejected before
+// any network call, preventing accidental usage without credentials.
+func TestOpenAIProvider_NoAPIKey(t *testing.T) {
 	cfg := config.LLMConfig{
 		Enabled:  true,
 		Provider: "openai",
-		Model:    "gpt-4",
-		APIKey:   "sk-test",
+		Model:    "gpt-4o-mini",
+		APIKey:   "", // empty — should fail fast
 	}
 	p := NewOpenAIProvider(cfg)
 
-	resp, err := p.GenerateExplanation(context.Background(), "test prompt")
-	assert.NoError(t, err)
-	assert.Contains(t, resp, "not implemented yet")
+	_, err := p.GenerateExplanation(context.Background(), "test prompt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "OPENAI_API_KEY")
 }
 
-func TestAnthropicProvider_GenerateExplanation_Stub(t *testing.T) {
+// TestOpenAIProvider_ID verifies the provider returns the correct identifier.
+func TestOpenAIProvider_ID(t *testing.T) {
+	p := NewOpenAIProvider(config.LLMConfig{})
+	assert.Equal(t, "openai", p.ID())
+}
+
+// TestOpenAIProvider_DefaultModel verifies that a default model is set when
+// the config leaves the model field empty.
+func TestOpenAIProvider_DefaultModel(t *testing.T) {
+	p := NewOpenAIProvider(config.LLMConfig{})
+	assert.Equal(t, "gpt-4o-mini", p.model)
+}
+
+// TestAnthropicProvider_NoAPIKey verifies that an empty API key is rejected
+// before any network call.
+func TestAnthropicProvider_NoAPIKey(t *testing.T) {
 	cfg := config.LLMConfig{
 		Enabled:  true,
 		Provider: "anthropic",
-		Model:    "claude-3",
-		APIKey:   "sk-test",
+		Model:    "claude-haiku-4-5",
+		APIKey:   "", // empty — should fail fast
 	}
 	p := NewAnthropicProvider(cfg)
 
-	resp, err := p.GenerateExplanation(context.Background(), "test prompt")
-	assert.NoError(t, err)
-	assert.Contains(t, resp, "not implemented yet")
+	_, err := p.GenerateExplanation(context.Background(), "test prompt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "ANTHROPIC_API_KEY")
+}
+
+// TestAnthropicProvider_ID verifies the provider returns the correct identifier.
+func TestAnthropicProvider_ID(t *testing.T) {
+	p := NewAnthropicProvider(config.LLMConfig{})
+	assert.Equal(t, "anthropic", p.ID())
+}
+
+// TestAnthropicProvider_DefaultModel verifies that a default model is used
+// when the config is empty.
+func TestAnthropicProvider_DefaultModel(t *testing.T) {
+	p := NewAnthropicProvider(config.LLMConfig{})
+	assert.Equal(t, "claude-haiku-4-5", p.model)
 }

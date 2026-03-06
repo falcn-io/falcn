@@ -289,6 +289,140 @@ type EnhancedSupplyChainResult struct {
 	Evidence          []string
 }
 
+// DetectThreats runs heuristic supply-chain analysis on a slice of packages.
+// It detects dependency-confusion candidates, suspicious version patterns, and
+// namespace-squatting indicators without making any network calls.
 func (d *EnhancedSupplyChainDetector) DetectThreats(ctx context.Context, pkgs []types.Package) ([]EnhancedSupplyChainResult, error) {
-	return nil, nil
+	results := make([]EnhancedSupplyChainResult, 0, len(pkgs))
+
+	for _, pkg := range pkgs {
+		select {
+		case <-ctx.Done():
+			return results, ctx.Err()
+		default:
+		}
+
+		result := EnhancedSupplyChainResult{
+			Package:           pkg.Name,
+			Registry:          pkg.Registry,
+			ConfidenceScore:   0,
+			FalsePositiveRisk: 0.1,
+		}
+
+		var evidence []string
+		score := 0.0
+
+		// ── 1. Dependency-confusion heuristic ──────────────────────────────
+		// Internal/scoped packages that also exist as public names are high-risk.
+		// Signals: contains internal naming conventions, very high version numbers,
+		// or a version number higher than 9 for a fresh public package.
+		name := strings.ToLower(pkg.Name)
+
+		// Unscoped package with internal-sounding name
+		internalKeywords := []string{"internal", "private", "corp", "enterprise", "infra", "backend", "frontend"}
+		for _, kw := range internalKeywords {
+			if strings.Contains(name, kw) {
+				score += 0.3
+				evidence = append(evidence, fmt.Sprintf("package name contains internal keyword '%s'", kw))
+				break
+			}
+		}
+
+		// Very high major version for a new/unknown package (version confusion)
+		if pkg.Version != "" {
+			parts := strings.SplitN(pkg.Version, ".", 2)
+			if len(parts) > 0 {
+				major := 0
+				fmt.Sscanf(parts[0], "%d", &major)
+				if major >= 99 {
+					score += 0.4
+					evidence = append(evidence, fmt.Sprintf("unusually high major version %d (dependency-confusion indicator)", major))
+				}
+			}
+		}
+
+		// ── 2. Namespace-squatting heuristic ──────────────────────────────
+		// Package names that differ from popular packages by one character in the scope/prefix.
+		popularPrefixes := []string{"@babel", "@types", "@angular", "@react", "@vue", "@aws", "@google", "@microsoft"}
+		for _, prefix := range popularPrefixes {
+			if strings.HasPrefix(name, prefix) {
+				// Scoped package that looks like a popular scope — only flag if it's the EXACT scope
+				// but has a suspicious sub-package name.
+				subPkg := strings.TrimPrefix(name, prefix+"/")
+				if strings.ContainsAny(subPkg, "_-.") && len(subPkg) < 3 {
+					score += 0.25
+					evidence = append(evidence, fmt.Sprintf("very short sub-package name '%s' under popular scope '%s'", subPkg, prefix))
+				}
+			}
+		}
+
+		// ── 3. Suspicious version pattern ─────────────────────────────────
+		// Version "0.0.1" or "0.0.0" as v1+ equivalent (common in supply-chain attacks
+		// where attacker uploads a low version to claim the namespace then bumps quickly).
+		if pkg.Version == "0.0.1" || pkg.Version == "0.0.0" || pkg.Version == "0.1.0" {
+			score += 0.15
+			evidence = append(evidence, fmt.Sprintf("suspiciously low initial version '%s'", pkg.Version))
+		}
+
+		// ── 4. Homoglyph / lookalike in plain name segment ────────────────
+		// We check for digits substituting letters (0→o, 1→l, 3→e, 4→a, 5→s).
+		homoglyphMap := map[rune]rune{'0': 'o', '1': 'l', '3': 'e', '4': 'a', '5': 's'}
+		normalized := []rune(name)
+		replaced := false
+		for i, ch := range normalized {
+			if sub, ok := homoglyphMap[ch]; ok {
+				normalized[i] = sub
+				replaced = true
+			}
+		}
+		if replaced && string(normalized) != name {
+			score += 0.2
+			evidence = append(evidence, fmt.Sprintf("possible homoglyph substitution detected in '%s'", pkg.Name))
+		}
+
+		// ── Aggregate result ──────────────────────────────────────────────
+		if score == 0 {
+			// Clean package — still add to results so caller has full coverage
+			result.IsFiltered = true
+			result.FilterReasons = []string{"no supply-chain indicators detected"}
+			results = append(results, result)
+			continue
+		}
+
+		// Cap at 1.0
+		if score > 1.0 {
+			score = 1.0
+		}
+		result.ConfidenceScore = score
+		result.SupplyChainRisk = score
+		result.Evidence = evidence
+
+		switch {
+		case score >= 0.7:
+			result.ThreatType = "dependency_confusion"
+			result.Severity = "high"
+			result.Recommendations = []string{
+				"Verify this package is from a trusted publisher",
+				"Check if an internal package of the same name exists in your private registry",
+				"Pin the exact version and hash in your lock file",
+			}
+		case score >= 0.4:
+			result.ThreatType = "namespace_squatting"
+			result.Severity = "medium"
+			result.Recommendations = []string{
+				"Review package ownership and publishing history",
+				"Compare with expected package metadata before use",
+			}
+		default:
+			result.ThreatType = "suspicious_version_pattern"
+			result.Severity = "low"
+			result.Recommendations = []string{
+				"Monitor this package for unexpected behaviour",
+			}
+		}
+
+		results = append(results, result)
+	}
+
+	return results, nil
 }

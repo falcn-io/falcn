@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -132,7 +133,7 @@ func runDirectScan(s *scanner.Scanner, path string) (int, error) {
 		nullFile.Close()
 	}()
 
-	result, err := s.ScanProject(absPath)
+	result, err := s.ScanProject(context.Background(), absPath)
 
 	// Restore immediately to ensure any defer output from function doesn't get lost if we printed there (we don't)
 	// But defer LIFO ensures restore happens last.
