@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/falcn-io/falcn/internal/config"
@@ -170,6 +171,10 @@ func maxPopularFromContext(ctx context.Context) int {
 	return 0
 }
 
+// popularPackagesMu guards all access to popularPackagesData, popularPackagesLoaded,
+// and embeddedPopularPackagesJSON from concurrent goroutines.
+var popularPackagesMu sync.RWMutex
+
 // popularPackagesData holds the loaded popular packages
 var popularPackagesData map[string][]string
 var popularPackagesLoaded bool
@@ -182,13 +187,18 @@ var embeddedPopularPackagesJSON []byte
 // Call this from an init() in package main before any scan runs.
 func SetEmbeddedPopularPackages(data []byte) {
 	if len(data) > 0 {
+		popularPackagesMu.Lock()
 		embeddedPopularPackagesJSON = data
 		popularPackagesLoaded = false // force reload from embedded data
+		popularPackagesMu.Unlock()
 	}
 }
 
-// loadPopularPackages loads popular packages from the JSON file
+// loadPopularPackages loads popular packages from the JSON file.
+// Must be called with popularPackagesMu.Lock held, or via the double-checked
+// locking pattern used by getPopularByRegistry.
 func loadPopularPackages() {
+	// Fast path: already loaded (caller holds at least RLock via loadOnce guard).
 	if popularPackagesLoaded {
 		return
 	}
@@ -241,15 +251,29 @@ func loadPopularPackages() {
 	popularPackagesLoaded = true
 }
 
-// getPopularByRegistry returns curated popular package names per registry
+// getPopularByRegistry returns curated popular package names per registry.
+// Thread-safe: uses double-checked locking to initialise popularPackagesData
+// exactly once without holding the write lock on every read.
 func getPopularByRegistry(registry string) []string {
-	loadPopularPackages()
+	// Fast path: already loaded.
+	popularPackagesMu.RLock()
+	loaded := popularPackagesLoaded
+	popularPackagesMu.RUnlock()
 
+	if !loaded {
+		popularPackagesMu.Lock()
+		if !popularPackagesLoaded { // second check inside write lock
+			loadPopularPackages()
+		}
+		popularPackagesMu.Unlock()
+	}
+
+	popularPackagesMu.RLock()
+	defer popularPackagesMu.RUnlock()
 	reg := strings.ToLower(registry)
 	if list, ok := popularPackagesData[reg]; ok {
 		return list
 	}
-
 	return popularPackagesData["default"]
 }
 

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/falcn-io/falcn/pkg/retry"
+	"github.com/sirupsen/logrus"
 )
 
 // ─── Scanner ──────────────────────────────────────────────────────────────────
@@ -316,7 +317,11 @@ func (s *Scanner) checkVulnerabilities(ctx context.Context, pkgs []InstalledPack
 
 	var out []PackageVuln
 	for r := range ch {
-		if r.err == nil && r.vuln != nil {
+		if r.err != nil {
+			logrus.WithError(r.err).Warn("OSV lookup failed; vulnerability data may be incomplete")
+			continue
+		}
+		if r.vuln != nil {
 			out = append(out, *r.vuln)
 		}
 	}
@@ -354,7 +359,9 @@ func (s *Scanner) queryOSV(ctx context.Context, pkg InstalledPackage, ecosystem 
 		return nil
 	})
 	if err != nil {
-		return nil, nil // treat persistent failure as "no data" to keep scan going
+		// Return the error so callers can flag the result as incomplete rather
+		// than silently reporting "no vulnerabilities found".
+		return nil, fmt.Errorf("OSV query for %s@%s failed: %w", pkg.Name, pkg.Version, err)
 	}
 
 	var r struct {
@@ -524,21 +531,78 @@ func maskSecret(env string) string {
 	return env
 }
 
-// cvssScore parses a CVSS v3 vector string and returns a severity label.
+// cvssScore parses a CVSS v3 vector string and returns a severity label using
+// the official CVSS v3.1 base score formula (FIRST.org specification).
 func cvssScore(vector string) string {
-	// Look for Base Score in vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
-	// We derive from vector rather than a numeric score because OSV may omit the number.
-	// Simple heuristic: if C:H/I:H/A:H → critical; C:H or I:H → high; etc.
-	upper := strings.ToUpper(vector)
-	crit := strings.Count(upper, ":H")
-	if crit >= 3 {
+	score := cvssV3BaseScore(vector)
+	switch {
+	case score >= 9.0:
 		return "critical"
-	} else if crit >= 1 {
+	case score >= 7.0:
 		return "high"
-	} else if strings.Contains(upper, ":M") {
+	case score >= 4.0:
 		return "medium"
+	case score > 0:
+		return "low"
+	default:
+		return "low" // unknown / parse failure → conservative default
 	}
-	return "low"
+}
+
+// cvssV3BaseScore computes the CVSS v3.1 base score from a vector string.
+// Returns 0.0 if the vector is empty or cannot be parsed.
+func cvssV3BaseScore(vector string) float64 {
+	if vector == "" {
+		return 0
+	}
+	vals := make(map[string]string, 10)
+	for _, part := range strings.Split(vector, "/") {
+		if idx := strings.IndexByte(part, ':'); idx >= 0 {
+			vals[part[:idx]] = part[idx+1:]
+		}
+	}
+
+	avM := map[string]float64{"N": 0.85, "A": 0.62, "L": 0.55, "P": 0.20}
+	acM := map[string]float64{"L": 0.77, "H": 0.44}
+	uiM := map[string]float64{"N": 0.85, "R": 0.62}
+	impM := map[string]float64{"H": 0.56, "L": 0.22, "N": 0.00}
+
+	scope := vals["S"]
+	prM := map[string]float64{"N": 0.85, "L": 0.62, "H": 0.27}
+	if scope == "C" {
+		prM = map[string]float64{"N": 0.85, "L": 0.68, "H": 0.50}
+	}
+
+	av, ok1 := avM[vals["AV"]]
+	ac, ok2 := acM[vals["AC"]]
+	pr, ok3 := prM[vals["PR"]]
+	ui, ok4 := uiM[vals["UI"]]
+	ic, ok5 := impM[vals["C"]]
+	ii, ok6 := impM[vals["I"]]
+	ia, ok7 := impM[vals["A"]]
+	if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 || !ok6 || !ok7 {
+		return 0
+	}
+
+	iscBase := 1 - (1-ic)*(1-ii)*(1-ia)
+	var isc float64
+	if scope == "C" {
+		isc = 7.52*(iscBase-0.029) - 3.25*math.Pow(iscBase-0.02, 15)
+	} else {
+		isc = 6.42 * iscBase
+	}
+	if isc <= 0 {
+		return 0
+	}
+
+	exploitability := 8.22 * av * ac * pr * ui
+	var raw float64
+	if scope == "C" {
+		raw = math.Min(1.08*(isc+exploitability), 10)
+	} else {
+		raw = math.Min(isc+exploitability, 10)
+	}
+	return math.Ceil(raw*10) / 10
 }
 
 // pickHigher returns the more severe of two severity strings.

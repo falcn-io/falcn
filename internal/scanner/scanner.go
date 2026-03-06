@@ -268,8 +268,9 @@ func (s *Scanner) ScanProject(ctx context.Context, projectPath string) (*types.S
 					pkg := packages[i]
 					threats, err := s.analyzePackageThreats(pkg)
 					if err != nil {
+						logrus.WithError(err).Warnf("analyzePackageThreats failed for %s; skipping", pkg.Name)
 						resCh <- pkgResult{index: i, threats: nil}
-						return
+						continue // keep this worker alive for remaining packages
 					}
 					resCh <- pkgResult{index: i, threats: threats}
 				}
