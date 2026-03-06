@@ -53,6 +53,14 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	$(GOBUILD) $(BUILD_FLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
 
+# FIPS 140-2 build — requires CGO_ENABLED=1 and a FIPS-capable Go toolchain.
+# The resulting binary panics if MD5 or SHA-1 are called at runtime.
+.PHONY: build-fips
+build-fips:
+	@echo "Building $(BINARY_NAME) [FIPS mode]..."
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 $(GOBUILD) -tags fips $(BUILD_FLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-fips .
+
 # Cross-platform builds
 .PHONY: build-all
 build-all: clean

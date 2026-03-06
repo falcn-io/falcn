@@ -29,10 +29,15 @@ import (
 	containerpkg "github.com/falcn-io/falcn/internal/container"
 	"github.com/falcn-io/falcn/internal/database"
 	"github.com/falcn-io/falcn/internal/detector"
+	internalevent "github.com/falcn-io/falcn/internal/events"
+	"github.com/falcn-io/falcn/internal/integrations/hub"
 	llmpkg "github.com/falcn-io/falcn/internal/llm"
 	"github.com/falcn-io/falcn/internal/security"
+	pkgevents "github.com/falcn-io/falcn/pkg/events"
+	pkglogger "github.com/falcn-io/falcn/pkg/logger"
 	pkgmetrics "github.com/falcn-io/falcn/pkg/metrics"
 	pkgtypes "github.com/falcn-io/falcn/pkg/types"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	redis "github.com/redis/go-redis/v9"
@@ -862,6 +867,77 @@ var (
 	detectorEngineOnce sync.Once
 )
 
+// ── Integration hub (optional, activated when cfg.Integrations.Enabled is true)
+var (
+	apiEventBus     *internalevent.EventBus
+	apiIntHub       *hub.IntegrationHub
+	apiIntHubOnce   sync.Once
+)
+
+// getIntegrationHub lazily creates the event bus + integration hub pair.
+// Returns nil if integrations are not configured.
+func getIntegrationHub() *hub.IntegrationHub {
+	apiIntHubOnce.Do(func() {
+		cfgMgr := appcfg.NewManager()
+		_ = cfgMgr.Load(".")
+		cfg := cfgMgr.Get()
+		if cfg.Integrations == nil || !cfg.Integrations.Enabled {
+			return
+		}
+		lg := pkglogger.New()
+		apiEventBus = internalevent.NewEventBus(*lg, 512)
+		apiIntHub = hub.NewIntegrationHub(apiEventBus, cfg.Integrations, *lg)
+		ctx := context.Background()
+		if err := apiIntHub.Initialize(ctx); err != nil {
+			log.Printf("integration hub init error: %v", err)
+			apiIntHub = nil
+			return
+		}
+		apiEventBus.Start(ctx)
+	})
+	return apiIntHub
+}
+
+// publishThreatEvent publishes a security event for a detected threat to the
+// integration hub (Jira, Teams, email, etc.) if one is configured. Non-blocking.
+func publishThreatEvent(ctx context.Context, packageName, registry, version string, t pkgtypes.Threat) {
+	if getIntegrationHub() == nil || apiEventBus == nil {
+		return
+	}
+	sev := pkgevents.SeverityLow
+	switch t.Severity {
+	case pkgtypes.SeverityCritical:
+		sev = pkgevents.SeverityCritical
+	case pkgtypes.SeverityHigh:
+		sev = pkgevents.SeverityHigh
+	case pkgtypes.SeverityMedium:
+		sev = pkgevents.SeverityMedium
+	}
+	event := &pkgevents.SecurityEvent{
+		ID:        "api_event_" + uuid.New().String(),
+		Timestamp: time.Now(),
+		Type:      pkgevents.EventTypeThreatDetected,
+		Severity:  sev,
+		Package: pkgevents.PackageInfo{
+			Name:     packageName,
+			Version:  version,
+			Registry: registry,
+		},
+		Threat: pkgevents.ThreatInfo{
+			Type:        string(t.Type),
+			Description: t.Description,
+			RiskScore:   t.Confidence,
+			Confidence:  t.Confidence,
+			Mitigations: []string{t.Recommendation},
+		},
+		Metadata: pkgevents.EventMetadata{
+			DetectionMethod: t.DetectionMethod,
+			Tags:            []string{"api", "automated"},
+		},
+	}
+	_ = apiEventBus.Publish(ctx, event)
+}
+
 func getDetectorEngine() *detector.Engine {
 	detectorEngineOnce.Do(func() {
 		cfgMgr := appcfg.NewManager()
@@ -942,6 +1018,9 @@ func performThreatAnalysis(packageName, registry string) ([]Threat, []Warning) {
 
 		// Publish the threat immediately (with explanation if cached).
 		sseBroker.publish(SSEEvent{Event: "threat", Data: apiThreat})
+
+		// Also publish to integration hub (Jira, Teams, email) if configured.
+		publishThreatEvent(ctx, packageName, registry, t.Version, t)
 
 		// If no inline explanation, fire an async goroutine to generate one.
 		if inlineExpl == nil {

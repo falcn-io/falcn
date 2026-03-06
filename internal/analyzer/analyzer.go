@@ -11,15 +11,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/falcn-io/falcn/internal/cache"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/detector"
 	"github.com/falcn-io/falcn/internal/edge"
+	internalevent "github.com/falcn-io/falcn/internal/events"
 	"github.com/falcn-io/falcn/internal/llm"
 	"github.com/falcn-io/falcn/internal/ml"
 	"github.com/falcn-io/falcn/internal/registry"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/falcn-io/falcn/internal/vulnerability"
+	pkgevents "github.com/falcn-io/falcn/pkg/events"
 	"github.com/falcn-io/falcn/pkg/types"
 	"github.com/sirupsen/logrus"
 )
@@ -41,6 +45,54 @@ type Analyzer struct {
 	stubRepo     *StubRepo
 	llmProvider  llm.Provider
 	explainCache explanationCache // explanation cache keyed by {pkg}:{ver}:{type}
+	eventBus     *internalevent.EventBus // optional; nil = no integration notifications
+}
+
+// SetEventBus wires an event bus into the analyzer so that every detected
+// threat is published as a SecurityEvent (for Jira/Teams/email connectors).
+func (a *Analyzer) SetEventBus(bus *internalevent.EventBus) {
+	a.eventBus = bus
+}
+
+// emitThreatEvent publishes a SecurityEvent for a detected threat.
+// Silently returns if no event bus is configured.
+func (a *Analyzer) emitThreatEvent(ctx context.Context, depName, depVersion, registry string, t *types.Threat) {
+	if a.eventBus == nil || t == nil {
+		return
+	}
+	sev := pkgevents.SeverityLow
+	switch t.Severity {
+	case types.SeverityCritical:
+		sev = pkgevents.SeverityCritical
+	case types.SeverityHigh:
+		sev = pkgevents.SeverityHigh
+	case types.SeverityMedium:
+		sev = pkgevents.SeverityMedium
+	}
+	event := &pkgevents.SecurityEvent{
+		ID:        "event_" + uuid.New().String(),
+		Timestamp: time.Now(),
+		Type:      pkgevents.EventTypeThreatDetected,
+		Severity:  sev,
+		Package: pkgevents.PackageInfo{
+			Name:     depName,
+			Version:  depVersion,
+			Registry: registry,
+		},
+		Threat: pkgevents.ThreatInfo{
+			Type:        string(t.Type),
+			Description: t.Description,
+			RiskScore:   t.Confidence,
+			Confidence:  t.Confidence,
+			Mitigations: []string{t.Recommendation},
+		},
+		Metadata: pkgevents.EventMetadata{
+			DetectionMethod: t.DetectionMethod,
+			Tags:            []string{"analyzer", "api"},
+		},
+	}
+	// Non-blocking publish — if the bus queue is full, drop and log.
+	_ = a.eventBus.Publish(ctx, event)
 }
 
 // ScanOptions contains options for scanning
@@ -570,6 +622,9 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 		// Add threats and warnings from the result
 		allThreats = append(allThreats, result.Threats...)
 		allWarnings = append(allWarnings, result.Warnings...)
+		for i := range result.Threats {
+			a.emitThreatEvent(ctx, dep.Name, dep.Version, dep.Registry, &result.Threats[i])
+		}
 
 		// Perform enhanced supply chain analysis if enabled
 		if enhancedDetector != nil {
@@ -608,6 +663,7 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 						},
 					}
 					allThreats = append(allThreats, threat)
+					a.emitThreatEvent(ctx, dep.Name, dep.Version, dep.Registry, &threat)
 					logrus.Infof("Enhanced supply chain threat detected for %s: %s (confidence: %.2f)",
 						dep.Name, enhancedResult.ThreatType, enhancedResult.ConfidenceScore)
 				} else if enhancedResult.IsFiltered {
@@ -680,6 +736,7 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 					},
 				}
 				allThreats = append(allThreats, threat)
+				a.emitThreatEvent(ctx, dep.Name, dep.Version, dep.Registry, &threat)
 			}
 
 			if len(vulns) > 0 {
