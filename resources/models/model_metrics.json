@@ -1,0 +1,18 @@
+{
+  "cv": {
+    "cv_f1_mean": 1.0,
+    "cv_f1_std": 0.0,
+    "cv_auc_mean": 1.0,
+    "cv_auc_std": 0.0
+  },
+  "test": {
+    "auc": 1.0,
+    "f1": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "n_train": 16000,
+  "n_test": 4000,
+  "n_features": 25
+}

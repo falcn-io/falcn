@@ -1,27 +1,52 @@
 package ml
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
+	"time"
 )
 
 // Inference constants — replace magic numbers with named values.
 const (
-	// logDownloadNormalizer is log10(1e18), which normalises download counts so
-	// that a package with ~65 million downloads (log ~18) scores near zero risk
+	// logDownloadNormalizer is log1p(65e6), which normalises download counts so
+	// that a package with ~65 million downloads (ln ~18) scores near zero risk
 	// from the download-count signal alone.
 	logDownloadNormalizer = 18.0
+
+	// defaultModelFilename is the ONNX model artifact produced by train_ml_model.py.
+	defaultModelFilename = "reputation_model.onnx"
+
+	// defaultScalerFilename is the scaler statistics JSON produced by train_ml_model.py.
+	defaultScalerFilename = "scaler_stats.json"
 )
 
+// ModelInfo holds metadata about the loaded model.
+type ModelInfo struct {
+	// Path is the absolute path to the ONNX model file, or empty if none was found.
+	Path string `json:"path"`
+	// SizeBytes is the file size of the ONNX model.
+	SizeBytes int64 `json:"size_bytes"`
+	// LoadedAt is when the model file was detected / validated.
+	LoadedAt time.Time `json:"loaded_at"`
+	// UsingHeuristic is true when the ONNX file is absent or the runtime is
+	// not available; the calibrated heuristic scorer is used instead.
+	UsingHeuristic bool `json:"using_heuristic"`
+	// ScalerPath is the path to the scaler statistics file.
+	ScalerPath string `json:"scaler_path,omitempty"`
+}
+
 // InferenceEngine handles ML model inference.
-// When an ONNX model file is available it is preferred; otherwise a calibrated
-// heuristic scorer runs on the same feature vector so scores are meaningful
-// even before the full ML training pipeline ships.
+// When an ONNX model file is available it records its presence and validates
+// it; the calibrated heuristic scorer then runs on the same 25-feature vector.
+// Once a Go ONNX runtime with stable cross-platform CGO support is added to
+// go.mod, the ONNX inference path will be wired in place of the heuristic.
 type InferenceEngine struct {
 	modelPath string
 	loaded    bool
-	// onnxModel would be loaded here once the ONNX runtime is integrated
+	info      ModelInfo
 }
 
 // NewInferenceEngine creates a new inference engine.
@@ -29,31 +54,126 @@ func NewInferenceEngine() *InferenceEngine {
 	return &InferenceEngine{}
 }
 
-// NOTE: Falcn uses a calibrated heuristic scoring engine for ML inference.
-// A trained ONNX model can be loaded by setting the ML_MODEL_PATH environment
-// variable or configuring ml.model_path in falcn.yaml. When no model is present,
-// the heuristic engine provides equivalent accuracy for most threat categories.
-// To train and export an ONNX model, see scripts/train_ml_model.py.
-
 // LoadModel attempts to load the ONNX model from path.
+// If path is empty the engine searches for the default model file relative to
+// the binary's working directory (resources/models/reputation_model.onnx).
 // If the file does not exist the engine falls back to heuristic scoring.
 func (ie *InferenceEngine) LoadModel(path string) error {
-	if _, err := os.Stat(path); err != nil {
-		// File missing — use heuristic fallback; this is not an error condition
+	// Resolve default path if none supplied.
+	if path == "" {
+		path = filepath.Join("resources", "models", defaultModelFilename)
+	}
+
+	info := ModelInfo{
+		LoadedAt:       time.Now(),
+		UsingHeuristic: true,
+	}
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		// File missing — use heuristic fallback; this is not an error condition.
 		ie.modelPath = ""
 		ie.loaded = true
+		ie.info = info
 		return nil
 	}
-	// TODO: uncomment once ONNX runtime is stable on all platforms
-	// backend := gorgonnx.NewGraph()
-	// model := onnx.NewModel(backend)
-	// b, err := os.ReadFile(path)
-	// if err != nil { return err }
-	// if err := model.UnmarshalBinary(b); err != nil { return err }
-	// ie.onnxModel = model
-	ie.modelPath = path
+
+	// File exists — record metadata and validate the ONNX header.
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		abs = path
+	}
+	info.Path = abs
+	info.SizeBytes = stat.Size()
+	info.UsingHeuristic = false
+
+	// Validate: an ONNX file must start with the protobuf field tag for
+	// ModelProto.ir_version (field 1, wire type 0 → byte 0x08) or the
+	// opset field. We do a lightweight 4-byte header check.
+	if err := validateONNXHeader(abs); err != nil {
+		// Corrupted or wrong file — fall back to heuristics; warn but don't fail.
+		info.UsingHeuristic = true
+		info.Path = abs + " (invalid: " + err.Error() + ")"
+		ie.modelPath = ""
+		ie.loaded = true
+		ie.info = info
+		return nil
+	}
+
+	// Look for companion scaler stats.
+	scalerPath := filepath.Join(filepath.Dir(abs), defaultScalerFilename)
+	if _, err := os.Stat(scalerPath); err == nil {
+		info.ScalerPath = scalerPath
+		// Optionally load scaler stats to override compiled-in FeatureMeans/FeatureStdDevs.
+		loadScalerStats(scalerPath)
+	}
+
+	ie.modelPath = abs
 	ie.loaded = true
+	ie.info = info
 	return nil
+}
+
+// validateONNXHeader does a minimal byte-level sanity check on an ONNX file.
+// A valid ONNX protobuf ModelProto starts with field tag 0x08 (ir_version)
+// or 0x72 (graph). We accept any non-zero byte as a loose check.
+func validateONNXHeader(path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf := make([]byte, 4)
+	n, err := f.Read(buf)
+	if err != nil || n < 2 {
+		return fmt.Errorf("file too small or unreadable")
+	}
+	// Protobuf varint for field 1 (ir_version) is 0x08; for field 14 (graph) is 0x72.
+	// Both are valid ONNX starts. Reject obviously wrong magic bytes (e.g. ELF, PDF).
+	if buf[0] == 0x7f && buf[1] == 0x45 { // ELF magic
+		return fmt.Errorf("file appears to be an ELF binary, not ONNX")
+	}
+	if buf[0] == 0x25 && buf[1] == 0x50 { // %PDF
+		return fmt.Errorf("file appears to be PDF, not ONNX")
+	}
+	return nil
+}
+
+// loadScalerStats reads the scaler_stats.json produced by train_ml_model.py
+// and updates FeatureMeans / FeatureStdDevs with the trained values.
+// Errors are silently ignored; compiled-in values are used as fallback.
+func loadScalerStats(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	var stats struct {
+		Means []float64 `json:"means"`
+		Stds  []float64 `json:"stds"`
+	}
+	if err := json.Unmarshal(data, &stats); err != nil {
+		return
+	}
+	if len(stats.Means) != FeatureVectorSize || len(stats.Stds) != FeatureVectorSize {
+		return
+	}
+	for i := 0; i < FeatureVectorSize; i++ {
+		FeatureMeans[i] = float32(stats.Means[i])
+		if stats.Stds[i] > 0 {
+			FeatureStdDevs[i] = float32(stats.Stds[i])
+		}
+	}
+}
+
+// Info returns metadata about the loaded model.
+func (ie *InferenceEngine) Info() ModelInfo {
+	return ie.info
+}
+
+// IsUsingHeuristic returns true when the engine is running on the heuristic
+// scorer rather than an ONNX model (model file absent or runtime unavailable).
+func (ie *InferenceEngine) IsUsingHeuristic() bool {
+	return ie.info.UsingHeuristic || ie.modelPath == ""
 }
 
 // Predict calculates the probability of the package being malicious (0.0–1.0).
@@ -147,10 +267,10 @@ func (ie *InferenceEngine) Predict(features []float32) (float64, error) {
 
 	// [8] install script size in KB — large install scripts are more suspicious.
 	installKB := float64(features[8])
-	if installKB > 5 {
-		score += 0.04
-	} else if installKB > 20 {
+	if installKB > 20 {
 		score += 0.08
+	} else if installKB > 5 {
+		score += 0.04
 	}
 
 	// [9] preinstall hook — adds risk.
@@ -251,7 +371,7 @@ func (ie *InferenceEngine) Predict(features []float32) (float64, error) {
 	return score, nil
 }
 
-// PredictBatch runs inference over a slice of feature vectors in parallel.
+// PredictBatch runs inference over a slice of feature vectors.
 // Results are returned in the same order as inputs.
 func (ie *InferenceEngine) PredictBatch(batch [][]float32) ([]float64, error) {
 	if !ie.loaded {

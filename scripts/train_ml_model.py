@@ -377,36 +377,51 @@ def evaluate(clf, X, y, k: int = 5) -> dict:
 
 def compute_shap(clf, X_sample, output_path: str):
     try:
-        import shap
-        # Use the Random Forest sub-estimator for SHAP (TreeExplainer)
-        rf_clf = None
-        for name, est in clf.estimators_:
-            if name == "rf":
-                rf_clf = est
-                break
+        import shap  # noqa: F401
+    except ImportError:
+        print("  [shap] shap not installed — skipping (pip install shap)")
+        return
+
+    try:
+        # Use the Random Forest sub-estimator for SHAP (TreeExplainer is fastest)
+        rf_clf = clf.named_estimators_.get("rf", None)
+        if rf_clf is None and clf.estimators_:
+            rf_clf = clf.estimators_[0]
         if rf_clf is None:
             print("  [shap] Could not find RF sub-estimator; skipping SHAP")
             return
 
         explainer = shap.TreeExplainer(rf_clf)
-        shap_values = explainer.shap_values(X_sample)
-        # For binary classification shap_values is a list [class0, class1]
-        if isinstance(shap_values, list):
-            shap_values = shap_values[1]
-        importances = np.abs(shap_values).mean(axis=0)
-        ranked = sorted(zip(FEATURE_NAMES, importances.tolist()), key=lambda x: -x[1])
+        raw = explainer.shap_values(X_sample)
+        arr = np.array(raw)
+
+        # Normalise to 2-D (n_samples, n_features) selecting class=1 (malicious)
+        if arr.ndim == 3:
+            # shap >= 0.46: shape (n_samples, n_features, n_classes)
+            sv = arr[:, :, 1]
+        elif arr.ndim == 2:
+            sv = arr
+        elif isinstance(raw, list) and len(raw) == 2:
+            # Old shap: list of [class0, class1]
+            sv = np.array(raw[1])
+        else:
+            sv = arr
+
+        importances = np.abs(sv).mean(axis=0).flatten()  # shape (n_features,)
+        vals = [float(v) for v in importances]
+        ranked = sorted(zip(FEATURE_NAMES, vals), key=lambda x: -x[1])
 
         print("\n  SHAP Feature Importances (top 25):")
+        max_val = ranked[0][1] if ranked[0][1] > 0 else 1.0
         for i, (name, val) in enumerate(ranked[:25]):
-            bar = "█" * int(val / ranked[0][1] * 30)
+            bar = "\u2588" * int(val / max_val * 30)
             print(f"    {i+1:2d}. {name:<35} {val:.4f}  {bar}")
 
         with open(output_path, "w") as f:
             json.dump({"features": [{"name": n, "importance": v} for n, v in ranked]}, f, indent=2)
         print(f"\n  SHAP importances written to {output_path}")
-    except ImportError:
-        print("  [shap] shap not installed — skipping (pip install shap)")
-
+    except Exception as e:
+        print(f"  [shap] SHAP computation failed ({type(e).__name__}: {e}) — skipping")
 
 # ---------------------------------------------------------------------------
 # ONNX export
@@ -520,16 +535,17 @@ def main():
     # 6. SHAP
     if not args.no_shap:
         print("\n=== SHAP Feature Importances ===")
-        sample_idx = np.random.choice(len(X_test_scaled), min(500, len(X_test_scaled)), replace=False)
-        compute_shap(clf, X_test_scaled[sample_idx], str(output_dir / "shap_importances.json"))
+        try:
+            sample_idx = np.random.choice(len(X_test_scaled), min(500, len(X_test_scaled)), replace=False)
+            compute_shap(clf, X_test_scaled[sample_idx], str(output_dir / "shap_importances.json"))
+        except Exception as e:
+            print(f"  [shap] Skipping SHAP due to error: {e}")
 
     # 7. ONNX export (use Random Forest alone for max ONNX compatibility)
     print("\n=== ONNX Export ===")
-    rf_clf = None
-    for name, est in clf.estimators_:
-        if name == "rf":
-            rf_clf = est
-            break
+    rf_clf = clf.named_estimators_.get("rf", None)
+    if rf_clf is None and clf.estimators_:
+        rf_clf = clf.estimators_[0]
 
     if rf_clf is not None:
         onnx_path = str(output_dir / "reputation_model.onnx")

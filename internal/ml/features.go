@@ -21,15 +21,15 @@ type InputData struct {
 	VerifiedFlagCount  int
 
 	// Install-time behavior (features 7-10)
-	HasInstallScript    bool
-	InstallScriptSize   int // bytes
-	HasPreinstallScript bool
+	HasInstallScript     bool
+	InstallScriptSize    int // bytes
+	HasPreinstallScript  bool
 	HasPostinstallScript bool
 
 	// Maintainer dynamics (features 11-13)
-	MaintainerChangeCount int // number of maintainer additions/removals in last 90d
-	MaintainerVelocity    float64 // changes per day over last 90d
-	DomainAgeOfAuthorEmail int // age of email domain in days (-1 = unknown)
+	MaintainerChangeCount  int     // number of maintainer additions/removals in last 90d
+	MaintainerVelocity     float64 // changes per day over last 90d
+	DomainAgeOfAuthorEmail int     // age of email domain in days (-1 = unknown)
 
 	// File composition (features 14-17)
 	ExecutableBinaryCount int
@@ -38,14 +38,14 @@ type InputData struct {
 	EntropyMaxFile        float64 // max Shannon entropy across all files (0-8)
 
 	// Version / dependency delta (features 18-20)
-	DependencyDelta       int // # deps added vs previous version (can be negative)
-	PreviousVersionCount  int // total number of published versions
-	DaysBetweenVersions   float64 // avg days between the last 3 version releases
+	DependencyDelta      int     // # deps added vs previous version (can be negative)
+	PreviousVersionCount int     // total number of published versions
+	DaysBetweenVersions  float64 // avg days between the last 3 version releases
 
 	// Ecosystem popularity signals (features 21-23)
-	StarCount             int
-	ForkCount             int
-	NamespaceAgeDays      int // age of the owning org/user namespace in days
+	StarCount        int
+	ForkCount        int
+	NamespaceAgeDays int // age of the owning org/user namespace in days
 }
 
 // ExtractFeatures converts InputData into a normalized feature vector.
@@ -229,66 +229,67 @@ func ExtractFeatures(data InputData) []float32 {
 	return features
 }
 
-// FeatureMeans and FeatureStdDevs are pre-computed training statistics for z-score normalization.
-// These must be updated whenever the ML model is retrained.
-// Values for features with near-zero std are set to 1.0 to avoid division by zero.
+// FeatureMeans and FeatureStdDevs contain z-score normalization statistics
+// computed from the trained model dataset (resources/models/scaler_stats.json).
+// These values were produced by scripts/train_ml_model.py on 2026-03-06.
+// Update whenever the model is retrained.
 var FeatureMeans = [FeatureVectorSize]float32{
-	8.5,   // [0]  log downloads (ln(5000) ≈ 8.5 typical pkg)
-	1.8,   // [1]  maintainer count
-	730.0, // [2]  age days (~2 years)
-	90.0,  // [3]  days since update
-	0.3,   // [4]  vuln count
-	0.02,  // [5]  malware reports
-	0.5,   // [6]  verified flags
-	0.3,   // [7]  has install script
-	2.0,   // [8]  install script KB
-	0.1,   // [9]  has preinstall
-	0.15,  // [10] has postinstall
-	0.4,   // [11] maintainer change count
-	0.005, // [12] maintainer velocity
-	1200.0, // [13] domain age days
-	0.1,   // [14] executable binary count
-	1.2,   // [15] network code files
-	2.3,   // [16] log total files
-	4.5,   // [17] max entropy
-	0.8,   // [18] dependency delta
-	1.6,   // [19] log version count
-	45.0,  // [20] days between versions
-	3.5,   // [21] log stars
-	2.0,   // [22] log forks
-	900.0, // [23] namespace age days
-	0.05,  // [24] download/star anomaly
+	9.4735,   // [0]  log_downloads
+	3.2159,   // [1]  maintainer_count
+	786.5998, // [2]  age_days
+	107.6925, // [3]  days_since_update
+	0.4189,   // [4]  vuln_count
+	0.0266,   // [5]  malware_reports
+	0.6683,   // [6]  verified_flags
+	0.4178,   // [7]  has_install_script
+	1.5797,   // [8]  install_script_kb
+	0.1448,   // [9]  has_preinstall
+	0.1889,   // [10] has_postinstall
+	0.3524,   // [11] maintainer_change_count
+	0.0070,   // [12] maintainer_velocity
+	1484.767, // [13] domain_age_days
+	0.1858,   // [14] executable_binary_count
+	1.2570,   // [15] network_code_files
+	2.4407,   // [16] log_total_files
+	4.7618,   // [17] entropy_max_file
+	1.1554,   // [18] dependency_delta
+	1.8660,   // [19] log_version_count
+	57.4083,  // [20] days_between_versions
+	4.5383,   // [21] log_stars
+	2.7612,   // [22] log_forks
+	970.8500, // [23] namespace_age_days
+	0.0344,   // [24] download_star_anomaly
 }
 
 var FeatureStdDevs = [FeatureVectorSize]float32{
-	4.0,   // [0]
-	2.5,   // [1]
-	600.0, // [2]
-	120.0, // [3]
-	1.2,   // [4]
-	0.15,  // [5]
-	1.0,   // [6]
-	0.46,  // [7]  binary 0/1
-	8.0,   // [8]
-	0.30,  // [9]
-	0.36,  // [10]
-	1.5,   // [11]
-	0.05,  // [12]
-	800.0, // [13]
-	0.5,   // [14]
-	3.0,   // [15]
-	1.5,   // [16]
-	1.5,   // [17]
-	5.0,   // [18]
-	1.2,   // [19]
-	60.0,  // [20]
-	3.0,   // [21]
-	2.0,   // [22]
-	700.0, // [23]
-	0.2,   // [24]
+	4.2145,   // [0]
+	1.7344,   // [1]
+	824.5095, // [2]
+	121.2384, // [3]
+	0.7070,   // [4]
+	0.2125,   // [5]
+	0.9464,   // [6]
+	0.4932,   // [7]  binary 0/1
+	4.2164,   // [8]
+	0.3519,   // [9]
+	0.3914,   // [10]
+	0.7706,   // [11]
+	0.0286,   // [12]
+	1465.122, // [13]
+	0.6708,   // [14]
+	1.3426,   // [15]
+	1.0117,   // [16]
+	1.3660,   // [17]
+	4.9371,   // [18]
+	1.1974,   // [19]
+	59.4247,  // [20]
+	3.1188,   // [21]
+	2.0472,   // [22]
+	983.2851, // [23]
+	0.1535,   // [24]
 }
 
-// NormalizeFeatures applies z-score normalization in-place using training statistics.
+// NormalizeFeatures applies z-score normalization using training statistics.
 // Normalized = (value - mean) / stddev, clamped to [-3, 3].
 // Call this before passing features to the ML model (not needed for heuristic fallback).
 func NormalizeFeatures(features []float32) []float32 {
