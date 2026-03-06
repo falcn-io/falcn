@@ -26,6 +26,7 @@ import (
 	apilm "github.com/falcn-io/falcn/internal/api/middleware"
 	whloader "github.com/falcn-io/falcn/internal/api/webhook"
 	appcfg "github.com/falcn-io/falcn/internal/config"
+	containerpkg "github.com/falcn-io/falcn/internal/container"
 	"github.com/falcn-io/falcn/internal/database"
 	"github.com/falcn-io/falcn/internal/detector"
 	llmpkg "github.com/falcn-io/falcn/internal/llm"
@@ -1343,6 +1344,9 @@ func main() {
 	// Threat list — paginated across all scans — requires auth
 	r.Handle("/v1/threats", authMiddleware(http.HandlerFunc(threatsListHandler))).Methods("GET")
 
+	// Container image and Dockerfile scanning
+	r.Handle("/v1/analyze/image", rateLimitMiddleware(authMiddleware(http.HandlerFunc(analyzeImageHandler)))).Methods("POST")
+
 	// Report generation — streams the file as an attachment
 	r.Handle("/v1/reports/generate", authMiddleware(http.HandlerFunc(reportGenerateHandler))).Methods("POST")
 
@@ -1912,6 +1916,63 @@ func threatsListHandler(w http.ResponseWriter, r *http.Request) {
 // ── Report generation ────────────────────────────────────────────────────────
 
 // POST /v1/reports/generate — streams a security report as a file download.
+// ── Container image analysis ──────────────────────────────────────────────────
+
+// analyzeImageHandler scans a container image for vulnerabilities and
+// misconfigurations.
+//
+// POST /v1/analyze/image
+// Request body:
+//
+//	{
+//	  "image":        "nginx:1.27",        // required
+//	  "light":        false,               // optional; skip layer downloads
+//	  "username":     "...",               // optional registry credentials
+//	  "password":     "...",
+//	  "token":        "...",
+//	  "max_layer_mb": 100                  // optional; skip layers above this size
+//	}
+//
+// Response: ImageScanResult JSON.
+func analyzeImageHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Image      string `json:"image"`
+		Light      bool   `json:"light"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		Token      string `json:"token"`
+		MaxLayerMB int64  `json:"max_layer_mb"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, maxRequestBodyBytes)).Decode(&req); err != nil {
+		http.Error(w, "invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if req.Image == "" {
+		http.Error(w, `"image" field is required`, http.StatusBadRequest)
+		return
+	}
+
+	opts := containerpkg.ScanOptions{
+		Light:          req.Light,
+		Username:       req.Username,
+		Password:       req.Password,
+		Token:          req.Token,
+		MaxLayerSizeMB: req.MaxLayerMB,
+	}
+
+	sc := containerpkg.New()
+	result, err := sc.ScanImage(r.Context(), req.Image, opts)
+	if err != nil {
+		http.Error(w, "scan failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(result)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Request body: { "type": "technical|executive|compliance", "format": "sarif|cyclonedx|spdx|json" }
 // Response: file attachment with appropriate Content-Type and Content-Disposition.
 func reportGenerateHandler(w http.ResponseWriter, r *http.Request) {
