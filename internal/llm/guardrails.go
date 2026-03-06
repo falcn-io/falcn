@@ -46,6 +46,13 @@ func (s *SafeProvider) GenerateExplanation(ctx context.Context, input string) (s
 	}
 
 	// 4. Output Guardrails
+	// Cap response length to prevent unbounded memory use from runaway LLM output.
+	const maxLLMResponseLength = 4096
+	if len(response) > maxLLMResponseLength {
+		response = response[:maxLLMResponseLength]
+	}
+	response = strings.TrimSpace(response)
+
 	if s.detectHallucination(response) {
 		logrus.Warn("LLM Hallucination or refusal detected")
 		return "AI Analysis Unavailable (Safety Filter)", nil

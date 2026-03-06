@@ -178,6 +178,11 @@ func (rl *RateLimiter) Allow(ip string) bool {
 // to prevent unbounded growth of the clients map.
 func (rl *RateLimiter) StartEviction(ctx context.Context, interval time.Duration) {
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("PANIC in rate limiter eviction goroutine: %v", r)
+			}
+		}()
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {
@@ -874,6 +879,12 @@ var (
 	apiIntHubOnce   sync.Once
 )
 
+// serverCtx is the server-level context cancelled on graceful shutdown.
+// Goroutines that outlive individual HTTP requests (e.g. LLM explanation
+// generators) should derive their context from this so they stop cleanly.
+// Overwritten in main() before any request-handling goroutine is spawned.
+var serverCtx = context.Background()
+
 // getIntegrationHub lazily creates the event bus + integration hub pair.
 // Returns nil if integrations are not configured.
 func getIntegrationHub() *hub.IntegrationHub {
@@ -1137,7 +1148,8 @@ func generateAndPublishExplanation(t pkgtypes.Threat, packageName, registry stri
 	}
 
 	// No cache hit — call the LLM.
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// Derive from serverCtx so this goroutine is cancelled on graceful shutdown.
+	ctx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
 	defer cancel()
 
 	prompt := llmpkg.BuildExplanationPrompt(llmpkg.ExplanationRequest{Threat: t})
@@ -1307,6 +1319,7 @@ func main() {
 	rateLimiter = NewRateLimiter()
 	apiCtx, apiCancel := context.WithCancel(context.Background())
 	defer apiCancel()
+	serverCtx = apiCtx // expose to package-level goroutines (e.g. LLM explanation workers)
 	rateLimiter.StartEviction(apiCtx, 5*time.Minute)
 
 	// Initialize JWT service. On failure, JWT auth is unavailable but API-key
@@ -1589,6 +1602,12 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("PANIC in signal handler goroutine: %v — forcing shutdown", r)
+				apiCancel()
+			}
+		}()
 		<-sigCh
 		log.Println("Shutdown signal received, draining connections (30s timeout)...")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)

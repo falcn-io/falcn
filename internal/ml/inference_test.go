@@ -3,6 +3,7 @@ package ml
 import (
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -411,4 +412,72 @@ func TestModelRegistry_ActiveModel_EmptyRegistry(t *testing.T) {
 
 	_, ok := mr.ActiveModel()
 	assert.False(t, ok, "empty registry must report no active model")
+}
+
+// ─── Real tree ensemble (requires tree_params.json) ──────────────────────────
+
+// TestLoadTreeParams_RealFile verifies that the exported tree_params.json loads
+// cleanly and that the resulting TreeParams produces valid probabilities.
+// The test is skipped if the file is absent (e.g. in CI without the model).
+func TestLoadTreeParams_RealFile(t *testing.T) {
+	modelDir := filepath.Join("..", "..", "resources", "models")
+	tp, err := LoadTreeParams(modelDir)
+	if tp == nil && err == nil {
+		t.Skip("tree_params.json not found; skipping real-model test")
+	}
+	require.NoError(t, err, "LoadTreeParams must not return an error")
+	require.NotNil(t, tp, "TreeParams must be non-nil when file exists")
+
+	// Run a benign-looking feature vector through the ensemble.
+	benign := make([]float32, FeatureVectorSize)
+	benign[0] = 16.0 // log(~9M downloads)
+	benign[1] = 10.0 // 10 maintainers
+	benign[2] = 1825 // 5 years old
+	benign[3] = 30   // last updated 30 days ago
+	benign[21] = 10  // log stars
+	benign[22] = 7   // log forks
+
+	score := tp.Predict(benign)
+	assert.GreaterOrEqual(t, score, 0.0, "score must be >= 0")
+	assert.LessOrEqual(t, score, 1.0, "score must be <= 1")
+
+	// Run a suspicious vector.
+	suspicious := make([]float32, FeatureVectorSize)
+	suspicious[5] = 3   // malware reports
+	suspicious[7] = 1   // install script
+	suspicious[14] = 2  // embedded binaries
+
+	score2 := tp.Predict(suspicious)
+	assert.GreaterOrEqual(t, score2, 0.0, "score must be >= 0")
+	assert.LessOrEqual(t, score2, 1.0, "score must be <= 1")
+}
+
+// TestInferenceEngine_RealModel verifies end-to-end: LoadModel picks up both
+// the ONNX file and tree_params.json, setting UsingHeuristic=false.
+func TestInferenceEngine_RealModel(t *testing.T) {
+	onnxPath := filepath.Join("..", "..", "resources", "models", "reputation_model.onnx")
+	if _, err := os.Stat(onnxPath); os.IsNotExist(err) {
+		t.Skip("reputation_model.onnx not found; skipping real-model test")
+	}
+
+	ie := NewInferenceEngine()
+	require.NoError(t, ie.LoadModel(onnxPath))
+
+	info := ie.Info()
+	assert.False(t, info.UsingHeuristic,
+		"UsingHeuristic must be false when tree_params.json is loaded alongside the ONNX")
+	assert.False(t, ie.IsUsingHeuristic(),
+		"IsUsingHeuristic() must return false with real tree params loaded")
+
+	// Predict with a representative feature vector.
+	features := make([]float32, FeatureVectorSize)
+	features[0] = 12.0 // moderate downloads
+	features[1] = 3    // 3 maintainers
+	features[2] = 400  // ~1 year old
+
+	score, err := ie.Predict(features)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, score, 0.0)
+	assert.LessOrEqual(t, score, 1.0)
+	t.Logf("Real ensemble score for moderate-risk profile: %.4f", score)
 }

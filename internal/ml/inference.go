@@ -41,14 +41,15 @@ type ModelInfo struct {
 }
 
 // InferenceEngine handles ML model inference.
-// When an ONNX model file is available it records its presence and validates
-// it; the calibrated heuristic scorer then runs on the same 25-feature vector.
-// Once a Go ONNX runtime with stable cross-platform CGO support is added to
-// go.mod, the ONNX inference path will be wired in place of the heuristic.
+// InferenceEngine handles ML model inference.
+// When tree_params.json is present alongside the ONNX file, Predict() runs the
+// full 300-tree RandomForest ensemble in pure Go (no CGO, no external deps).
+// If the file is absent it falls back to the calibrated heuristic scorer.
 type InferenceEngine struct {
-	modelPath string
-	loaded    bool
-	info      ModelInfo
+	modelPath  string
+	loaded     bool
+	info       ModelInfo
+	treeParams *TreeParams // non-nil → real ensemble inference
 }
 
 // NewInferenceEngine creates a new inference engine.
@@ -106,8 +107,24 @@ func (ie *InferenceEngine) LoadModel(path string) error {
 	scalerPath := filepath.Join(filepath.Dir(abs), defaultScalerFilename)
 	if _, err := os.Stat(scalerPath); err == nil {
 		info.ScalerPath = scalerPath
-		// Optionally load scaler stats to override compiled-in FeatureMeans/FeatureStdDevs.
+		// Load scaler stats to override compiled-in FeatureMeans/FeatureStdDevs.
 		loadScalerStats(scalerPath)
+	}
+
+	// Load pure-Go tree ensemble from tree_params.json (same directory as ONNX).
+	// If the file is present, Predict() will use real ML inference instead of
+	// the heuristic fallback. Regenerate with: python3 scripts/export_tree_params.py
+	modelDir := filepath.Dir(abs)
+	tp, err := LoadTreeParams(modelDir)
+	if err != nil {
+		// Log but don't fail — fall back to heuristic.
+		info.UsingHeuristic = true
+	} else if tp != nil {
+		ie.treeParams = tp
+		info.UsingHeuristic = false
+	} else {
+		// tree_params.json not found — heuristic mode.
+		info.UsingHeuristic = true
 	}
 
 	ie.modelPath = abs
@@ -264,6 +281,11 @@ func (ie *InferenceEngine) Predict(features []float32) (float64, error) {
 	}
 	if len(features) < FeatureVectorSize {
 		return 0, fmt.Errorf("expected %d features, got %d", FeatureVectorSize, len(features))
+	}
+
+	// Use real 300-tree ensemble when tree_params.json was loaded successfully.
+	if ie.treeParams != nil {
+		return ie.treeParams.Predict(features), nil
 	}
 
 	// Heuristic scoring calibrated to produce meaningful risk probabilities.

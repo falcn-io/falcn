@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/falcn-io/falcn/pkg/retry"
 )
 
 // ─── Scanner ──────────────────────────────────────────────────────────────────
@@ -322,27 +324,37 @@ func (s *Scanner) checkVulnerabilities(ctx context.Context, pkgs []InstalledPack
 }
 
 // queryOSV calls the OSV REST API for a single package and returns a PackageVuln
-// if any vulnerabilities are found.
+// if any vulnerabilities are found. Retries up to 3 times on transient errors.
 func (s *Scanner) queryOSV(ctx context.Context, pkg InstalledPackage, ecosystem string) (*PackageVuln, error) {
-	body := fmt.Sprintf(`{"version":%q,"package":{"name":%q,"ecosystem":%q}}`,
+	reqBody := fmt.Sprintf(`{"version":%q,"package":{"name":%q,"ecosystem":%q}}`,
 		pkg.Version, pkg.Name, ecosystem)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		"https://api.osv.dev/v1/query",
-		strings.NewReader(body))
+	var rawBody []byte
+	err := retry.Do(ctx, 3, 500*time.Millisecond, func() error {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+			"https://api.osv.dev/v1/query",
+			strings.NewReader(reqBody))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := s.vulnDB.client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return retry.StatusError(resp.StatusCode, fmt.Errorf("OSV returned %d", resp.StatusCode))
+		}
+		b, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		if err != nil {
+			return err
+		}
+		rawBody = b
+		return nil
+	})
 	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.vulnDB.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, nil // treat non-200 as "no data"
+		return nil, nil // treat persistent failure as "no data" to keep scan going
 	}
 
 	var r struct {
@@ -364,7 +376,7 @@ func (s *Scanner) queryOSV(ctx context.Context, pkg InstalledPackage, ecosystem 
 			} `json:"affected"`
 		} `json:"vulns"`
 	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&r); err != nil {
+	if err := json.Unmarshal(rawBody, &r); err != nil {
 		return nil, nil
 	}
 	if len(r.Vulns) == 0 {
