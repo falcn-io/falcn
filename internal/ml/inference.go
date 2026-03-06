@@ -6,6 +6,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -163,6 +165,57 @@ func loadScalerStats(path string) {
 			FeatureStdDevs[i] = float32(stats.Stds[i])
 		}
 	}
+}
+
+// ─── SHAP feature importances ─────────────────────────────────────────────────
+
+// SHAPEntry is one feature-importance pair from the trained SHAP analysis.
+type SHAPEntry struct {
+	Name       string  `json:"name"`
+	Importance float64 `json:"importance"`
+}
+
+// shapOnce ensures shap_importances.json is loaded exactly once per process.
+var (
+	shapOnce     sync.Once
+	shapFeatures []SHAPEntry
+)
+
+// LoadSHAPImportances reads shap_importances.json from modelDir and caches the
+// result for the lifetime of the process. Errors are silently swallowed so that
+// missing SHAP data never prevents a scan from completing.
+func LoadSHAPImportances(modelDir string) {
+	shapOnce.Do(func() {
+		path := filepath.Join(modelDir, "shap_importances.json")
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return
+		}
+		var raw struct {
+			Features []SHAPEntry `json:"features"`
+		}
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return
+		}
+		// Sort descending by importance so callers can take the top-N slice.
+		sort.Slice(raw.Features, func(i, j int) bool {
+			return raw.Features[i].Importance > raw.Features[j].Importance
+		})
+		shapFeatures = raw.Features
+	})
+}
+
+// TopSHAPFeatures returns the top n SHAP feature importances loaded from the
+// most recent call to LoadSHAPImportances. Returns nil if not yet loaded or
+// the file was absent.
+func TopSHAPFeatures(n int) []SHAPEntry {
+	if n <= 0 || len(shapFeatures) == 0 {
+		return nil
+	}
+	if n > len(shapFeatures) {
+		n = len(shapFeatures)
+	}
+	return shapFeatures[:n]
 }
 
 // Info returns metadata about the loaded model.

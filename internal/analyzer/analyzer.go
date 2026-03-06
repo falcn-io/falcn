@@ -16,6 +16,7 @@ import (
 	"github.com/falcn-io/falcn/internal/detector"
 	"github.com/falcn-io/falcn/internal/edge"
 	"github.com/falcn-io/falcn/internal/llm"
+	"github.com/falcn-io/falcn/internal/ml"
 	"github.com/falcn-io/falcn/internal/registry"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/falcn-io/falcn/internal/vulnerability"
@@ -113,6 +114,10 @@ func New(cfg *config.Config) (*Analyzer, error) {
 	// Initialize registry factory and auto-detector
 	factory := registry.NewFactory()
 	autoDetector := scanner.NewAutoDetector()
+
+	// Load SHAP feature importances from the trained model directory once per
+	// process so they can be injected into LLM explanation prompts.
+	ml.LoadSHAPImportances(filepath.Join("resources", "models"))
 
 	// Initialize LLM provider with guardrails
 	var llmProvider llm.Provider
@@ -688,6 +693,26 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 		logrus.Infof("Generating AI explanations for threats (max LLM calls: %d)...", options.MaxLLMCalls)
 		llmCallCount := 0
 
+		// Build a metadata lookup map keyed by package name for LLM context enrichment.
+		type depMeta struct {
+			downloads int64
+			ageDays   int
+		}
+		depMetaMap := make(map[string]depMeta, len(deps))
+		{
+			now := time.Now()
+			for _, dep := range deps {
+				ageDays := 0
+				if dep.Metadata.CreationDate != nil {
+					ageDays = int(now.Sub(*dep.Metadata.CreationDate).Hours() / 24)
+				}
+				depMetaMap[dep.Name] = depMeta{
+					downloads: dep.Metadata.Downloads,
+					ageDays:   ageDays,
+				}
+			}
+		}
+
 		for i := range allThreats {
 			if options.MaxLLMCalls > 0 && llmCallCount >= options.MaxLLMCalls {
 				logrus.Debugf("Max LLM calls (%d) reached, skipping remaining explanations", options.MaxLLMCalls)
@@ -716,11 +741,21 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 			}
 
 			// Build structured prompt with per-threat-type guidance and evidence.
+			meta := depMetaMap[t.Package]
+
+			// Convert ml.SHAPEntry → llm.SHAPFeature (same data, separate packages).
+			rawSHAP := ml.TopSHAPFeatures(5)
+			shapFeatures := make([]llm.SHAPFeature, len(rawSHAP))
+			for idx, s := range rawSHAP {
+				shapFeatures[idx] = llm.SHAPFeature{Name: s.Name, Importance: s.Importance}
+			}
+
 			req := llm.ExplanationRequest{
-				Threat:        *t,
-				DIRTScore:     0,   // populated by DIRT if available
-				PackageAge:    0,
-				DownloadCount: 0,
+				Threat:          *t,
+				DIRTScore:       t.Confidence, // confidence correlates with DIRT impact score
+				PackageAge:      meta.ageDays,
+				DownloadCount:   meta.downloads,
+				SHAPImportances: shapFeatures,
 			}
 			prompt := llm.BuildExplanationPrompt(req)
 

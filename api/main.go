@@ -1314,41 +1314,62 @@ func main() {
 		}
 	}).Methods("GET")
 
-	// API endpoints with auth and rate limiting
+	// ── RBAC-aware route helpers ──────────────────────────────────────────────
+	// requireRole wraps a handler with auth + RBAC role enforcement.
+	// In dev mode (no credentials configured) role checks are skipped so that
+	// local development is frictionless.
+	requireRole := func(role security.Role, h http.HandlerFunc) http.Handler {
+		return authMiddleware(func(w http.ResponseWriter, req *http.Request) {
+			if !authDevMode() {
+				security.RequireRole(role, http.HandlerFunc(h)).ServeHTTP(w, req)
+			} else {
+				h(w, req)
+			}
+		})
+	}
+
+	// ── API endpoints with auth, RBAC, and rate limiting ─────────────────────
+	// Scan-triggering endpoints require RoleAnalyst (read-only viewers cannot
+	// trigger scans that consume compute and network resources).
+	analystAnalyze := func(h http.HandlerFunc) http.Handler {
+		inner := requireRole(security.RoleAnalyst, h)
+		return rateLimitMiddleware(inner.ServeHTTP)
+	}
+
 	if dsn := os.Getenv("RATE_LIMIT_REDIS_URL"); dsn != "" {
 		if rl, err := apilm.NewRedisLimiter(dsn, apilm.RatePolicy{Limit: 10, Window: time.Minute}); err == nil {
 			wrap := apilm.RateLimitMiddleware(rl, func(r *http.Request) string { return getClientIP(r) })
-			r.Handle("/v1/analyze", wrap(authMiddleware(http.HandlerFunc(analyzeHandler)))).Methods("POST")
-			r.Handle("/v1/analyze/batch", wrap(authMiddleware(http.HandlerFunc(batchAnalyzeHandler)))).Methods("POST")
+			r.Handle("/v1/analyze", wrap(requireRole(security.RoleAnalyst, analyzeHandler))).Methods("POST")
+			r.Handle("/v1/analyze/batch", wrap(requireRole(security.RoleAnalyst, batchAnalyzeHandler))).Methods("POST")
 		} else {
-			r.Handle("/v1/analyze", rateLimitMiddleware(authMiddleware(http.HandlerFunc(analyzeHandler)))).Methods("POST")
-			r.Handle("/v1/analyze/batch", rateLimitMiddleware(authMiddleware(http.HandlerFunc(batchAnalyzeHandler)))).Methods("POST")
+			r.Handle("/v1/analyze", analystAnalyze(analyzeHandler)).Methods("POST")
+			r.Handle("/v1/analyze/batch", analystAnalyze(batchAnalyzeHandler)).Methods("POST")
 		}
 	} else {
-		r.Handle("/v1/analyze", rateLimitMiddleware(authMiddleware(http.HandlerFunc(analyzeHandler)))).Methods("POST")
-		r.Handle("/v1/analyze/batch", rateLimitMiddleware(authMiddleware(http.HandlerFunc(batchAnalyzeHandler)))).Methods("POST")
+		r.Handle("/v1/analyze", analystAnalyze(analyzeHandler)).Methods("POST")
+		r.Handle("/v1/analyze/batch", analystAnalyze(batchAnalyzeHandler)).Methods("POST")
 	}
 	// /v1/status is intentionally public — used by load balancers and uptime monitors.
 	r.HandleFunc("/v1/status", statusHandler).Methods("GET")
-	// All data-bearing endpoints require authentication.
-	r.Handle("/v1/stats", authMiddleware(http.HandlerFunc(statsHandler))).Methods("GET")
-	r.Handle("/v1/vulnerabilities", authMiddleware(http.HandlerFunc(vulnerabilitiesHandler))).Methods("GET")
+	// Read-only data endpoints: RoleViewer and above.
+	r.Handle("/v1/stats", requireRole(security.RoleViewer, statsHandler)).Methods("GET")
+	r.Handle("/v1/vulnerabilities", requireRole(security.RoleViewer, vulnerabilitiesHandler)).Methods("GET")
 
-	// Dashboard endpoints — require auth (expose aggregated security data)
-	r.Handle("/v1/dashboard/metrics", authMiddleware(http.HandlerFunc(dashboardMetricsHandler))).Methods("GET")
-	r.Handle("/v1/dashboard/performance", authMiddleware(http.HandlerFunc(dashboardPerformanceHandler))).Methods("GET")
+	// Dashboard endpoints — RoleViewer and above.
+	r.Handle("/v1/dashboard/metrics", requireRole(security.RoleViewer, dashboardMetricsHandler)).Methods("GET")
+	r.Handle("/v1/dashboard/performance", requireRole(security.RoleViewer, dashboardPerformanceHandler)).Methods("GET")
 
-	// Scan history — requires auth
-	r.Handle("/v1/scans", authMiddleware(http.HandlerFunc(scansHandler))).Methods("GET")
+	// Scan history — RoleViewer and above.
+	r.Handle("/v1/scans", requireRole(security.RoleViewer, scansHandler)).Methods("GET")
 
-	// Threat list — paginated across all scans — requires auth
-	r.Handle("/v1/threats", authMiddleware(http.HandlerFunc(threatsListHandler))).Methods("GET")
+	// Threat list — RoleViewer and above.
+	r.Handle("/v1/threats", requireRole(security.RoleViewer, threatsListHandler)).Methods("GET")
 
-	// Container image and Dockerfile scanning
-	r.Handle("/v1/analyze/image", rateLimitMiddleware(authMiddleware(http.HandlerFunc(analyzeImageHandler)))).Methods("POST")
+	// Container image and Dockerfile scanning — RoleAnalyst (triggers network I/O).
+	r.Handle("/v1/analyze/image", analystAnalyze(analyzeImageHandler)).Methods("POST")
 
-	// Report generation — streams the file as an attachment
-	r.Handle("/v1/reports/generate", authMiddleware(http.HandlerFunc(reportGenerateHandler))).Methods("POST")
+	// Report generation — RoleAnalyst (produces exportable artefacts).
+	r.Handle("/v1/reports/generate", requireRole(security.RoleAnalyst, reportGenerateHandler)).Methods("POST")
 
 	// Configure CORS
 	// CORS: configurable via FALCN_CORS_ORIGINS env var (comma-separated).
