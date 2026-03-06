@@ -99,13 +99,28 @@ func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
 				severityColor = "\033[33m"
 			}
 
-			fmt.Printf("  %s%s  %s\033[0m\n", severityColor, strings.ToUpper(threat.Severity.String()), threat.Package)
+			// Reachability badge: shown only for CVE threats with analysis result.
+			reachabilityBadge := ""
+			if threat.Reachable != nil {
+				if *threat.Reachable {
+					reachabilityBadge = "  \033[31m[REACHABLE]\033[0m"
+				} else {
+					reachabilityBadge = "  \033[90m[not reachable]\033[0m"
+				}
+			}
+
+			fmt.Printf("  %s%s  %s\033[0m%s\n", severityColor, strings.ToUpper(threat.Severity.String()), threat.Package, reachabilityBadge)
 			fmt.Printf("  \033[90m│\033[0m Type: %s\n", threat.Type)
 			if threat.SimilarTo != "" {
 				fmt.Printf("  \033[90m│\033[0m Target: %s (similarity: %.2f)\n", threat.SimilarTo, threat.Confidence)
 			}
 			fmt.Printf("  \033[90m│\033[0m Risk Score: %.2f\n", threat.Confidence)
 			fmt.Printf("  \033[90m│\033[0m Action: %s\n", threat.Recommendation)
+
+			// Show call path when reachable
+			if threat.Reachable != nil && *threat.Reachable && len(threat.CallPath) > 0 {
+				fmt.Printf("  \033[90m│\033[0m Call path: %s\n", strings.Join(threat.CallPath, " → "))
+			}
 
 			if threat.Metadata != nil {
 				if explanation, ok := threat.Metadata["ai_explanation"]; ok && explanation != nil {

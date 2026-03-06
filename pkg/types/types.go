@@ -186,6 +186,14 @@ type Threat struct {
 	CVE                string                 `json:"cve,omitempty"`
 	// Explanation is the AI-generated structured explanation (nil when --no-llm).
 	Explanation *ThreatExplanation `json:"explanation,omitempty"`
+	// Reachable indicates whether the vulnerable code path is reachable from
+	// the project's entry points. nil = not yet analysed; true = reachable
+	// (high priority); false = not reachable (can be deprioritised).
+	Reachable *bool `json:"reachable,omitempty"`
+	// CallPath is the ordered list of call frames from an entry point to the
+	// first usage of the vulnerable symbol, e.g.:
+	//   ["main()", "server.Run()", "http.ListenAndServe()"]
+	CallPath []string `json:"call_path,omitempty"`
 }
 
 // AnalysisResult represents the result of package analysis

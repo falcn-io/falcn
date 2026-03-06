@@ -17,6 +17,7 @@ import (
 	"github.com/falcn-io/falcn/internal/heuristics"
 	"github.com/falcn-io/falcn/internal/integrations/hub"
 	"github.com/falcn-io/falcn/internal/policy"
+	"github.com/falcn-io/falcn/internal/reachability"
 	pkgevents "github.com/falcn-io/falcn/pkg/events"
 	"github.com/falcn-io/falcn/pkg/logger"
 	"github.com/falcn-io/falcn/pkg/types"
@@ -362,6 +363,12 @@ func (s *Scanner) ScanProject(ctx context.Context, projectPath string) (*types.S
 
 		packages = append(packages, filesPkg)
 	}
+
+	// Phase 6: Reachability Analysis
+	// Annotate CVE / vulnerability threats with Reachable + CallPath so that
+	// callers can suppress low-priority alerts for unreachable code paths.
+	// This is best-effort: failures are logged but do not abort the scan.
+	s.annotateReachability(projectPath, packages)
 
 	// Build summary
 	summary := s.buildSummary(packages)
@@ -814,6 +821,70 @@ func (s *Scanner) hasSuspiciousConnections(files []string) bool {
 		"burpcollaborator", ".onion", "dnslog.cn",
 	}
 	return countPatternMatches(files, patterns) > 0
+}
+
+// annotateReachability runs the reachability engine on all packages and sets
+// Reachable + CallPath on each CVE/vulnerability threat. Threats whose
+// Reachable field is false can be deprioritised by callers.
+//
+// Only threats where the vulnerable package is a direct project dependency are
+// analysed. Infrastructure/synthetic packages (registry "internal") are skipped.
+func (s *Scanner) annotateReachability(projectPath string, packages []*types.Package) {
+	ra, err := reachability.New(projectPath)
+	if err != nil {
+		logrus.Warnf("reachability: could not create analyser: %v", err)
+		return
+	}
+
+	// Collect unique package names that have CVE-bearing threats.
+	pkgSet := make(map[string]struct{})
+	for _, pkg := range packages {
+		if pkg.Registry == "internal" {
+			continue
+		}
+		for _, t := range pkg.Threats {
+			if len(t.CVEs) > 0 || t.CVE != "" {
+				pkgSet[pkg.Name] = struct{}{}
+				break
+			}
+		}
+	}
+	if len(pkgSet) == 0 {
+		return // nothing to annotate
+	}
+
+	// Build the name list and run batch reachability check.
+	names := make([]string, 0, len(pkgSet))
+	for name := range pkgSet {
+		names = append(names, name)
+	}
+	results := ra.CheckMultiple(names)
+
+	// Stamp results back onto threats.
+	trueVal := true
+	falseVal := false
+	for _, pkg := range packages {
+		res, ok := results[pkg.Name]
+		if !ok {
+			continue
+		}
+		for i := range pkg.Threats {
+			t := &pkg.Threats[i]
+			if len(t.CVEs) == 0 && t.CVE == "" {
+				continue // only annotate CVE threats
+			}
+			if res.Error != nil {
+				// Analysis failed; leave Reachable nil (= unknown).
+				continue
+			}
+			if res.Reachable {
+				t.Reachable = &trueVal
+				t.CallPath = res.CallPath
+			} else {
+				t.Reachable = &falseVal
+			}
+		}
+	}
 }
 
 // min returns the minimum of two integers

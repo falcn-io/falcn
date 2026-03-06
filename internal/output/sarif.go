@@ -152,6 +152,9 @@ type ResultProperties struct {
 	Evidence        []EvidenceInfo         `json:"evidence,omitempty"`
 	ThreatMetadata  map[string]interface{} `json:"threatMetadata,omitempty"`
 	RiskScore       float64                `json:"riskScore,omitempty"`
+	// Reachability fields — surfaced in GitHub Advanced Security "Properties" panel.
+	Reachable *bool    `json:"reachable,omitempty"`
+	CallPath  []string `json:"callPath,omitempty"`
 }
 
 // Artifact represents a file or other artifact
@@ -468,6 +471,8 @@ func (f *SARIFFormatter) convertResults(scanResult *analyzer.ScanResult) []Resul
 				Evidence:        f.convertEvidence(threat.Evidence),
 				ThreatMetadata:  threat.Metadata,
 				RiskScore:       f.calculateRiskScore(threat),
+				Reachable:       threat.Reachable,
+				CallPath:        threat.CallPath,
 			},
 		}
 

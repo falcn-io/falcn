@@ -1,0 +1,218 @@
+{
+  "name": "falcn-security",
+  "displayName": "Falcn Supply Chain Security",
+  "description": "Real-time supply chain security scanning for package manifests — detects malicious packages, typosquatting, embedded secrets, and CVEs",
+  "version": "1.0.0",
+  "publisher": "falcn-io",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1a1a2e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/falcn-io/falcn"
+  },
+  "bugs": {
+    "url": "https://github.com/falcn-io/falcn/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "supply chain",
+    "malware",
+    "typosquatting",
+    "npm",
+    "go",
+    "cargo",
+    "pypi",
+    "dependencies",
+    "CVE"
+  ],
+  "activationEvents": [
+    "onLanguage:json",
+    "onLanguage:go",
+    "onLanguage:toml",
+    "onLanguage:pip-requirements",
+    "workspaceContains:**/package.json",
+    "workspaceContains:**/go.mod",
+    "workspaceContains:**/requirements.txt",
+    "workspaceContains:**/Cargo.toml",
+    "workspaceContains:**/composer.json",
+    "workspaceContains:**/Gemfile"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "falcn.scanProject",
+        "title": "Falcn: Scan Project",
+        "category": "Falcn",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "falcn.scanCurrentFile",
+        "title": "Falcn: Scan Current File",
+        "category": "Falcn",
+        "icon": "$(search)"
+      },
+      {
+        "command": "falcn.clearDiagnostics",
+        "title": "Falcn: Clear Diagnostics",
+        "category": "Falcn"
+      },
+      {
+        "command": "falcn.showOutput",
+        "title": "Falcn: Show Output Log",
+        "category": "Falcn"
+      },
+      {
+        "command": "falcn.openSettings",
+        "title": "Falcn: Open Settings",
+        "category": "Falcn"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "falcn.scanCurrentFile",
+          "when": "resourceFilename =~ /^(package\\.json|go\\.mod|requirements\\.txt|Cargo\\.toml|composer\\.json|Gemfile)$/",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "falcn.scanProject",
+          "group": "falcn"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Falcn Security",
+      "properties": {
+        "falcn.apiEndpoint": {
+          "type": "string",
+          "default": "http://localhost:8082",
+          "description": "Falcn REST API base URL. Set to empty to use the CLI subprocess fallback.",
+          "order": 1
+        },
+        "falcn.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for authenticating with the Falcn API (leave blank if not required).",
+          "order": 2
+        },
+        "falcn.cliPath": {
+          "type": "string",
+          "default": "falcn",
+          "description": "Path to the falcn CLI binary (used as fallback when API is unavailable).",
+          "order": 3
+        },
+        "falcn.autoScanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan manifest files when they are saved.",
+          "order": 4
+        },
+        "falcn.autoScanOnOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan manifest files when they are opened.",
+          "order": 5
+        },
+        "falcn.riskThreshold": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Risk score threshold (0–1) above which a package is flagged as risky.",
+          "order": 6
+        },
+        "falcn.severityLevel": {
+          "type": "string",
+          "enum": ["error", "warning", "information", "hint"],
+          "default": "warning",
+          "description": "VS Code diagnostic severity level for risky packages.",
+          "order": 7
+        },
+        "falcn.debounceMs": {
+          "type": "number",
+          "default": 1500,
+          "minimum": 500,
+          "maximum": 10000,
+          "description": "Debounce delay in milliseconds before triggering a scan after document changes.",
+          "order": 8
+        },
+        "falcn.maxConcurrentRequests": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Maximum number of concurrent API requests per scan.",
+          "order": 9
+        },
+        "falcn.enableHoverProvider": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show risk information when hovering over a package name.",
+          "order": 10
+        },
+        "falcn.enableQuickFix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show 'Update to safe version' quick-fix suggestions.",
+          "order": 11
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "falcn.criticalRisk",
+        "description": "Color for critical risk packages",
+        "defaults": {
+          "dark": "#ff4444",
+          "light": "#cc0000",
+          "highContrast": "#ff0000"
+        }
+      },
+      {
+        "id": "falcn.highRisk",
+        "description": "Color for high risk packages",
+        "defaults": {
+          "dark": "#ff8800",
+          "light": "#cc6600",
+          "highContrast": "#ff8800"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/vsce": "^2.23.0"
+  }
+}
