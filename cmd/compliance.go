@@ -90,8 +90,13 @@ func runCompliance(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create analyzer: %w", err)
 	}
+	vulnDBs := []string{}
+	if checkVulns {
+		vulnDBs = []string{"osv", "github"}
+	}
 	scanResult, err := a.Scan(absPath, &analyzer.ScanOptions{
 		CheckVulnerabilities: checkVulns,
+		VulnerabilityDBs:     vulnDBs,
 		DisableLLM:           noLLM,
 		SimilarityThreshold:  defaultSimilarityThreshold,
 	})
