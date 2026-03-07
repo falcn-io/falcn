@@ -52,6 +52,17 @@ type CycloneDXVuln struct {
 	Ratings     []CycloneDXRating  `json:"ratings,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Affects     []CycloneDXAffect  `json:"affects,omitempty"`
+	Analysis    *CycloneDXAnalysis  `json:"analysis,omitempty"`
+}
+
+// CycloneDXAnalysis represents a VEX (Vulnerability Exploitability eXchange) analysis
+// statement for a single vulnerability, per CycloneDX 1.5 specification.
+// State values: "affected" | "not_affected" | "fixed" | "in_triage" | "false_positive" | "not_applicable"
+type CycloneDXAnalysis struct {
+	State         string   `json:"state"`
+	Justification string   `json:"justification,omitempty"`
+	Response      []string `json:"response,omitempty"`
+	Detail        string   `json:"detail,omitempty"`
 }
 
 // CycloneDXVulnSource identifies the vulnerability database.
@@ -160,13 +171,32 @@ func (f *CycloneDXFormatter) Format(res *scanner.ScanResults, opts *FormatterOpt
 			} else if threat.ID != "" {
 				vulnID = threat.ID
 			}
-			vulns = append(vulns, CycloneDXVuln{
+			vuln := CycloneDXVuln{
 				ID:          vulnID,
 				Source:      CycloneDXVulnSource{Name: "falcn"},
 				Ratings:     []CycloneDXRating{{Severity: strings.ToLower(threat.Severity.String())}},
 				Description: threat.Description,
 				Affects:     []CycloneDXAffect{{Ref: bomRef}},
-			})
+			}
+
+			// Populate VEX analysis from reachability annotation.
+			if threat.Reachable != nil {
+				if !*threat.Reachable {
+					vuln.Analysis = &CycloneDXAnalysis{
+						State:         "not_affected",
+						Justification: "code_not_reachable",
+						Response:      []string{"will_not_fix"},
+						Detail:        "Static reachability analysis determined this vulnerability's code path is not called from any entry point.",
+					}
+				} else {
+					vuln.Analysis = &CycloneDXAnalysis{
+						State:  "affected",
+						Detail: "Reachability analysis confirmed this vulnerability is callable from production entry points.",
+					}
+				}
+			}
+
+			vulns = append(vulns, vuln)
 		}
 	}
 

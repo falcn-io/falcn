@@ -72,6 +72,13 @@ type Configuration struct {
 	Level string `json:"level"`
 }
 
+// Suppression represents a SARIF 2.1 suppression annotation.
+type Suppression struct {
+	Kind          string `json:"kind"`                    // "inSource" or "external"
+	Status        string `json:"status,omitempty"`        // "accepted", "underReview", "rejected"
+	Justification string `json:"justification,omitempty"` // Human-readable reason
+}
+
 // Result represents a single analysis result
 type Result struct {
 	RuleID              string               `json:"ruleId"`
@@ -81,6 +88,7 @@ type Result struct {
 	Locations           []Location           `json:"locations,omitempty"`
 	PartialFingerprints *PartialFingerprints `json:"partialFingerprints,omitempty"`
 	Properties          *ResultProperties    `json:"properties,omitempty"`
+	Suppressions        []Suppression        `json:"suppressions,omitempty"`
 }
 
 // Message represents a message with text
@@ -152,6 +160,7 @@ type ResultProperties struct {
 	Evidence        []EvidenceInfo         `json:"evidence,omitempty"`
 	ThreatMetadata  map[string]interface{} `json:"threatMetadata,omitempty"`
 	RiskScore       float64                `json:"riskScore,omitempty"`
+	FixedVersion    string                 `json:"fixedVersion,omitempty"`
 	// Reachability fields — surfaced in GitHub Advanced Security "Properties" panel.
 	Reachable *bool    `json:"reachable,omitempty"`
 	CallPath  []string `json:"callPath,omitempty"`
@@ -471,9 +480,19 @@ func (f *SARIFFormatter) convertResults(scanResult *analyzer.ScanResult) []Resul
 				Evidence:        f.convertEvidence(threat.Evidence),
 				ThreatMetadata:  threat.Metadata,
 				RiskScore:       f.calculateRiskScore(threat),
+				FixedVersion:    threat.FixedVersion,
 				Reachable:       threat.Reachable,
 				CallPath:        threat.CallPath,
 			},
+		}
+
+		// Mark unreachable vulnerabilities as suppressed per SARIF 2.1 §3.35.
+		if threat.Reachable != nil && !*threat.Reachable {
+			result.Suppressions = []Suppression{{
+				Kind:          "inSource",
+				Status:        "accepted",
+				Justification: "Reachability analysis: vulnerability is not callable from any production entry point",
+			}}
 		}
 
 		results = append(results, result)

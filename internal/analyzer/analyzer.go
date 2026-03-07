@@ -691,22 +691,61 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 
 			// Convert vulnerabilities to threats
 			for _, vuln := range vulns {
-				// Extract affected versions from vulnerability data
+				// Extract affected versions and fixed version from vulnerability data.
 				affectedVersions := ""
 				fixedVersion := ""
 				if len(vuln.AffectedPackages) > 0 {
 					for _, affected := range vuln.AffectedPackages {
-						if affected.Name == dep.Name {
+						nameMatcher := affected.Name == dep.Name || len(vuln.AffectedPackages) == 1
+						if !nameMatcher {
+							continue
+						}
+						if affected.VersionRange != "" && affectedVersions == "" {
 							affectedVersions = affected.VersionRange
+						}
+						// Walk range events to find the earliest "fixed" version.
+						for _, rng := range affected.Ranges {
+							for _, ev := range rng.Events {
+								if ev.Fixed != "" && fixedVersion == "" {
+									fixedVersion = ev.Fixed
+								}
+							}
+						}
+						if fixedVersion != "" {
 							break
 						}
+					}
+				}
+
+				// Build ecosystem-specific remediation command.
+				remediation := ""
+				if fixedVersion != "" {
+					switch strings.ToLower(dep.Registry) {
+					case "npm":
+						remediation = fmt.Sprintf("npm install %s@%s", dep.Name, fixedVersion)
+					case "pypi":
+						remediation = fmt.Sprintf(`pip install "%s==%s"`, dep.Name, fixedVersion)
+					case "go":
+						remediation = fmt.Sprintf("go get %s@v%s", dep.Name, fixedVersion)
+					case "maven":
+						remediation = fmt.Sprintf("Update %s to version %s in pom.xml/build.gradle", dep.Name, fixedVersion)
+					case "nuget":
+						remediation = fmt.Sprintf("dotnet add package %s --version %s", dep.Name, fixedVersion)
+					case "rubygems":
+						remediation = fmt.Sprintf("gem install %s -v %s", dep.Name, fixedVersion)
+					case "crates.io":
+						remediation = fmt.Sprintf("Update %s to \"%s\" in Cargo.toml", dep.Name, fixedVersion)
+					case "packagist":
+						remediation = fmt.Sprintf("composer require %s:%s", dep.Name, fixedVersion)
+					default:
+						remediation = fmt.Sprintf("Upgrade %s to version %s or later", dep.Name, fixedVersion)
 					}
 				}
 
 				// Generate proposed correction
 				proposedCorrection := fmt.Sprintf("Update %s to a patched version that addresses %s", dep.Name, vuln.ID)
 				if fixedVersion != "" {
-					proposedCorrection = fmt.Sprintf("Update %s from version %s to %s or later", dep.Name, dep.Version, fixedVersion)
+					proposedCorrection = fmt.Sprintf("Update %s from %s to %s or later", dep.Name, dep.Version, fixedVersion)
 				}
 
 				threat := types.Threat{
@@ -733,6 +772,7 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 						"modified":         vuln.Modified,
 						"source":           vuln.Source,
 						"aliases":          vuln.Aliases,
+						"remediation":      remediation,
 					},
 				}
 				allThreats = append(allThreats, threat)
