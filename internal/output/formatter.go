@@ -88,9 +88,11 @@ func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
 		fmt.Println("\033[33m⚠  THREATS DETECTED\033[0m")
 		fmt.Println()
 
-		for _, threat := range result.Threats {
+		// Group threats by package for a cleaner, less repetitive output.
+		groups := GroupThreatsByPackage(result.Threats)
+		for _, g := range groups {
 			severityColor := "\033[34m" // Default/Low
-			switch strings.ToUpper(threat.Severity.String()) {
+			switch strings.ToUpper(g.MaxSeverity.String()) {
 			case "CRITICAL":
 				severityColor = "\033[31m"
 			case "HIGH":
@@ -99,42 +101,38 @@ func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
 				severityColor = "\033[33m"
 			}
 
-			// Reachability badge: shown only for CVE threats with analysis result.
+			// Reachability badge
 			reachabilityBadge := ""
-			if threat.Reachable != nil {
-				if *threat.Reachable {
+			if g.Reachable != nil {
+				if *g.Reachable {
 					reachabilityBadge = "  \033[31m[REACHABLE]\033[0m"
 				} else {
 					reachabilityBadge = "  \033[90m[not reachable]\033[0m"
 				}
 			}
 
-			fmt.Printf("  %s%s  %s\033[0m%s\n", severityColor, strings.ToUpper(threat.Severity.String()), threat.Package, reachabilityBadge)
-			fmt.Printf("  \033[90m│\033[0m Type: %s\n", threat.Type)
-			if threat.SimilarTo != "" {
-				fmt.Printf("  \033[90m│\033[0m Target: %s (similarity: %.2f)\n", threat.SimilarTo, threat.Confidence)
+			displayName := g.PackageName
+			if g.Version != "" {
+				displayName = g.PackageName + "@" + g.Version
 			}
-			fmt.Printf("  \033[90m│\033[0m Risk Score: %.2f\n", threat.Confidence)
-			fmt.Printf("  \033[90m│\033[0m Action: %s\n", threat.Recommendation)
-
-			// Show call path when reachable
-			if threat.Reachable != nil && *threat.Reachable && len(threat.CallPath) > 0 {
-				fmt.Printf("  \033[90m│\033[0m Call path: %s\n", strings.Join(threat.CallPath, " → "))
+			fmt.Printf("  %s%s  %s\033[0m%s\n", severityColor, strings.ToUpper(g.MaxSeverity.String()), displayName, reachabilityBadge)
+			fmt.Printf("  \033[90m│\033[0m Types: %s\n", strings.Join(g.Types, ", "))
+			if len(g.CVEIDs) > 0 {
+				fmt.Printf("  \033[90m│\033[0m CVEs (%d): %s\n", len(g.CVEIDs), strings.Join(g.CVEIDs, ", "))
 			}
-
-			if threat.Metadata != nil {
-				if explanation, ok := threat.Metadata["ai_explanation"]; ok && explanation != nil {
-					fmt.Printf("  \033[90m│\033[0m AI Analysis: %s\n", explanation)
-				}
+			if g.FixedVersion != "" {
+				fmt.Printf("  \033[90m│\033[0m Fix: upgrade to %s\n", g.FixedVersion)
+			}
+			if g.ThreatCount > 1 {
+				fmt.Printf("  \033[90m│\033[0m Issues: %d threats grouped\n", g.ThreatCount)
 			}
 
 			fmt.Println("  \033[90m│\033[0m")
-			fmt.Printf("  \033[90m└─\033[0m Evidence: %s\n", threat.Description)
 			fmt.Println()
 		}
 
 		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
-		fmt.Printf("  \033[31m✖ %d threats found\033[0m • Run `falcn report` for full details\n", len(result.Threats))
+		fmt.Printf("  \033[31m✖ %d threats found\033[0m across %d packages • Run `falcn report` for full details\n", len(result.Threats), len(groups))
 		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")
 	} else {
 		fmt.Println("\033[90m────────────────────────────────────────────────────────────\033[0m")

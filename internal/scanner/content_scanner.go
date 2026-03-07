@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -215,12 +216,28 @@ func (cs *ContentScanner) scanFile(filePath string) []types.Threat {
 
 	// Check for suspicious patterns
 	if patterns := cs.detectSuspiciousPatterns(contentStr); len(patterns) > 0 {
-		threats = append(threats, cs.createPatternThreat(filePath, patterns))
+		t := cs.createPatternThreat(filePath, patterns)
+		// Escalate to CRITICAL when suspicious patterns appear in package.json install hooks
+		if filepath.Base(filePath) == "package.json" {
+			if hooks := extractInstallHooks(content); len(hooks) > 0 {
+				t.Severity = types.SeverityCritical
+				t.Description = t.Description + " — found in install hook — executes automatically on npm install"
+			}
+		}
+		threats = append(threats, t)
 	}
 
 	// Check for embedded secrets/credentials
 	if secrets := cs.detectEmbeddedSecrets(contentStr); len(secrets) > 0 {
-		threats = append(threats, cs.createSecretThreat(filePath, secrets))
+		t := cs.createSecretThreat(filePath, secrets)
+		// Escalate: secrets in package.json install hooks are always CRITICAL (already are, but reinforce)
+		if filepath.Base(filePath) == "package.json" {
+			if hooks := extractInstallHooks(content); len(hooks) > 0 {
+				t.Severity = types.SeverityCritical
+				t.Description = t.Description + " — found in install hook — executes automatically on npm install"
+			}
+		}
+		threats = append(threats, t)
 	}
 
 	// Check for network indicators
@@ -805,6 +822,25 @@ func (cs *ContentScanner) isBinaryFile(filePath string) bool {
 	}
 
 	return false
+}
+
+// extractInstallHooks extracts the content of install-time hooks from package.json.
+// These hooks execute automatically on `npm install` and are high-risk if malicious.
+func extractInstallHooks(content []byte) []string {
+	var pkg struct {
+		Scripts map[string]string `json:"scripts"`
+	}
+	if err := json.Unmarshal(content, &pkg); err != nil {
+		return nil
+	}
+	hookKeys := []string{"preinstall", "install", "postinstall", "prepare", "prepack"}
+	var hooks []string
+	for _, k := range hookKeys {
+		if v, ok := pkg.Scripts[k]; ok && v != "" {
+			hooks = append(hooks, v)
+		}
+	}
+	return hooks
 }
 
 func min(a, b int) int {

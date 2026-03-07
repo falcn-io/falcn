@@ -39,7 +39,13 @@ func (be *BehavioralEngine) AnalyzeBehavior(ctx context.Context, dep types.Depen
 	// 2. Install Package (triggers install scripts)
 	// We want to capture what happens during install.
 	// Command: npm install <package>@<version>
-	cmd := []string{"npm", "install", fmt.Sprintf("%s@%s", dep.Name, dep.Version)}
+	cmd := []string{
+		"sh", "-c",
+		fmt.Sprintf(
+			"strace -f -e trace=network,file -o /tmp/st.log npm install %s@%s 2>&1; cat /tmp/st.log 2>/dev/null",
+			dep.Name, dep.Version,
+		),
+	}
 
 	logrus.Debugf("Executing in sandbox: %v", cmd)
 	result, err := be.sandbox.Execute(ctx, cmd, nil)
@@ -48,11 +54,12 @@ func (be *BehavioralEngine) AnalyzeBehavior(ctx context.Context, dep types.Depen
 		// We process partial logs even if it failed (malware often crashes or returns exit 1)
 	}
 
-	// 3. Analyze Logs
+	// 3. Analyze Logs (keyword-based + strace syscall parsing)
 	findings := be.traceAnalyzer.AnalyzeLogs(result.Stdout, result.Stderr)
+	straceActivities := be.traceAnalyzer.ParseStraceOutput(result.Stdout + "\n" + result.Stderr)
 
 	var threats []types.Threat
-	if len(findings) > 0 {
+	if len(findings) > 0 || len(straceActivities) > 0 {
 		evidenceList := []types.Evidence{}
 		for keyword, desc := range findings {
 			evidenceList = append(evidenceList, types.Evidence{
@@ -60,6 +67,18 @@ func (be *BehavioralEngine) AnalyzeBehavior(ctx context.Context, dep types.Depen
 				Description: desc,
 				Value:       keyword,
 				Score:       0.8, // High confidence if we see it in logs
+			})
+		}
+		for _, sa := range straceActivities {
+			score := 0.85
+			if sa.Severity == "CRITICAL" {
+				score = 0.95
+			}
+			evidenceList = append(evidenceList, types.Evidence{
+				Type:        "strace_syscall",
+				Description: sa.Description,
+				Value:       sa.Syscall,
+				Score:       score,
 			})
 		}
 

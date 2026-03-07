@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "falcn-api",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["run", "./api/main.go"],
+      "port": 8080
+    },
+    {
+      "name": "falcn-docker-full-stack",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up", "--profile", "sqlite"],
+      "port": 8080
+    },
+    {
+      "name": "falcn-docker-monitoring",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up", "--profile", "monitoring"],
+      "port": 9090
+    },
+    {
+      "name": "falcn-dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "web"],
+      "port": 4173
+    }
+  ]
+}

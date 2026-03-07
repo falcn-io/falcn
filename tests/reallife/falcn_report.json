@@ -1,7 +1,7 @@
 {
-  "scan_id": "scan_1772719334",
-  "timestamp": "2026-03-05T15:02:14.949025+01:00",
-  "duration": 1334146584,
+  "scan_id": "scan_1772886054323963000",
+  "timestamp": "2026-03-07T13:20:54.323962+01:00",
+  "duration": 519186541,
   "path": "/Users/alikorsi/falcn/examples/npm-vulnerable",
   "total_packages": 2,
   "packages": [
@@ -41,7 +41,7 @@
       "registry": "npm",
       "threats": [
         {
-          "id": "abce3ebba9b902fd9b2d2ce79a509fa5",
+          "id": "17ea9dad683de48be85c5ce96b859699",
           "package": "expresss",
           "version": "^1.0.0",
           "registry": "npm",
@@ -63,11 +63,11 @@
               "value": "{[davidribyrne] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
             }
           ],
-          "detected_at": "2026-03-05T15:02:15.190787+01:00",
+          "detected_at": "2026-03-07T13:20:54.557972+01:00",
           "detection_method": "enhanced_typosquatting"
         },
         {
-          "id": "meta_01f3f318-3be3-4cc5-969f-f7647f14a4cc",
+          "id": "meta_d48cae0b-ffcf-49e5-a5cc-21b453d0cb9a",
           "package": "",
           "registry": "",
           "type": "incomplete_metadata",
@@ -105,7 +105,7 @@
   ],
   "threats": [
     {
-      "id": "abce3ebba9b902fd9b2d2ce79a509fa5",
+      "id": "17ea9dad683de48be85c5ce96b859699",
       "package": "expresss",
       "version": "^1.0.0",
       "registry": "npm",
@@ -127,11 +127,11 @@
           "value": "{[davidribyrne] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
         }
       ],
-      "detected_at": "2026-03-05T15:02:15.190787+01:00",
+      "detected_at": "2026-03-07T13:20:54.557972+01:00",
       "detection_method": "enhanced_typosquatting"
     },
     {
-      "id": "meta_01f3f318-3be3-4cc5-969f-f7647f14a4cc",
+      "id": "meta_d48cae0b-ffcf-49e5-a5cc-21b453d0cb9a",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -149,7 +149,7 @@
       "detection_method": ""
     },
     {
-      "id": "86cbe2bb585426ae17db281ed5c93abe",
+      "id": "484acf9bd6a40e4c35109167acc614c7",
       "package": "expresss",
       "version": "unknown",
       "registry": "npm",
@@ -171,7 +171,7 @@
           "value": "{[davidribyrne] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
         }
       ],
-      "detected_at": "2026-03-05T15:02:16.281498+01:00",
+      "detected_at": "2026-03-07T13:20:54.84103+01:00",
       "detection_method": "enhanced_typosquatting"
     }
   ],

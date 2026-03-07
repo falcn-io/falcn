@@ -1,44 +1,18 @@
 {
-  "scan_id": "scan_1766073796",
-  "timestamp": "2025-12-18T17:03:16.6496981+01:00",
-  "duration": 13358817600,
-  "path": "examples/enterprise-demo",
-  "total_packages": 14,
+  "scan_id": "scan_1772888148368342000",
+  "timestamp": "2026-03-07T13:55:48.368341+01:00",
+  "duration": 6587691500,
+  "path": "/tmp/falcn-tests/apt-backdoor",
+  "total_packages": 12,
   "packages": [
     {
-      "name": "react",
-      "version": "18.2.0",
+      "name": "boto3",
+      "version": "==1.26.0",
       "type": "production",
-      "registry": "npm",
+      "registry": "pypi",
       "threats": [
         {
-          "id": "572d8b4ebc25ded0c77e858d4f152138",
-          "package": "react",
-          "version": "18.2.0",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 0,
-          "confidence": 0.6292397660818713,
-          "description": "Possible typosquatting detected: react-dom is similar to react (unknown)",
-          "similar_to": "react-dom",
-          "recommendation": "Verify if you intended to use react instead of react-dom",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:19.0769074+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "meta_1766073799078185400",
+          "id": "meta_f8b23013-6efa-4d0b-a7e4-2b12be2550a7",
           "package": "",
           "registry": "",
           "type": "incomplete_metadata",
@@ -54,101 +28,34 @@
           ],
           "detected_at": "0001-01-01T00:00:00Z",
           "detection_method": ""
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for react",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
         }
       ],
-      "risk_level": 2,
-      "risk_score": 0.4000000000000001,
-      "metadata": {
-        "name": "react",
-        "version": "18.2.0",
-        "registry": "npm",
-        "description": "React is a JavaScript library for building user interfaces.",
-        "maintainers": [
-          "fb",
-          "react-bot"
-        ],
-        "homepage": "https://react.dev/",
-        "repository": "git+https://github.com/facebook/react.git",
-        "license": "MIT",
-        "created_at": "2011-10-26T17:46:21.942Z",
-        "updated_at": "2025-12-17T16:21:26.552Z",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "axios",
-      "version": "1.6.0",
-      "type": "production",
-      "registry": "npm",
       "risk_level": 0,
-      "risk_score": 0,
+      "risk_score": 0.2,
       "metadata": {
-        "name": "axios",
-        "version": "1.6.0",
-        "registry": "npm",
-        "description": "Promise based HTTP client for the browser and node.js",
-        "author": "Matt Zabriskie",
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "===============================\nBoto3 - The AWS SDK for Python\n===============================\n\n|Version| |Python| |License|\n\nBoto3 is the Amazon Web Services (AWS) Software Development Kit (SDK) for\nPython, which allows Python developers to write software that makes use\nof services like Amazon S3 and Amazon EC2. You can find the latest, most\nup to date, documentation at our `doc site`_, including a list of\nservices that are supported.\n\nBoto3 is maintained and published by `Amazon Web Services`_.\n\nBoto (pronounced boh-toh) was named after the fresh water dolphin native to the Amazon river. The name was chosen by the author of the original Boto library, Mitch Garnaat, as a reference to the company.\n\nNotices\n-------\n\nOn 2026-04-29, support for Python 3.9 will end for Boto3. This follows the\nPython Software Foundation `end of support \u003chttps://peps.python.org/pep-0596/#lifespan\u003e`__\nfor the runtime which occurred on 2025-10-31.\n\nOn 2025-04-22, support for Python 3.8 ended for Boto3. This follows the\nPython Software Foundation `end of support \u003chttps://peps.python.org/pep-0569/#lifespan\u003e`__\nfor the runtime which occurred on 2024-10-07.\n\nFor more information on deprecations, see this\n`blog post \u003chttps://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/\u003e`__.\n\n.. _boto: https://docs.pythonboto.org/\n.. _`doc site`: https://docs.aws.amazon.com/boto3/latest/\n.. _`Amazon Web Services`: https://aws.amazon.com/what-is-aws/\n.. |Python| image:: https://img.shields.io/pypi/pyversions/boto3.svg?style=flat\n    :target: https://pypi.python.org/pypi/boto3/\n    :alt: Python Versions\n.. |Version| image:: http://img.shields.io/pypi/v/boto3.svg?style=flat\n    :target: https://pypi.python.org/pypi/boto3/\n    :alt: Package Version\n.. |License| image:: http://img.shields.io/pypi/l/boto3.svg?style=flat\n    :target: https://github.com/boto/boto3/blob/develop/LICENSE\n    :alt: License\n\nGetting Started\n---------------\nAssuming that you have a supported version of Python installed, you can first\nset up your environment with:\n\n.. code-block:: sh\n\n    $ python -m venv .venv\n    ...\n    $ . .venv/bin/activate\n\nThen, you can install boto3 from PyPI with:\n\n.. code-block:: sh\n\n    $ python -m pip install boto3\n\nor install from source with:\n\n.. code-block:: sh\n\n    $ git clone https://github.com/boto/boto3.git\n    $ cd boto3\n    $ python -m pip install -r requirements.txt\n    $ python -m pip install -e .\n\n\nUsing Boto3\n~~~~~~~~~~~~~~\nAfter installing boto3\n\nNext, set up credentials (in e.g. ``~/.aws/credentials``):\n\n.. code-block:: ini\n\n    [default]\n    aws_access_key_id = YOUR_KEY\n    aws_secret_access_key = YOUR_SECRET\n\nThen, set up a default region (in e.g. ``~/.aws/config``):\n\n.. code-block:: ini\n\n   [default]\n   region = us-east-1\n\nOther credential configuration methods can be found `here \u003chttps://docs.aws.amazon.com/boto3/latest/guide/credentials.html\u003e`__\n\nThen, from a Python interpreter:\n\n.. code-block:: python\n\n    \u003e\u003e\u003e import boto3\n    \u003e\u003e\u003e s3 = boto3.resource('s3')\n    \u003e\u003e\u003e for bucket in s3.buckets.all():\n            print(bucket.name)\n\nRunning Tests\n~~~~~~~~~~~~~\nYou can run tests in all supported Python versions using ``tox``. By default,\nit will run all of the unit and functional tests, but you can also specify your own\n``pytest`` options. Note that this requires that you have all supported\nversions of Python installed, otherwise you must pass ``-e`` or run the\n``pytest`` command directly:\n\n.. code-block:: sh\n\n    $ tox\n    $ tox -- unit/test_session.py\n    $ tox -e py26,py33 -- integration/\n\nYou can also run individual tests with your default Python version:\n\n.. code-block:: sh\n\n    $ pytest tests/unit\n\n\nGetting Help\n------------\n\nWe use GitHub issues for tracking bugs and feature requests and have limited\nbandwidth to address them. Please use these community resources for getting\nhelp:\n\n* Ask a question on `Stack Overflow \u003chttps://stackoverflow.com/\u003e`__ and tag it with `boto3 \u003chttps://stackoverflow.com/questions/tagged/boto3\u003e`__\n* Open a support ticket with `AWS Support \u003chttps://console.aws.amazon.com/support/home#/\u003e`__\n* If it turns out that you may have found a bug, please `open an issue \u003chttps://github.com/boto/boto3/issues/new\u003e`__\n\n\nContributing\n------------\n\nWe value feedback and contributions from our community. Whether it's a bug report, new feature, correction, or additional documentation, we welcome your issues and pull requests. Please read through this `CONTRIBUTING \u003chttps://github.com/boto/boto3/blob/develop/CONTRIBUTING.rst\u003e`__ document before submitting any issues or pull requests to ensure we have all the necessary information to effectively respond to your contribution.\n\n\nMaintenance and Support for SDK Major Versions\n----------------------------------------------\n\nBoto3 was made generally available on 06/22/2015 and is currently in the full support phase of the availability life cycle.\n\nFor information about maintenance and support for SDK major versions and their underlying dependencies, see the following in the AWS SDKs and Tools Shared Configuration and Credentials Reference Guide:\n\n* `AWS SDKs and Tools Maintenance Policy \u003chttps://docs.aws.amazon.com/sdkref/latest/guide/maint-policy.html\u003e`__\n* `AWS SDKs and Tools Version Support Matrix \u003chttps://docs.aws.amazon.com/sdkref/latest/guide/version-support-matrix.html\u003e`__\n\n\nMore Resources\n--------------\n\n* `NOTICE \u003chttps://github.com/boto/boto3/blob/develop/NOTICE\u003e`__\n* `Changelog \u003chttps://github.com/boto/boto3/blob/develop/CHANGELOG.rst\u003e`__\n* `License \u003chttps://github.com/boto/boto3/blob/develop/LICENSE\u003e`__\n",
         "maintainers": [
-          "mzabriskie",
-          "nickuraltsev",
-          "emilyemorehouse",
-          "jasonsaayman"
+          "Amazon Web Services"
         ],
-        "homepage": "https://axios-http.com",
-        "repository": "git+https://github.com/axios/axios.git",
-        "license": "MIT",
-        "created_at": "2014-08-29T23:08:36.81Z",
-        "updated_at": "2025-11-04T20:01:20.484Z",
+        "homepage": "https://github.com/boto/boto3",
+        "license": "Apache-2.0",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
         "has_install_script": false
       },
       "analyzed_at": "0001-01-01T00:00:00Z"
     },
     {
-      "name": "rceact",
-      "version": "18.2.0",
+      "name": "cryptography",
+      "version": "==40.0.0",
       "type": "production",
-      "registry": "npm",
+      "registry": "pypi",
       "threats": [
         {
-          "id": "0a51340cd618dcd4d36f914dbce711c7",
-          "package": "rceact",
-          "version": "18.2.0",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 3,
-          "confidence": 0.8159649122807017,
-          "description": "Possible typosquatting detected: react is similar to rceact (unknown)",
-          "similar_to": "react",
-          "recommendation": "Review usage of react carefully. Detected patterns: insertion_deletion",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[] [fb react-bot] true false false false false false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:19.3696686+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "meta_1766073799369668600",
+          "id": "meta_3fea7af9-9a64-4ce9-88e5-c30ed3d0439e",
           "package": "",
           "registry": "",
           "type": "incomplete_metadata",
@@ -164,131 +71,29 @@
           ],
           "detected_at": "0001-01-01T00:00:00Z",
           "detection_method": ""
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for rceact",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
         }
       ],
-      "risk_level": 2,
-      "risk_score": 0.6666666666666666,
-      "metadata": {
-        "name": "rceact",
-        "version": "18.2.0",
-        "registry": "npm",
-        "description": "Package metadata will be fetched during analysis",
-        "created_at": "2025-12-18T17:03:16.652961+01:00",
-        "updated_at": "2025-12-18T17:03:16.652961+01:00",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "moment",
-      "version": "2.29.4",
-      "type": "production",
-      "registry": "npm",
       "risk_level": 0,
-      "risk_score": 0,
+      "risk_score": 0.2,
       "metadata": {
-        "name": "moment",
-        "version": "2.29.4",
-        "registry": "npm",
-        "description": "Parse, validate, manipulate, and display dates",
-        "author": "Iskren Ivov Chernev",
-        "maintainers": [
-          "ichernev",
-          "timrwood",
-          "mj1856",
-          "maggiepint",
-          "marwahaha"
-        ],
-        "homepage": "https://momentjs.com",
-        "repository": "git+https://github.com/moment/moment.git",
-        "license": "MIT",
-        "created_at": "2011-10-17T20:04:22.876Z",
-        "updated_at": "2025-10-14T04:55:02.871Z",
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "pyca/cryptography\n=================\n\n.. image:: https://img.shields.io/pypi/v/cryptography.svg\n    :target: https://pypi.org/project/cryptography/\n    :alt: Latest Version\n\n.. image:: https://readthedocs.org/projects/cryptography/badge/?version=latest\n    :target: https://cryptography.io\n    :alt: Latest Docs\n\n.. image:: https://github.com/pyca/cryptography/actions/workflows/ci.yml/badge.svg\n    :target: https://github.com/pyca/cryptography/actions/workflows/ci.yml?query=branch%3Amain\n\n``cryptography`` is a package which provides cryptographic recipes and\nprimitives to Python developers. Our goal is for it to be your \"cryptographic\nstandard library\". It supports Python 3.8+ and PyPy3 7.3.11+.\n\n``cryptography`` includes both high level recipes and low level interfaces to\ncommon cryptographic algorithms such as symmetric ciphers, message digests, and\nkey derivation functions. For example, to encrypt something with\n``cryptography``'s high level symmetric encryption recipe:\n\n.. code-block:: pycon\n\n    \u003e\u003e\u003e from cryptography.fernet import Fernet\n    \u003e\u003e\u003e # Put this somewhere safe!\n    \u003e\u003e\u003e key = Fernet.generate_key()\n    \u003e\u003e\u003e f = Fernet(key)\n    \u003e\u003e\u003e token = f.encrypt(b\"A really secret message. Not for prying eyes.\")\n    \u003e\u003e\u003e token\n    b'...'\n    \u003e\u003e\u003e f.decrypt(token)\n    b'A really secret message. Not for prying eyes.'\n\nYou can find more information in the `documentation`_.\n\nYou can install ``cryptography`` with:\n\n.. code-block:: console\n\n    $ pip install cryptography\n\nFor full details see `the installation documentation`_.\n\nDiscussion\n~~~~~~~~~~\n\nIf you run into bugs, you can file them in our `issue tracker`_.\n\nWe maintain a `cryptography-dev`_ mailing list for development discussion.\n\nYou can also join ``#pyca`` on ``irc.libera.chat`` to ask questions or get\ninvolved.\n\nSecurity\n~~~~~~~~\n\nNeed to report a security issue? Please consult our `security reporting`_\ndocumentation.\n\n\n.. _`documentation`: https://cryptography.io/\n.. _`the installation documentation`: https://cryptography.io/en/latest/installation/\n.. _`issue tracker`: https://github.com/pyca/cryptography/issues\n.. _`cryptography-dev`: https://mail.python.org/mailman/listinfo/cryptography-dev\n.. _`security reporting`: https://cryptography.io/en/latest/security/\n\n",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
         "has_install_script": false
       },
       "analyzed_at": "0001-01-01T00:00:00Z"
     },
     {
-      "name": "expres",
-      "version": "4.18.2",
+      "name": "paramiko",
+      "version": "==3.0.0",
       "type": "production",
-      "registry": "npm",
+      "registry": "pypi",
       "threats": [
         {
-          "id": "9580d030feb1bd3c5eafaa0e230a3250",
-          "package": "expres",
-          "version": "4.18.2",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 3,
-          "confidence": 0.8833902939166096,
-          "description": "Possible typosquatting detected: express is similar to expres (unknown)",
-          "similar_to": "express",
-          "recommendation": "Review usage of express carefully. Detected patterns: insertion_deletion",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[cpsubrian] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:19.4598024+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for expres",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
-        }
-      ],
-      "risk_level": 2,
-      "risk_score": 0.9,
-      "metadata": {
-        "name": "expres",
-        "version": "4.18.2",
-        "registry": "npm",
-        "description": "Add express compatible methods to your response object",
-        "author": "Brian Link",
-        "maintainers": [
-          "cpsubrian"
-        ],
-        "repository": "git://github.com/cpsubrian/node-expres.git",
-        "created_at": "2012-10-10T03:49:52.879Z",
-        "updated_at": "2022-06-17T22:06:27.898Z",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "@internal/billing-core",
-      "version": "99.9.9",
-      "type": "production",
-      "registry": "npm",
-      "threats": [
-        {
-          "id": "meta_1766073799462740800",
+          "id": "meta_8fc0733b-42c3-473a-a938-195131a3430c",
           "package": "",
           "registry": "",
           "type": "incomplete_metadata",
@@ -304,339 +109,29 @@
           ],
           "detected_at": "0001-01-01T00:00:00Z",
           "detection_method": ""
-        },
-        {
-          "id": "anomaly_1766073799462740800",
-          "package": "",
-          "registry": "",
-          "type": "version_anomaly",
-          "severity": 2,
-          "confidence": 0.8,
-          "description": "Package uses suspiciously high version number (indicative of Dependency Confusion)",
-          "evidence": [
-            {
-              "type": "version",
-              "description": "",
-              "value": "99.9.9"
-            }
-          ],
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": ""
-        },
-        {
-          "id": "conf_1766073799462740800",
-          "package": "",
-          "registry": "",
-          "type": "dependency_confusion",
-          "severity": 2,
-          "confidence": 0.7,
-          "description": "Package '@internal/billing-core' claims internal scope but is found in public dependency list",
-          "evidence": [
-            {
-              "type": "package_name",
-              "description": "",
-              "value": "@internal/billing-core"
-            }
-          ],
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": ""
         }
       ],
-      "risk_level": 2,
-      "risk_score": 0.6,
-      "metadata": {
-        "name": "@internal/billing-core",
-        "version": "99.9.9",
-        "registry": "npm",
-        "description": "Package metadata will be fetched during analysis",
-        "created_at": "2025-12-18T17:03:16.652961+01:00",
-        "updated_at": "2025-12-18T17:03:16.652961+01:00",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "azure-sdk-js",
-      "version": "1.0.0",
-      "type": "production",
-      "registry": "npm",
-      "threats": [
-        {
-          "id": "2784aa9e329fa7b432d067fa2f530a96",
-          "package": "azure-sdk-js",
-          "version": "1.0.0",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 1,
-          "confidence": 0.7961218836565096,
-          "description": "Possible typosquatting detected: azure-sdk is similar to azure-sdk-js (unknown)",
-          "similar_to": "azure-sdk",
-          "recommendation": "Verify if you intended to use azure-sdk-js instead of azure-sdk",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[] [] true false false false false false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.1385808+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "meta_1766073800139112500",
-          "package": "",
-          "registry": "",
-          "type": "incomplete_metadata",
-          "severity": 0,
-          "confidence": 0.4,
-          "description": "Package has incomplete metadata (missing author or description)",
-          "evidence": [
-            {
-              "type": "metadata",
-              "description": "",
-              "value": "incomplete"
-            }
-          ],
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": ""
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for azure-sdk-js",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
-        }
-      ],
-      "risk_level": 2,
-      "risk_score": 0.5,
-      "metadata": {
-        "name": "azure-sdk-js",
-        "version": "1.0.0",
-        "registry": "npm",
-        "description": "Package metadata will be fetched during analysis",
-        "created_at": "2025-12-18T17:03:16.652961+01:00",
-        "updated_at": "2025-12-18T17:03:16.652961+01:00",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "react-dom",
-      "version": "18.2.0",
-      "type": "production",
-      "registry": "npm",
-      "threats": [
-        {
-          "id": "085baa3c276d76bd69e5a29996b57105",
-          "package": "react-dom",
-          "version": "18.2.0",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 0,
-          "confidence": 0.6292397660818713,
-          "description": "Possible typosquatting detected: react is similar to react-dom (unknown)",
-          "similar_to": "react",
-          "recommendation": "Verify if you intended to use react-dom instead of react",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.5167913+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "meta_1766073800517792800",
-          "package": "",
-          "registry": "",
-          "type": "incomplete_metadata",
-          "severity": 0,
-          "confidence": 0.4,
-          "description": "Package has incomplete metadata (missing author or description)",
-          "evidence": [
-            {
-              "type": "metadata",
-              "description": "",
-              "value": "incomplete"
-            }
-          ],
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": ""
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for react-dom",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
-        }
-      ],
-      "risk_level": 2,
-      "risk_score": 0.4000000000000001,
-      "metadata": {
-        "name": "react-dom",
-        "version": "18.2.0",
-        "registry": "npm",
-        "description": "React package for working with the DOM.",
-        "maintainers": [
-          "fb",
-          "react-bot"
-        ],
-        "homepage": "https://react.dev/",
-        "repository": "git+https://github.com/facebook/react.git",
-        "license": "MIT",
-        "created_at": "2014-05-06T18:59:36.16Z",
-        "updated_at": "2025-12-17T16:21:35.07Z",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "lodash",
-      "version": "4.17.21",
-      "type": "production",
-      "registry": "npm",
       "risk_level": 0,
-      "risk_score": 0,
+      "risk_score": 0.2,
       "metadata": {
-        "name": "lodash",
-        "version": "4.17.21",
-        "registry": "npm",
-        "description": "Lodash modular utilities.",
-        "author": "John-David Dalton",
-        "maintainers": [
-          "mathias",
-          "jdalton",
-          "bnjmnt4n"
-        ],
-        "homepage": "https://lodash.com/",
-        "repository": "git+https://github.com/lodash/lodash.git",
-        "license": "MIT",
-        "created_at": "2012-04-23T16:37:11.912Z",
-        "updated_at": "2025-11-24T02:31:17.803Z",
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "|version| |python| |license| |ci| |coverage|\n\n.. |version| image:: https://img.shields.io/pypi/v/paramiko\n    :target: https://pypi.org/project/paramiko/\n    :alt: PyPI - Package Version\n.. |python| image:: https://img.shields.io/pypi/pyversions/paramiko\n    :target: https://pypi.org/project/paramiko/\n    :alt: PyPI - Python Version\n.. |license| image:: https://img.shields.io/pypi/l/paramiko\n    :target: https://github.com/paramiko/paramiko/blob/main/LICENSE\n    :alt: PyPI - License\n.. |ci| image:: https://img.shields.io/circleci/build/github/paramiko/paramiko/main\n    :target: https://app.circleci.com/pipelines/github/paramiko/paramiko\n    :alt: CircleCI\n.. |coverage| image:: https://img.shields.io/codecov/c/gh/paramiko/paramiko\n    :target: https://app.codecov.io/gh/paramiko/paramiko\n    :alt: Codecov\n\nWelcome to Paramiko!\n====================\n\nParamiko is a pure-Python [#]_ implementation of the SSHv2 protocol [#]_,\nproviding both client and server functionality. It provides the foundation for\nthe high-level SSH library `Fabric \u003chttps://fabfile.org\u003e`_, which is what we\nrecommend you use for common client use-cases such as running remote shell\ncommands or transferring files.\n\nDirect use of Paramiko itself is only intended for users who need\nadvanced/low-level primitives or want to run an in-Python sshd.\n\nFor installation information, changelogs, FAQs and similar, please visit `our\nmain project website \u003chttps://paramiko.org\u003e`_; for API details, see `the\nversioned docs \u003chttps://docs.paramiko.org\u003e`_. Additionally, the project\nmaintainer keeps a `roadmap \u003chttp://bitprophet.org/projects#roadmap\u003e`_ on his\npersonal site.\n\n.. [#]\n    Paramiko relies on `cryptography \u003chttps://cryptography.io\u003e`_ for crypto\n    functionality, which makes use of C and Rust extensions but has many\n    precompiled options available. See `our installation page\n    \u003chttps://www.paramiko.org/installing.html\u003e`_ for details.\n\n.. [#]\n    OpenSSH's RFC specification page is a fantastic resource and collection of\n    links that we won't bother replicating here:\n    https://www.openssh.com/specs.html\n\n    OpenSSH itself also happens to be our primary reference implementation:\n    when in doubt, we consult how they do things, unless there are good reasons\n    not to. There are always some gaps, but we do our best to reconcile them\n    when possible.\n",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
         "has_install_script": false
       },
       "analyzed_at": "0001-01-01T00:00:00Z"
     },
     {
-      "name": "loadsh",
-      "version": "4.17.21",
+      "name": "loguru",
+      "version": "==0.7.0",
       "type": "production",
-      "registry": "npm",
+      "registry": "pypi",
       "threats": [
         {
-          "id": "da19fa3a67233b3c58e4840668865fa7",
-          "package": "loadsh",
-          "version": "4.17.21",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 1,
-          "confidence": 0.6912280701754386,
-          "description": "Possible typosquatting detected: lodash is similar to loadsh (unknown)",
-          "similar_to": "lodash",
-          "recommendation": "Verify if you intended to use loadsh instead of lodash",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[npm] [mathias jdalton bnjmnt4n] true false false false false false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.5920852+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for loadsh",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
-        }
-      ],
-      "risk_level": 2,
-      "risk_score": 0.65,
-      "metadata": {
-        "name": "loadsh",
-        "version": "4.17.21",
-        "registry": "npm",
-        "description": "Lodash modular utilities.",
-        "author": "John-David Dalton",
-        "maintainers": [
-          "npm"
-        ],
-        "homepage": "https://lodash.com/",
-        "repository": "git+https://github.com/lodash/lodash.git",
-        "license": "MIT",
-        "created_at": "2018-09-13T06:41:39.649Z",
-        "updated_at": "2022-12-13T02:39:28.282Z",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "chalk",
-      "version": "4.1.2",
-      "type": "production",
-      "registry": "npm",
-      "threats": [
-        {
-          "id": "45c4febf3f7168d7d1ad4c62b7f7e724",
-          "package": "chalk",
-          "version": "4.1.2",
-          "registry": "npm",
-          "type": "typosquatting",
-          "severity": 1,
-          "confidence": 0.6989097744360903,
-          "description": "Possible typosquatting detected: chai is similar to chalk (unknown)",
-          "similar_to": "chai",
-          "recommendation": "Verify if you intended to use chalk instead of chai",
-          "evidence": [
-            {
-              "type": "similarity",
-              "description": "Typosquatting analysis result",
-              "value": "unknown"
-            },
-            {
-              "type": "signals",
-              "description": "Multi-signal analysis",
-              "value": "{[sindresorhus] [chaijs] true false false false false false}"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.6703505+01:00",
-          "detection_method": "enhanced_typosquatting"
-        },
-        {
-          "id": "meta_1766073800670350500",
+          "id": "meta_ede891ec-9c9b-4aad-a139-2e20383ef74a",
           "package": "",
           "registry": "",
           "type": "incomplete_metadata",
@@ -652,163 +147,29 @@
           ],
           "detected_at": "0001-01-01T00:00:00Z",
           "detection_method": ""
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "enterprise_policy",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "policy violation: typosquat requires multi-signal gating for chalk",
-          "detected_at": "0001-01-01T00:00:00Z",
-          "detection_method": "opa_policy"
         }
       ],
-      "risk_level": 2,
-      "risk_score": 0.5,
-      "metadata": {
-        "name": "chalk",
-        "version": "4.1.2",
-        "registry": "npm",
-        "description": "Terminal string styling done right",
-        "maintainers": [
-          "sindresorhus"
-        ],
-        "homepage": "https://github.com/chalk/chalk#readme",
-        "repository": "git+https://github.com/chalk/chalk.git",
-        "license": "MIT",
-        "created_at": "2013-08-03T00:21:56.318Z",
-        "updated_at": "2025-10-29T23:18:03.554Z",
-        "has_install_script": false
-      },
-      "analyzed_at": "0001-01-01T00:00:00Z"
-    },
-    {
-      "name": "express",
-      "version": "4.18.2",
-      "type": "production",
-      "registry": "npm",
       "risk_level": 0,
-      "risk_score": 0,
+      "risk_score": 0.2,
       "metadata": {
-        "name": "express",
-        "version": "4.18.2",
-        "registry": "npm",
-        "description": "Fast, unopinionated, minimalist web framework",
-        "author": "TJ Holowaychuk",
-        "maintainers": [
-          "wesleytodd",
-          "jonchurch",
-          "ctcpip",
-          "ulisesgascon",
-          "sheplu"
-        ],
-        "homepage": "https://expressjs.com/",
-        "repository": "git+https://github.com/expressjs/express.git",
-        "license": "MIT",
-        "created_at": "2010-12-29T19:38:25.45Z",
-        "updated_at": "2025-12-09T14:09:18.752Z",
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "\u003cp align=\"center\"\u003e\n    \u003ca href=\"#readme\"\u003e\n        \u003cimg alt=\"Loguru logo\" src=\"https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/logo.png\"\u003e\n        \u003c!-- Logo credits: Sambeet from Pixaday --\u003e\n        \u003c!-- Logo fonts: Comfortaa + Raleway --\u003e\n    \u003c/a\u003e\n\u003c/p\u003e\n\u003cp align=\"center\"\u003e\n    \u003ca href=\"https://pypi.python.org/pypi/loguru\"\u003e\u003cimg alt=\"Pypi version\" src=\"https://img.shields.io/pypi/v/loguru.svg\"\u003e\u003c/a\u003e\n    \u003ca href=\"https://pypi.python.org/pypi/loguru\"\u003e\u003cimg alt=\"Python versions\" src=\"https://img.shields.io/badge/python-3.5%2B%20%7C%20PyPy-blue.svg\"\u003e\u003c/a\u003e\n    \u003ca href=\"https://loguru.readthedocs.io/en/stable/index.html\"\u003e\u003cimg alt=\"Documentation\" src=\"https://img.shields.io/readthedocs/loguru.svg\"\u003e\u003c/a\u003e\n    \u003ca href=\"https://github.com/Delgan/loguru/actions/workflows/tests.yml?query=branch:master\"\u003e\u003cimg alt=\"Build status\" src=\"https://img.shields.io/github/actions/workflow/status/Delgan/loguru/tests.yml?branch=master\"\u003e\u003c/a\u003e\n    \u003ca href=\"https://codecov.io/gh/delgan/loguru/branch/master\"\u003e\u003cimg alt=\"Coverage\" src=\"https://img.shields.io/codecov/c/github/delgan/loguru/master.svg\"\u003e\u003c/a\u003e\n    \u003ca href=\"https://app.codacy.com/gh/Delgan/loguru/dashboard\"\u003e\u003cimg alt=\"Code quality\" src=\"https://img.shields.io/codacy/grade/be7337df3c0d40d1929eb7f79b1671a6.svg\"\u003e\u003c/a\u003e\n    \u003ca href=\"https://github.com/Delgan/loguru/blob/master/LICENSE\"\u003e\u003cimg alt=\"License\" src=\"https://img.shields.io/github/license/delgan/loguru.svg\"\u003e\u003c/a\u003e\n\u003c/p\u003e\n\u003cp align=\"center\"\u003e\n    \u003ca href=\"#readme\"\u003e\n        \u003cimg alt=\"Loguru logo\" src=\"https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/demo.gif\"\u003e\n    \u003c/a\u003e\n\u003c/p\u003e\n\n______________________________________________________________________\n\n**Loguru** is a library which aims to bring enjoyable logging in Python.\n\nDid you ever feel lazy about configuring a logger and used `print()` instead?... I did, yet logging is fundamental to every application and eases the process of debugging. Using **Loguru** you have no excuse not to use logging from the start, this is as simple as `from loguru import logger`.\n\nAlso, this library is intended to make Python logging less painful by adding a bunch of useful functionalities that solve caveats of the standard loggers. Using logs in your application should be an automatism, **Loguru** tries to make it both pleasant and powerful.\n\n\u003c!-- end-of-readme-intro --\u003e\n\n## Installation\n\n```\npip install loguru\n```\n\n## Features\n\n- [Ready to use out of the box without boilerplate](#ready-to-use-out-of-the-box-without-boilerplate)\n- [No Handler, no Formatter, no Filter: one function to rule them all](#no-handler-no-formatter-no-filter-one-function-to-rule-them-all)\n- [Easier file logging with rotation / retention / compression](#easier-file-logging-with-rotation--retention--compression)\n- [Modern string formatting using braces style](#modern-string-formatting-using-braces-style)\n- [Exceptions catching within threads or main](#exceptions-catching-within-threads-or-main)\n- [Pretty logging with colors](#pretty-logging-with-colors)\n- [Asynchronous, Thread-safe, Multiprocess-safe](#asynchronous-thread-safe-multiprocess-safe)\n- [Fully descriptive exceptions](#fully-descriptive-exceptions)\n- [Structured logging as needed](#structured-logging-as-needed)\n- [Lazy evaluation of expensive functions](#lazy-evaluation-of-expensive-functions)\n- [Customizable levels](#customizable-levels)\n- [Better datetime handling](#better-datetime-handling)\n- [Suitable for scripts and libraries](#suitable-for-scripts-and-libraries)\n- [Entirely compatible with standard logging](#entirely-compatible-with-standard-logging)\n- [Personalizable defaults through environment variables](#personalizable-defaults-through-environment-variables)\n- [Convenient parser](#convenient-parser)\n- [Exhaustive notifier](#exhaustive-notifier)\n- \u003cs\u003e[10x faster than built-in logging](#10x-faster-than-built-in-logging)\u003c/s\u003e\n\n## Take the tour\n\n### Ready to use out of the box without boilerplate\n\nThe main concept of Loguru is that **there is one and only one** [`logger`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger).\n\nFor convenience, it is pre-configured and outputs to `stderr` to begin with (but that's entirely configurable).\n\n```python\nfrom loguru import logger\n\nlogger.debug(\"That's it, beautiful and simple logging!\")\n```\n\nThe [`logger`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger) is just an interface which dispatches log messages to configured handlers. Simple, right?\n\n### No Handler, no Formatter, no Filter: one function to rule them all\n\nHow to add a handler? How to set up logs formatting? How to filter messages? How to set level?\n\nOne answer: the [`add()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.add) function.\n\n```python\nlogger.add(sys.stderr, format=\"{time} {level} {message}\", filter=\"my_module\", level=\"INFO\")\n```\n\nThis function should be used to register [sinks](https://loguru.readthedocs.io/en/stable/api/logger.html#sink) which are responsible for managing [log messages](https://loguru.readthedocs.io/en/stable/api/logger.html#message) contextualized with a [record dict](https://loguru.readthedocs.io/en/stable/api/logger.html#record). A sink can take many forms: a simple function, a string path, a file-like object, a coroutine function or a built-in Handler.\n\nNote that you may also  a previously added handler by using the identifier returned while adding it. This is particularly useful if you want to supersede the default `stderr` handler: just call [`logger.remove()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.remove) to make a fresh start.\n\n### Easier file logging with rotation / retention / compression\n\nIf you want to send logged messages to a file, you just have to use a string path as the sink. It can be automatically timed too for convenience:\n\n```python\nlogger.add(\"file_{time}.log\")\n```\n\nIt is also [easily configurable](https://loguru.readthedocs.io/en/stable/api/logger.html#file) if you need rotating logger, if you want to remove older logs, or if you wish to compress your files at closure.\n\n```python\nlogger.add(\"file_1.log\", rotation=\"500 MB\")    # Automatically rotate too big file\nlogger.add(\"file_2.log\", rotation=\"12:00\")     # New file is created each day at noon\nlogger.add(\"file_3.log\", rotation=\"1 week\")    # Once the file is too old, it's rotated\n\nlogger.add(\"file_X.log\", retention=\"10 days\")  # Cleanup after some time\n\nlogger.add(\"file_Y.log\", compression=\"zip\")    # Save some loved space\n```\n\n### Modern string formatting using braces style\n\nLoguru favors the much more elegant and powerful `{}` formatting over `%`, logging functions are actually equivalent to `str.format()`.\n\n```python\nlogger.info(\"If you're using Python {}, prefer {feature} of course!\", 3.6, feature=\"f-strings\")\n```\n\n### Exceptions catching within threads or main\n\nHave you ever seen your program crashing unexpectedly without seeing anything in the log file? Did you ever notice that exceptions occurring in threads were not logged? This can be solved using the [`catch()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.catch) decorator / context manager which ensures that any error is correctly propagated to the [`logger`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger).\n\n```python\n@logger.catch\ndef my_function(x, y, z):\n    # An error? It's caught anyway!\n    return 1 / (x + y + z)\n```\n\n### Pretty logging with colors\n\nLoguru automatically adds colors to your logs if your terminal is compatible. You can define your favorite style by using [markup tags](https://loguru.readthedocs.io/en/stable/api/logger.html#color) in the sink format.\n\n```python\nlogger.add(sys.stdout, colorize=True, format=\"\u003cgreen\u003e{time}\u003c/green\u003e \u003clevel\u003e{message}\u003c/level\u003e\")\n```\n\n### Asynchronous, Thread-safe, Multiprocess-safe\n\nAll sinks added to the [`logger`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger) are thread-safe by default. They are not multiprocess-safe, but you can `enqueue` the messages to ensure logs integrity. This same argument can also be used if you want async logging.\n\n```python\nlogger.add(\"somefile.log\", enqueue=True)\n```\n\nCoroutine functions used as sinks are also supported and should be awaited with [`complete()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.complete).\n\n### Fully descriptive exceptions\n\nLogging exceptions that occur in your code is important to track bugs, but it's quite useless if you don't know why it failed. Loguru helps you identify problems by allowing the entire stack trace to be displayed, including values of variables (thanks [`better_exceptions`](https://github.com/Qix-/better-exceptions) for this!).\n\nThe code:\n\n```python\n# Caution, \"diagnose=True\" is the default and may leak sensitive data in prod\nlogger.add(\"out.log\", backtrace=True, diagnose=True)\n\ndef func(a, b):\n    return a / b\n\ndef nested(c):\n    try:\n        func(5, c)\n    except ZeroDivisionError:\n        logger.exception(\"What?!\")\n\nnested(0)\n```\n\nWould result in:\n\n```none\n2018-07-17 01:38:43.975 | ERROR    | __main__:nested:10 - What?!\nTraceback (most recent call last):\n\n  File \"test.py\", line 12, in \u003cmodule\u003e\n    nested(0)\n    └ \u003cfunction nested at 0x7f5c755322f0\u003e\n\n\u003e File \"test.py\", line 8, in nested\n    func(5, c)\n    │       └ 0\n    └ \u003cfunction func at 0x7f5c79fc2e18\u003e\n\n  File \"test.py\", line 4, in func\n    return a / b\n           │   └ 0\n           └ 5\n\nZeroDivisionError: division by zero\n```\n\nNote that this feature won't work on default Python REPL due to unavailable frame data.\n\nSee also: [Security considerations when using Loguru](https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru).\n\n### Structured logging as needed\n\nWant your logs to be serialized for easier parsing or to pass them around? Using the `serialize` argument, each log message will be converted to a JSON string before being sent to the configured sink.\n\n```python\nlogger.add(custom_sink_function, serialize=True)\n```\n\nUsing [`bind()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.bind) you can contextualize your logger messages by modifying the `extra` record attribute.\n\n```python\nlogger.add(\"file.log\", format=\"{extra[ip]} {extra[user]} {message}\")\ncontext_logger = logger.bind(ip=\"192.168.0.1\", user=\"someone\")\ncontext_logger.info(\"Contextualize your logger easily\")\ncontext_logger.bind(user=\"someone_else\").info(\"Inline binding of extra attribute\")\ncontext_logger.info(\"Use kwargs to add context during formatting: {user}\", user=\"anybody\")\n```\n\nIt is possible to modify a context-local state temporarily with [`contextualize()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.contextualize):\n\n```python\nwith logger.contextualize(task=task_id):\n    do_something()\n    logger.info(\"End of task\")\n```\n\nYou can also have more fine-grained control over your logs by combining [`bind()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.bind) and `filter`:\n\n```python\nlogger.add(\"special.log\", filter=lambda record: \"special\" in record[\"extra\"])\nlogger.debug(\"This message is not logged to the file\")\nlogger.bind(special=True).info(\"This message, though, is logged to the file!\")\n```\n\nFinally, the [`patch()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.patch) method allows dynamic values to be attached to the record dict of each new message:\n\n```python\nlogger.add(sys.stderr, format=\"{extra[utc]} {message}\")\nlogger = logger.patch(lambda record: record[\"extra\"].update(utc=datetime.utcnow()))\n```\n\n### Lazy evaluation of expensive functions\n\nSometime you would like to log verbose information without performance penalty in production, you can use the [`opt()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.opt) method to achieve this.\n\n```python\nlogger.opt(lazy=True).debug(\"If sink level \u003c= DEBUG: {x}\", x=lambda: expensive_function(2**64))\n\n# By the way, \"opt()\" serves many usages\nlogger.opt(exception=True).info(\"Error stacktrace added to the log message (tuple accepted too)\")\nlogger.opt(colors=True).info(\"Per message \u003cblue\u003ecolors\u003c/blue\u003e\")\nlogger.opt(record=True).info(\"Display values from the record (eg. {record[thread]})\")\nlogger.opt(raw=True).info(\"Bypass sink formatting\\n\")\nlogger.opt(depth=1).info(\"Use parent stack context (useful within wrapped functions)\")\nlogger.opt(capture=False).info(\"Keyword arguments not added to {dest} dict\", dest=\"extra\")\n```\n\n### Customizable levels\n\nLoguru comes with all standard [logging levels](https://loguru.readthedocs.io/en/stable/api/logger.html#levels) to which [`trace()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.trace) and [`success()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.success) are added. Do you need more? Then, just create it by using the [`level()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.level) function.\n\n```python\nnew_level = logger.level(\"SNAKY\", no=38, color=\"\u003cyellow\u003e\", icon=\"🐍\")\n\nlogger.log(\"SNAKY\", \"Here we go!\")\n```\n\n### Better datetime handling\n\nThe standard logging is bloated with arguments like `datefmt` or `msecs`, `%(asctime)s` and `%(created)s`, naive datetimes without timezone information, not intuitive formatting, etc. Loguru [fixes it](https://loguru.readthedocs.io/en/stable/api/logger.html#time):\n\n```python\nlogger.add(\"file.log\", format=\"{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}\")\n```\n\n### Suitable for scripts and libraries\n\nUsing the logger in your scripts is easy, and you can [`configure()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.configure) it at start. To use Loguru from inside a library, remember to never call [`add()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.add) but use [`disable()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.disable) instead so logging functions become no-op. If a developer wishes to see your library's logs, they can [`enable()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.enable) it again.\n\n```python\n# For scripts\nconfig = {\n    \"handlers\": [\n        {\"sink\": sys.stdout, \"format\": \"{time} - {message}\"},\n        {\"sink\": \"file.log\", \"serialize\": True},\n    ],\n    \"extra\": {\"user\": \"someone\"}\n}\nlogger.configure(**config)\n\n# For libraries, should be your library's `__name__`\nlogger.disable(\"my_library\")\nlogger.info(\"No matter added sinks, this message is not displayed\")\n\n# In your application, enable the logger in the library\nlogger.enable(\"my_library\")\nlogger.info(\"This message however is propagated to the sinks\")\n```\n\nFor additional convenience, you can also use the [`loguru-config`](https://github.com/erezinman/loguru-config) library to setup the `logger` directly from a configuration file.\n\n### Entirely compatible with standard logging\n\nWish to use built-in logging `Handler` as a Loguru sink?\n\n```python\nhandler = logging.handlers.SysLogHandler(address=('localhost', 514))\nlogger.add(handler)\n```\n\nNeed to propagate Loguru messages to standard `logging`?\n\n```python\nclass PropagateHandler(logging.Handler):\n    def emit(self, record: logging.LogRecord) -\u003e None:\n        logging.getLogger(record.name).handle(record)\n\nlogger.add(PropagateHandler(), format=\"{message}\")\n```\n\nWant to intercept standard `logging` messages toward your Loguru sinks?\n\n```python\nclass InterceptHandler(logging.Handler):\n    def emit(self, record: logging.LogRecord) -\u003e None:\n        # Get corresponding Loguru level if it exists.\n        level: str | int\n        try:\n            level = logger.level(record.levelname).name\n        except ValueError:\n            level = record.levelno\n\n        # Find caller from where originated the logged message.\n        frame, depth = inspect.currentframe(), 0\n        while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):\n            frame = frame.f_back\n            depth += 1\n\n        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())\n\nlogging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)\n```\n\n### Personalizable defaults through environment variables\n\nDon't like the default logger formatting? Would prefer another `DEBUG` color? [No problem](https://loguru.readthedocs.io/en/stable/api/logger.html#env):\n\n```bash\n# Linux / OSX\nexport LOGURU_FORMAT=\"{time} | \u003clvl\u003e{message}\u003c/lvl\u003e\"\n\n# Windows\nsetx LOGURU_DEBUG_COLOR \"\u003cgreen\u003e\"\n```\n\n### Convenient parser\n\nIt is often useful to extract specific information from generated logs, this is why Loguru provides a [`parse()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.parse) method which helps to deal with logs and regexes.\n\n```python\npattern = r\"(?P\u003ctime\u003e.*) - (?P\u003clevel\u003e[0-9]+) - (?P\u003cmessage\u003e.*)\"  # Regex with named groups\ncaster_dict = dict(time=dateutil.parser.parse, level=int)        # Transform matching groups\n\nfor groups in logger.parse(\"file.log\", pattern, cast=caster_dict):\n    print(\"Parsed:\", groups)\n    # {\"level\": 30, \"message\": \"Log example\", \"time\": datetime(2018, 12, 09, 11, 23, 55)}\n```\n\n### Exhaustive notifier\n\nLoguru can easily be combined with the great [`apprise`](https://github.com/caronc/apprise) library (must be installed separately) to receive an e-mail when your program fail unexpectedly or to send many other kind of notifications.\n\n```python\nimport apprise\n\n# Define the configuration constants.\nWEBHOOK_ID = \"123456790\"\nWEBHOOK_TOKEN = \"abc123def456\"\n\n# Prepare the object to send Discord notifications.\nnotifier = apprise.Apprise()\nnotifier.add(f\"discord://{WEBHOOK_ID}/{WEBHOOK_TOKEN}\")\n\n# Install a handler to be alerted on each error.\n# You can filter out logs from \"apprise\" itself to avoid recursive calls.\nlogger.add(notifier.notify, level=\"ERROR\", filter={\"apprise\": False})\n```\n\n\u003cs\u003e\n\n### 10x faster than built-in logging\n\n\u003c/s\u003e\n\nAlthough logging impact on performances is in most cases negligible, a zero-cost logger would allow to use it anywhere without much concern. In an upcoming release, Loguru's critical functions will be implemented in C for maximum speed.\n\n\u003c!-- end-of-readme-usage --\u003e\n\n## Documentation\n\n- [API Reference](https://loguru.readthedocs.io/en/stable/api/logger.html)\n- [Help \u0026 Guides](https://loguru.readthedocs.io/en/stable/resources.html)\n- [Type hints](https://loguru.readthedocs.io/en/stable/api/type_hints.html)\n- [Contributing](https://loguru.readthedocs.io/en/stable/project/contributing.html)\n- [License](https://loguru.readthedocs.io/en/stable/project/license.html)\n- [Changelog](https://loguru.readthedocs.io/en/stable/project/changelog.html)\n\n",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
         "has_install_script": false
       },
       "analyzed_at": "0001-01-01T00:00:00Z"
     },
     {
-      "name": "ci-cd-infrastructure",
-      "version": "latest",
-      "type": "infrastructure",
-      "registry": "internal",
+      "name": "disnake",
+      "version": "==2.9.1",
+      "type": "production",
+      "registry": "pypi",
       "threats": [
         {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "self_hosted_runner",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
-          "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
-          "evidence": [
-            {
-              "type": "workflow_file",
-              "description": "GitHub Actions workflow",
-              "value": "deploy.yml"
-            },
-            {
-              "type": "runner_type",
-              "description": "Runner configuration",
-              "value": "self-hosted"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:16.6524015+01:00",
-          "detection_method": "cicd_analysis",
-          "metadata": {
-            "file_name": "deploy.yml",
-            "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "cicd_injection",
-          "severity": 3,
-          "confidence": 0.95,
-          "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
-          "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
-          "evidence": [
-            {
-              "type": "workflow_file",
-              "description": "GitHub Actions workflow",
-              "value": "deploy.yml"
-            },
-            {
-              "type": "injection_patterns",
-              "description": "Vulnerable expressions",
-              "value": "github.event.issue.title; github.event.comment.body"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:16.6524015+01:00",
-          "detection_method": "cicd_analysis",
-          "metadata": {
-            "file_name": "deploy.yml",
-            "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
-            "injections": [
-              "github.event.issue.title",
-              "github.event.comment.body"
-            ]
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "c2_channel",
-          "severity": 2,
-          "confidence": 0.8,
-          "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
-          "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
-          "evidence": [
-            {
-              "type": "workflow_file",
-              "description": "GitHub Actions workflow",
-              "value": "deploy.yml"
-            },
-            {
-              "type": "trigger_type",
-              "description": "Workflow trigger",
-              "value": "discussion/issues"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:16.6524015+01:00",
-          "detection_method": "cicd_analysis",
-          "metadata": {
-            "file_name": "deploy.yml",
-            "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-          }
-        },
-        {
-          "id": "meta_1766073800674696700",
+          "id": "meta_a9a03ea8-29ff-40a7-a62e-a614d2c9df0c",
           "package": "",
           "registry": "",
           "type": "incomplete_metadata",
@@ -826,8 +187,135 @@
           "detection_method": ""
         }
       ],
-      "risk_level": 2,
-      "risk_score": 0.7000000000000001,
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "\u003c!-- SPDX-License-Identifier: MIT --\u003e\n\n[![Disnake Banner](https://raw.githubusercontent.com/DisnakeDev/disnake/master/assets/banner.png)](https://disnake.dev/)\n\ndisnake\n=======\n\u003cp align=\"center\"\u003e\n    \u003cimg src=\"https://img.shields.io/github/actions/workflow/status/DisnakeDev/disnake/lint-test.yml?branch=master\u0026style=flat-square\"\u003e\u003c/img\u003e\n    \u003ca href=\"https://discord.gg/disnake\"\u003e\u003cimg src=\"https://img.shields.io/discord/808030843078836254?style=flat-square\u0026color=5865f2\u0026logo=discord\u0026logoColor=ffffff\u0026label=discord\" alt=\"Discord server invite\" /\u003e\u003c/a\u003e\n    \u003ca href=\"https://pypi.org/project/disnake/\"\u003e\u003cimg src=\"https://img.shields.io/pypi/v/disnake.svg?style=flat-square\" alt=\"PyPI version info\" /\u003e\u003c/a\u003e\n    \u003ca href=\"https://pypi.org/project/disnake/\"\u003e\u003cimg src=\"https://img.shields.io/pypi/pyversions/disnake.svg?style=flat-square\" alt=\"PyPI supported Python versions\" /\u003e\u003c/a\u003e\n    \u003ca href=\"https://github.com/DisnakeDev/disnake/commits\"\u003e\u003cimg src=\"https://img.shields.io/github/commit-activity/w/DisnakeDev/disnake.svg?style=flat-square\" alt=\"Commit activity\" /\u003e\u003c/a\u003e\n\u003c/p\u003e\n\nA modern, easy to use, feature-rich, and async-ready API wrapper for Discord written in Python.\n\nKey Features\n------------\n\n- Proper rate limit handling.\n- Type-safety measures.\n- [FastAPI](https://fastapi.tiangolo.com/)-like slash command syntax.\n\n\u003csup\u003eThe syntax and structure of `discord.py 2.0` is preserved.\u003c/sup\u003e\n\nInstalling\n----------\n\n**Python 3.10 or higher is required.**\n\nTo install the library without full voice support, you can just run the\nfollowing command:\n\n``` sh\n# Linux/macOS\npython3 -m pip install -U disnake\n\n# Windows\npy -3 -m pip install -U disnake\n```\n\nInstalling `disnake` with full voice support requires you to replace `disnake` here, with `disnake[voice]`. To learn more about voice support (or installing the development version), please visit [this section of our guide](https://guide.disnake.dev/prerequisites/installing-disnake/).\n\nNote that voice support on Linux requires installation of `libffi-dev` and `python-dev` packages, via your preferred package manager (e.g. `apt`, `dnf`, etc.) before running the following commands.\n\nVersioning\n----------\n\nThis project does **not** quite follow semantic versioning; for more details, see [version guarantees](https://docs.disnake.dev/en/latest/version_guarantees.html).\n\nTo be on the safe side and avoid unexpected breaking changes, pin the dependency to a minor version (e.g. `disnake==a.b.*` or `disnake~=a.b.c`) or an exact version (e.g. `disnake==a.b.c`).\n\nQuick Example\n-------------\n\n### Slash Commands Example\n\n``` py\nimport disnake\nfrom disnake.ext import commands\n\nbot = commands.InteractionBot(test_guilds=[12345])\n\n@bot.slash_command()\nasync def ping(inter):\n    await inter.response.send_message(\"Pong!\")\n\nbot.run(\"BOT_TOKEN\")\n```\n\n### Context Menus Example\n\n``` py\nimport disnake\nfrom disnake.ext import commands\n\nbot = commands.InteractionBot(test_guilds=[12345])\n\n@bot.user_command()\nasync def avatar(inter, user):\n    embed = disnake.Embed(title=str(user))\n    embed.set_image(url=user.display_avatar.url)\n    await inter.response.send_message(embed=embed)\n\nbot.run(\"BOT_TOKEN\")\n```\n\n### Prefix Commands Example\n\n``` py\nimport disnake\nfrom disnake.ext import commands\n\nbot = commands.Bot(command_prefix=commands.when_mentioned)\n\n@bot.command()\nasync def ping(ctx):\n    await ctx.send(\"Pong!\")\n\nbot.run(\"BOT_TOKEN\")\n```\n\nYou can find more examples in the [examples directory](https://github.com/DisnakeDev/disnake/tree/master/examples).\n\n\u003cbr\u003e\n\u003cp align=\"center\"\u003e\n    \u003ca href=\"https://docs.disnake.dev/\"\u003eDocumentation\u003c/a\u003e\n    ⁕\n    \u003ca href=\"https://guide.disnake.dev/\"\u003eGuide\u003c/a\u003e\n    ⁕\n    \u003ca href=\"https://discord.gg/disnake\"\u003eDiscord Server\u003c/a\u003e\n    ⁕\n    \u003ca href=\"https://discord.gg/discord-developers\"\u003eDiscord Developers\u003c/a\u003e\n\u003c/p\u003e\n\u003cbr\u003e\n",
+        "maintainers": [
+          "Disnake Development"
+        ],
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "botocore",
+      "version": "==1.29.0",
+      "type": "production",
+      "registry": "pypi",
+      "threats": [
+        {
+          "id": "meta_77272ff7-0a54-444e-93ac-8b43fc809ffe",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "botocore\n========\n\n|Version| |Python| |License|\n\nA low-level interface to a growing number of Amazon Web Services. The\nbotocore package is the foundation for the\n`AWS CLI \u003chttps://github.com/aws/aws-cli\u003e`__ as well as\n`boto3 \u003chttps://github.com/boto/boto3\u003e`__.\n\nBotocore is maintained and published by `Amazon Web Services`_.\n\nNotices\n-------\n\nOn 2026-04-29, support for Python 3.9 will end for Botocore. This follows the\nPython Software Foundation `end of support \u003chttps://peps.python.org/pep-0596/#lifespan\u003e`__\nfor the runtime which occurred on 2025-10-31.\n\nOn 2025-04-22, support for Python 3.8 ended for Botocore. This follows the\nPython Software Foundation `end of support \u003chttps://peps.python.org/pep-0569/#lifespan\u003e`__\nfor the runtime which occurred on 2024-10-07.\n\nFor more information, see this `blog post \u003chttps://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/\u003e`__.\n\n.. _`Amazon Web Services`: https://aws.amazon.com/what-is-aws/\n.. |Python| image:: https://img.shields.io/pypi/pyversions/botocore.svg?style=flat\n    :target: https://pypi.python.org/pypi/botocore/\n    :alt: Python Versions\n.. |Version| image:: http://img.shields.io/pypi/v/botocore.svg?style=flat\n    :target: https://pypi.python.org/pypi/botocore/\n    :alt: Package Version\n.. |License| image:: http://img.shields.io/pypi/l/botocore.svg?style=flat\n    :target: https://github.com/boto/botocore/blob/develop/LICENSE.txt\n    :alt: License\n\nGetting Started\n---------------\nAssuming that you have Python and ``virtualenv`` installed, set up your environment and install the required dependencies like this or you can install the library using ``pip``:\n\n.. code-block:: sh\n\n    $ git clone https://github.com/boto/botocore.git\n    $ cd botocore\n    $ python -m venv .venv\n    ...\n    $ source .venv/bin/activate\n    $ python -m pip install -r requirements.txt\n    $ python -m pip install -e .\n\n.. code-block:: sh\n\n    $ pip install botocore\n\nUsing Botocore\n~~~~~~~~~~~~~~\nAfter installing botocore\n\nNext, set up credentials (in e.g. ``~/.aws/credentials``):\n\n.. code-block:: ini\n\n    [default]\n    aws_access_key_id = YOUR_KEY\n    aws_secret_access_key = YOUR_SECRET\n\nThen, set up a default region (in e.g. ``~/.aws/config``):\n\n.. code-block:: ini\n\n   [default]\n   region=us-east-1\n\nOther credentials configuration method can be found `here \u003chttps://docs.aws.amazon.com/boto3/latest/guide/credentials.html\u003e`__\n\nThen, from a Python interpreter:\n\n.. code-block:: python\n\n    \u003e\u003e\u003e import botocore.session\n    \u003e\u003e\u003e session = botocore.session.get_session()\n    \u003e\u003e\u003e client = session.create_client('ec2')\n    \u003e\u003e\u003e print(client.describe_instances())\n\n\nGetting Help\n------------\n\nWe use GitHub issues for tracking bugs and feature requests and have limited\nbandwidth to address them. Please use these community resources for getting\nhelp. Please note many of the same resources available for ``boto3`` are\napplicable for ``botocore``:\n\n* Ask a question on `Stack Overflow \u003chttps://stackoverflow.com/\u003e`__ and tag it with `boto3 \u003chttps://stackoverflow.com/questions/tagged/boto3\u003e`__\n* Open a support ticket with `AWS Support \u003chttps://console.aws.amazon.com/support/home#/\u003e`__\n* If it turns out that you may have found a bug, please `open an issue \u003chttps://github.com/boto/botocore/issues/new/choose\u003e`__\n\n\nContributing\n------------\n\nWe value feedback and contributions from our community. Whether it's a bug report, new feature, correction, or additional documentation, we welcome your issues and pull requests. Please read through this `CONTRIBUTING \u003chttps://github.com/boto/botocore/blob/develop/CONTRIBUTING.rst\u003e`__ document before submitting any issues or pull requests to ensure we have all the necessary information to effectively respond to your contribution.\n\n\nMaintenance and Support for SDK Major Versions\n----------------------------------------------\n\nBotocore was made generally available on 06/22/2015 and is currently in the full support phase of the availability life cycle.\n\nFor information about maintenance and support for SDK major versions and their underlying dependencies, see the following in the AWS SDKs and Tools Reference Guide:\n\n* `AWS SDKs and Tools Maintenance Policy \u003chttps://docs.aws.amazon.com/sdkref/latest/guide/maint-policy.html\u003e`__\n* `AWS SDKs and Tools Version Support Matrix \u003chttps://docs.aws.amazon.com/sdkref/latest/guide/version-support-matrix.html\u003e`__\n\n\nMore Resources\n--------------\n\n* `NOTICE \u003chttps://github.com/boto/botocore/blob/develop/NOTICE\u003e`__\n* `Changelog \u003chttps://github.com/boto/botocore/blob/develop/CHANGELOG.rst\u003e`__\n* `License \u003chttps://github.com/boto/botocore/blob/develop/LICENSE.txt\u003e`__\n",
+        "maintainers": [
+          "Amazon Web Services"
+        ],
+        "homepage": "https://github.com/boto/botocore",
+        "license": "Apache-2.0",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "awscli",
+      "version": "==1.27.0",
+      "type": "production",
+      "registry": "pypi",
+      "threats": [
+        {
+          "id": "meta_81166c1e-2f09-4832-89d8-a274efd05b13",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "aws-cli\n=======\n\n.. image:: https://github.com/aws/aws-cli/actions/workflows/run-tests.yml/badge.svg\n   :target: https://github.com/aws/aws-cli/actions/workflows/run-tests.yml\n   :alt: Build Status\n\nThis package provides a unified command line interface to Amazon Web\nServices.\n\nJump to:\n\n-  `Getting Started \u003c#getting-started\u003e`__\n-  `Getting Help \u003c#getting-help\u003e`__\n-  `More Resources \u003c#more-resources\u003e`__\n\n\nEntering Maintenance Mode on July 15, 2026\n------------------------------------------\n\nWe `announced \u003chttps://aws.amazon.com/blogs/developer/cli-v1-maintenance-mode-announcement/\u003e`__\nthe upcoming **end-of-support for the AWS CLI v1**. We recommend\nthat you migrate to\n`AWS CLI v2 \u003chttps://docs.aws.amazon.com/cli/latest/userguide/cliv2-migration.html\u003e`__.\nFor dates, additional details, and information on how to migrate,\nplease refer to the linked announcement.\n\nGetting Started\n---------------\n\nThis README is for the AWS CLI version 1. If you are looking for\ninformation about the AWS CLI version 2, please visit the `v2\nbranch \u003chttps://github.com/aws/aws-cli/tree/v2\u003e`__.\n\nRequirements\n~~~~~~~~~~~~\n\nThe aws-cli package works on Python versions:\n\n-  3.9.x and greater\n-  3.10.x and greater\n-  3.11.x and greater\n-  3.12.x and greater\n-  3.13.x and greater\n-  3.14.x and greater\n\nNotices\n~~~~~~~\n\nOn 2025-04-22, support for Python 3.8 ended for the AWS CLI. This follows the\nPython Software Foundation `end of support \u003chttps://peps.python.org/pep-0569/#lifespan\u003e`__\nfor the runtime which occurred on 2024-10-07.\nFor more information, see this `blog post \u003chttps://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/\u003e`__.\n\n*Attention!*\n\n*We recommend that all customers regularly monitor the* `Amazon Web\nServices Security Bulletins\nwebsite \u003chttps://aws.amazon.com/security/security-bulletins\u003e`__ *for\nany important security bulletins related to aws-cli.*\n\nMaintenance and Support for CLI Major Versions\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nThe AWS CLI version 1 was made generally available on 09/02/2013 and is currently in the full support phase of the availability life cycle.\n\nFor information about maintenance and support for SDK major versions and their underlying dependencies, see the `Maintenance Policy \u003chttps://docs.aws.amazon.com/credref/latest/refdocs/maint-policy.html\u003e`__ section in the *AWS SDKs and Tools Shared Configuration and Credentials Reference Guide*.\n\nInstallation\n~~~~~~~~~~~~\n\nInstallation of the AWS CLI and its dependencies use a range of packaging\nfeatures provided by ``pip`` and ``setuptools``. To ensure smooth installation,\nit's recommended to use:\n\n- ``pip``: 9.0.2 or greater\n- ``setuptools``: 36.2.0 or greater\n\nThe safest way to install the AWS CLI is to use\n`pip \u003chttps://pip.pypa.io/en/stable/\u003e`__ in a ``virtualenv``:\n\n::\n\n   $ python -m pip install awscli\n\nor, if you are not installing in a ``virtualenv``, to install globally:\n\n::\n\n   $ sudo python -m pip install awscli\n\nor for your user:\n\n::\n\n   $ python -m pip install --user awscli\n\nIf you have the aws-cli package installed and want to upgrade to the\nlatest version, you can run:\n\n::\n\n   $ python -m pip install --upgrade awscli\n\nThis will install the aws-cli package as well as all dependencies.\n\n.. note::\n   On macOS, if you see an error regarding the version of ``six`` that\n   came with ``distutils`` in El Capitan, use the ``--ignore-installed``\n   option:\n\n::\n\n   $ sudo python -m pip install awscli --ignore-installed six\n\nOn Linux and Mac OS, the AWS CLI can be installed using a `bundled\ninstaller \u003chttps://docs.aws.amazon.com/cli/latest/userguide/install-linux.html#install-linux-bundled\u003e`__.\nThe AWS CLI can also be installed on Windows via an `MSI\nInstaller \u003chttps://docs.aws.amazon.com/cli/latest/userguide/install-windows.html#msi-on-windows\u003e`__.\n\nIf you want to run the ``develop`` branch of the AWS CLI, see the\n`Development Version \u003cCONTRIBUTING.md#cli-development-version\u003e`__ section of\nthe contributing guide.\n\nSee the\n`installation \u003chttps://docs.aws.amazon.com/cli/latest/userguide/install-cliv1.html\u003e`__\nsection of the AWS CLI User Guide for more information.\n\nConfiguration\n~~~~~~~~~~~~~\n\nBefore using the AWS CLI, you need to configure your AWS credentials.\nYou can do this in several ways:\n\n-  Configuration command\n-  Environment variables\n-  Shared credentials file\n-  Config file\n-  IAM Role\n\nThe quickest way to get started is to run the ``aws configure`` command:\n\n::\n\n   $ aws configure\n   AWS Access Key ID: MYACCESSKEY\n   AWS Secret Access Key: MYSECRETKEY\n   Default region name [us-west-2]: us-west-2\n   Default output format [None]: json\n\nTo use environment variables, do the following:\n\n::\n\n   $ export AWS_ACCESS_KEY_ID=\u003caccess_key\u003e\n   $ export AWS_SECRET_ACCESS_KEY=\u003csecret_key\u003e\n\nTo use the shared credentials file, create an INI formatted file like\nthis:\n\n::\n\n   [default]\n   aws_access_key_id=MYACCESSKEY\n   aws_secret_access_key=MYSECRETKEY\n\n   [testing]\n   aws_access_key_id=MYACCESSKEY\n   aws_secret_access_key=MYSECRETKEY\n\nand place it in ``~/.aws/credentials`` (or in\n``%UserProfile%\\.aws/credentials`` on Windows). If you wish to place the\nshared credentials file in a different location than the one specified\nabove, you need to tell aws-cli where to find it. Do this by setting the\nappropriate environment variable:\n\n::\n\n   $ export AWS_SHARED_CREDENTIALS_FILE=/path/to/shared_credentials_file\n\nTo use a config file, create an INI formatted file like this:\n\n::\n\n   [default]\n   aws_access_key_id=\u003cdefault access key\u003e\n   aws_secret_access_key=\u003cdefault secret key\u003e\n   # Optional, to define default region for this profile.\n   region=us-west-1\n\n   [profile testing]\n   aws_access_key_id=\u003ctesting access key\u003e\n   aws_secret_access_key=\u003ctesting secret key\u003e\n   region=us-west-2\n\nand place it in ``~/.aws/config`` (or in ``%UserProfile%\\.aws\\config``\non Windows). If you wish to place the config file in a different\nlocation than the one specified above, you need to tell the AWS CLI\nwhere to find it. Do this by setting the appropriate environment\nvariable:\n\n::\n\n   $ export AWS_CONFIG_FILE=/path/to/config_file\n\nAs you can see, you can have multiple ``profiles`` defined in both the\nshared credentials file and the configuration file. You can then specify\nwhich profile to use by using the ``--profile`` option. If no profile is\nspecified the ``default`` profile is used.\n\nIn the config file, except for the default profile, you **must** prefix\neach config section of a profile group with ``profile``. For example, if\nyou have a profile named \"testing\" the section header would be\n``[profile testing]``.\n\nThe final option for credentials is highly recommended if you are using\nthe AWS CLI on an EC2 instance. `IAM\nRoles \u003chttps://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html\u003e`__\nare a great way to have credentials installed automatically on your\ninstance. If you are using IAM Roles, the AWS CLI will find and use them\nautomatically.\n\nIn addition to credentials, a number of other variables can be\nconfigured either with environment variables, configuration file\nentries, or both. See the `AWS Tools and SDKs Shared Configuration and\nCredentials Reference\nGuide \u003chttps://docs.aws.amazon.com/credref/latest/refdocs/overview.html\u003e`__\nfor more information.\n\nFor more information about configuration options, please refer to the\n`AWS CLI Configuration Variables\ntopic \u003chttp://docs.aws.amazon.com/cli/latest/topic/config-vars.html#cli-aws-help-config-vars\u003e`__.\nYou can access this topic from the AWS CLI as well by running\n``aws help config-vars``.\n\nBasic Commands\n~~~~~~~~~~~~~~\n\nAn AWS CLI command has the following structure:\n\n::\n\n   $ aws \u003ccommand\u003e \u003csubcommand\u003e [options and parameters]\n\nFor example, to list S3 buckets, the command would be:\n\n::\n\n   $ aws s3 ls\n\nTo view help documentation, use one of the following:\n\n::\n\n   $ aws help\n   $ aws \u003ccommand\u003e help\n   $ aws \u003ccommand\u003e \u003csubcommand\u003e help\n\nTo get the version of the AWS CLI:\n\n::\n\n   $ aws --version\n\nTo turn on debugging output:\n\n::\n\n   $ aws --debug \u003ccommand\u003e \u003csubcommand\u003e\n\nYou can read more information on the `Using the AWS\nCLI \u003chttps://docs.aws.amazon.com/cli/latest/userguide/cli-chap-using.html\u003e`__\nchapter of the AWS CLI User Guide.\n\nCommand Completion\n~~~~~~~~~~~~~~~~~~\n\nThe aws-cli package includes a command completion feature for Unix-like\nsystems. This feature is not automatically installed so you need to\nconfigure it manually. To learn more, read the `AWS CLI Command\ncompletion\ntopic \u003chttps://docs.aws.amazon.com/cli/latest/userguide/cli-configure-completion.html\u003e`__.\n\nGetting Help\n------------\n\nThe best way to interact with our team is through GitHub. You can `open\nan issue \u003chttps://github.com/aws/aws-cli/issues/new/choose\u003e`__ and\nchoose from one of our templates for guidance, bug reports, or feature\nrequests.\n\nYou may find help from the community on `Stack\nOverflow \u003chttps://stackoverflow.com/\u003e`__ with the tag\n`aws-cli \u003chttps://stackoverflow.com/questions/tagged/aws-cli\u003e`__ or on\nthe `AWS Discussion Forum for\nCLI \u003chttps://forums.aws.amazon.com/forum.jspa?forumID=150\u003e`__. If you\nhave a support plan with `AWS Support\n\u003chttps://aws.amazon.com/premiumsupport\u003e`__, you can also create\na new support case.\n\nPlease check for open similar\n`issues \u003chttps://github.com/aws/aws-cli/issues/\u003e`__ before opening\nanother one.\n\nThe AWS CLI implements AWS service APIs. For general issues regarding\nthe services or their limitations, you may find the `Amazon Web Services\nDiscussion Forums \u003chttps://forums.aws.amazon.com/\u003e`__ helpful.\n\nMore Resources\n--------------\n\n-  `Changelog \u003chttps://github.com/aws/aws-cli/blob/develop/CHANGELOG.rst\u003e`__\n-  `AWS CLI\n   Documentation \u003chttps://docs.aws.amazon.com/cli/index.html\u003e`__\n-  `AWS CLI User\n   Guide \u003chttps://docs.aws.amazon.com/cli/latest/userguide/\u003e`__\n-  `AWS CLI Command\n   Reference \u003chttps://docs.aws.amazon.com/cli/latest/reference/\u003e`__\n-  `Amazon Web Services Discussion\n   Forums \u003chttps://forums.aws.amazon.com/\u003e`__\n-  `AWS Support \u003chttps://console.aws.amazon.com/support/home#/\u003e`__\n\n.. |Build Status| image:: https://travis-ci.org/aws/aws-cli.svg?branch=develop\n   :target: https://travis-ci.org/aws/aws-cli\n.. |Gitter| image:: https://badges.gitter.im/aws/aws-cli.svg\n   :target: https://gitter.im/aws/aws-cli\n",
+        "maintainers": [
+          "Amazon Web Services"
+        ],
+        "homepage": "http://aws.amazon.com/cli/",
+        "license": "Apache License 2.0",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "aws-cdk",
+      "version": ".core==1.199.0",
+      "type": "production",
+      "registry": "pypi",
+      "threats": [
+        {
+          "id": "meta_bf028a9b-db89-486b-b08d-10c6d25f33ed",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 0,
+      "risk_score": 0.2,
       "metadata": {
         "name": "",
         "version": "",
@@ -839,221 +327,173 @@
       "analyzed_at": "0001-01-01T00:00:00Z"
     },
     {
-      "name": "project-files",
-      "version": "current",
-      "type": "source",
-      "registry": "internal",
+      "name": "python-jose",
+      "version": "==3.3.0",
+      "type": "production",
+      "registry": "pypi",
       "threats": [
         {
-          "id": "",
+          "id": "meta_7c4108a3-3c5b-4c9f-8e7b-0d03c8f60594",
           "package": "",
           "registry": "",
-          "type": "runtime_exfiltration",
-          "severity": 2,
-          "confidence": 0.8,
-          "description": "File 'index.js' contains potential data exfiltration patterns",
-          "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
           "evidence": [
             {
-              "type": "network_patterns",
-              "description": "Detected network indicators",
-              "value": "Connections to unknown domains: azur-cloud-storage.com"
-            },
-            {
-              "type": "file",
-              "description": "Source file",
-              "value": "index.js"
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
             }
           ],
-          "detected_at": "2025-12-18T17:03:20.6826789+01:00",
-          "detection_method": "static_network_analysis",
-          "metadata": {
-            "file_path": "node_modules\\azure-sdk-js\\index.js",
-            "indicators": [
-              "Connections to unknown domains: azur-cloud-storage.com"
-            ]
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "runtime_exfiltration",
-          "severity": 2,
-          "confidence": 0.8,
-          "description": "File 'analytics.js' contains potential data exfiltration patterns",
-          "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
-          "evidence": [
-            {
-              "type": "network_patterns",
-              "description": "Detected network indicators",
-              "value": "Connections to unknown domains: malicious-site.com"
-            },
-            {
-              "type": "file",
-              "description": "Source file",
-              "value": "analytics.js"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.6826789+01:00",
-          "detection_method": "static_network_analysis",
-          "metadata": {
-            "file_path": "src\\analytics.js",
-            "indicators": [
-              "Connections to unknown domains: malicious-site.com"
-            ]
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "beacon_activity",
-          "severity": 2,
-          "confidence": 0.7,
-          "description": "File 'updater.js' contains potential beacon/C2 pattern (periodic network activity)",
-          "recommendation": "Packages should not make periodic network requests. This pattern is often used for command-and-control communication.",
-          "evidence": [
-            {
-              "type": "beacon_pattern",
-              "description": "setInterval + network calls",
-              "value": "Detected"
-            },
-            {
-              "type": "file",
-              "description": "Source file",
-              "value": "updater.js"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.683207+01:00",
-          "detection_method": "static_network_analysis",
-          "metadata": {
-            "file_path": "src\\lib\\updater.js"
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "self_hosted_runner",
-          "severity": 2,
-          "confidence": 0.9,
-          "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
-          "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
-          "evidence": [
-            {
-              "type": "workflow_file",
-              "description": "GitHub Actions workflow",
-              "value": "deploy.yml"
-            },
-            {
-              "type": "runner_type",
-              "description": "Runner configuration",
-              "value": "self-hosted"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.6837328+01:00",
-          "detection_method": "cicd_analysis",
-          "metadata": {
-            "file_name": "deploy.yml",
-            "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "cicd_injection",
-          "severity": 3,
-          "confidence": 0.95,
-          "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
-          "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
-          "evidence": [
-            {
-              "type": "workflow_file",
-              "description": "GitHub Actions workflow",
-              "value": "deploy.yml"
-            },
-            {
-              "type": "injection_patterns",
-              "description": "Vulnerable expressions",
-              "value": "github.event.issue.title; github.event.comment.body"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.6837328+01:00",
-          "detection_method": "cicd_analysis",
-          "metadata": {
-            "file_name": "deploy.yml",
-            "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
-            "injections": [
-              "github.event.issue.title",
-              "github.event.comment.body"
-            ]
-          }
-        },
-        {
-          "id": "",
-          "package": "",
-          "registry": "",
-          "type": "c2_channel",
-          "severity": 2,
-          "confidence": 0.8,
-          "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
-          "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
-          "evidence": [
-            {
-              "type": "workflow_file",
-              "description": "GitHub Actions workflow",
-              "value": "deploy.yml"
-            },
-            {
-              "type": "trigger_type",
-              "description": "Workflow trigger",
-              "value": "discussion/issues"
-            }
-          ],
-          "detected_at": "2025-12-18T17:03:20.6837328+01:00",
-          "detection_method": "cicd_analysis",
-          "metadata": {
-            "file_name": "deploy.yml",
-            "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-          }
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
         }
       ],
-      "risk_level": 2,
-      "risk_score": 0.8333333333333334,
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "python-jose\n===========\n\nA JOSE implementation in Python\n\n|pypi| |Github Actions CI Status| |Coverage Status| |Docs| |style|\n\nDocs are available on ReadTheDocs_.\n\nThe JavaScript Object Signing and Encryption (JOSE) technologies - JSON\nWeb Signature (JWS), JSON Web Encryption (JWE), JSON Web Key (JWK), and\nJSON Web Algorithms (JWA) - collectively can be used to encrypt and/or\nsign content using a variety of algorithms. While the full set of\npermutations is extremely large, and might be daunting to some, it is\nexpected that most applications will only use a small set of algorithms\nto meet their needs.\n\n\nInstallation\n------------\n\n::\n\n    $ pip install python-jose[cryptography]\n\n\nCryptographic Backends\n----------------------\n\nAs of 3.3.0, python-jose implements three different cryptographic backends.\nThe backend must be selected as an extra when installing python-jose.\nIf you do not select a backend, the native-python backend will be installed.\n\nUnless otherwise noted, all backends support all operations.\n\nDue to complexities with setuptools, the native-python backend is always installed,\neven if you select a different backend on install.\nWe recommend that you remove unnecessary dependencies in production.\n\n#. cryptography\n\n   * This backend uses `pyca/cryptography`_ for all cryptographic operations.\n     This is the recommended backend and is selected over all other backends if any others are present.\n   * Installation: ``pip install python-jose[cryptography]``\n   * Unused dependencies:\n\n     * ``rsa``\n     * ``ecdsa``\n     * ``pyasn1``\n\n#. pycryptodome\n\n   * This backend uses `pycryptodome`_ for all cryptographic operations.\n   * Installation: ``pip install python-jose[pycryptodome]``\n   * Unused dependencies:\n\n     * ``rsa``\n\n#. native-python\n\n   * This backend uses `python-rsa`_ and `python-ecdsa`_ for all cryptographic operations.\n     This backend is always installed but any other backend will take precedence if one is installed.\n   * Installation: ``pip install python-jose``\n\n   .. note::\n\n       The native-python backend cannot process certificates.\n\nUsage\n-----\n\n.. code-block:: python\n\n    \u003e\u003e\u003e from jose import jwt\n    \u003e\u003e\u003e token = jwt.encode({'key': 'value'}, 'secret', algorithm='HS256')\n    u'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ2YWx1ZSJ9.FG-8UppwHaFp1LgRYQQeS6EDQF7_6-bMFegNucHjmWg'\n\n    \u003e\u003e\u003e jwt.decode(token, 'secret', algorithms=['HS256'])\n    {u'key': u'value'}\n\n\nThanks\n------\n\nThis library was originally based heavily on the work of the folks over at PyJWT_.\n\n.. |pypi| image:: https://img.shields.io/pypi/v/python-jose?style=flat-square\n   :target: https://pypi.org/project/python-jose/\n   :alt: PyPI\n.. |Github Actions CI Status| image:: https://github.com/mpdavis/python-jose/actions/workflows/ci.yml/badge.svg\n   :target: https://github.com/mpdavis/python-jose/actions/workflows/ci.yml\n   :alt: Github Actions CI Status\n.. |Coverage Status| image:: http://codecov.io/github/mpdavis/python-jose/coverage.svg?branch=master\n   :target: http://codecov.io/github/mpdavis/python-jose?branch=master\n.. |Docs| image:: https://readthedocs.org/projects/python-jose/badge/\n   :target: https://python-jose.readthedocs.org/en/latest/\n.. _ReadTheDocs: https://python-jose.readthedocs.org/en/latest/\n.. _PyJWT: https://github.com/jpadilla/pyjwt\n.. _pyca/cryptography: http://cryptography.io/\n.. _pycryptodome: https://pycryptodome.readthedocs.io/en/latest/\n.. _pycrypto: https://www.dlitz.net/software/pycrypto/\n.. _python-ecdsa: https://github.com/warner/python-ecdsa\n.. _python-rsa: https://stuvel.eu/rsa\n.. |style| image:: https://img.shields.io/badge/code%20style-black-000000.svg\n   :target: https://github.com/psf/black\n   :alt: Code style: black\n",
+        "maintainers": [
+          "Michael Davis"
+        ],
+        "homepage": "http://github.com/mpdavis/python-jose",
+        "license": "MIT",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "pycryptodomex",
+      "version": "==3.17.0",
+      "type": "production",
+      "registry": "pypi",
+      "threats": [
+        {
+          "id": "meta_c88b2937-a98c-476d-9972-8ecb89ab44d0",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "PyCryptodome\n============\n\nPyCryptodome is a self-contained Python package of low-level\ncryptographic primitives.\n\nIt supports Python 2.7, Python 3.7 and newer, and PyPy.\n\nYou can install it with::\n\n    pip install pycryptodomex\n\nAll modules are installed under the ``Cryptodome`` package.\n\nCheck the pycryptodome_ project for the equivalent library that\nworks under the ``Crypto`` package.\n\nPyCryptodome is a fork of PyCrypto. It brings several enhancements\nwith respect to the last official version of PyCrypto (2.6.1),\nfor instance:\n\n* Authenticated encryption modes (GCM, CCM, EAX, SIV, OCB, KW, KWP)\n* Hybrid Public Key Encryption (HPKE)\n* Accelerated AES on Intel platforms via AES-NI\n* First class support for PyPy\n* Elliptic curves cryptography (NIST P-curves; Ed25519, Ed448, Curve25519)\n* Better and more compact API (`nonce` and `iv` attributes for ciphers,\n  automatic generation of random nonces and IVs, simplified CTR cipher mode,\n  and more)\n* SHA-3 (including SHAKE XOFs) and BLAKE2 hash algorithms\n* Salsa20 and ChaCha20 stream ciphers\n* scrypt and HKDF\n* Deterministic (EC)DSA and EdDSA\n* Password-protected PKCS#8 key containers\n* Shamir's Secret Sharing scheme\n* Random numbers get sourced directly from the OS (and not from a CSPRNG in userspace)\n* Simplified install process, including better support for Windows\n* Cleaner RSA and DSA key generation (largely based on FIPS 186-4)\n* Major clean ups and simplification of the code base\n\nPyCryptodome is not a wrapper to a separate C library like *OpenSSL*.\nTo the largest possible extent, algorithms are implemented in pure Python.\nOnly the pieces that are extremely critical to performance (e.g. block ciphers)\nare implemented as C extensions.\n\nFor more information, see the `homepage`_.\n\nAll the code can be downloaded from `GitHub`_.\n\n.. _pycryptodome: https://pypi.python.org/pypi/pycryptodome\n.. _`homepage`: http://www.pycryptodome.org\n.. _GitHub: https://github.com/Legrandin/pycryptodome\n\n\n",
+        "maintainers": [
+          "Helder Eijs"
+        ],
+        "homepage": "https://www.pycryptodome.org",
+        "license": "BSD, Public Domain",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "aiohttp",
+      "version": "==3.8.4",
+      "type": "production",
+      "registry": "pypi",
+      "threats": [
+        {
+          "id": "meta_4b2d7660-c2ce-43b9-8564-6aa30ff60d28",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "==================================\nAsync http client/server framework\n==================================\n\n.. image:: https://raw.githubusercontent.com/aio-libs/aiohttp/master/docs/aiohttp-plain.svg\n   :height: 64px\n   :width: 64px\n   :alt: aiohttp logo\n\n|\n\n.. image:: https://github.com/aio-libs/aiohttp/workflows/CI/badge.svg\n   :target: https://github.com/aio-libs/aiohttp/actions?query=workflow%3ACI\n   :alt: GitHub Actions status for master branch\n\n.. image:: https://codecov.io/gh/aio-libs/aiohttp/branch/master/graph/badge.svg\n   :target: https://codecov.io/gh/aio-libs/aiohttp\n   :alt: codecov.io status for master branch\n\n.. image:: https://badge.fury.io/py/aiohttp.svg\n   :target: https://pypi.org/project/aiohttp\n   :alt: Latest PyPI package version\n\n.. image:: https://img.shields.io/pypi/dm/aiohttp\n   :target: https://pypistats.org/packages/aiohttp\n   :alt: Downloads count\n\n.. image:: https://readthedocs.org/projects/aiohttp/badge/?version=latest\n   :target: https://docs.aiohttp.org/\n   :alt: Latest Read The Docs\n\n.. image:: https://img.shields.io/endpoint?url=https://codspeed.io/badge.json\n   :target: https://codspeed.io/aio-libs/aiohttp\n   :alt: Codspeed.io status for aiohttp\n\n\nKey Features\n============\n\n- Supports both client and server side of HTTP protocol.\n- Supports both client and server Web-Sockets out-of-the-box and avoids\n  Callback Hell.\n- Provides Web-server with middleware and pluggable routing.\n\n\nGetting started\n===============\n\nClient\n------\n\nTo get something from the web:\n\n.. code-block:: python\n\n  import aiohttp\n  import asyncio\n\n  async def main():\n\n      async with aiohttp.ClientSession() as session:\n          async with session.get('http://python.org') as response:\n\n              print(\"Status:\", response.status)\n              print(\"Content-type:\", response.headers['content-type'])\n\n              html = await response.text()\n              print(\"Body:\", html[:15], \"...\")\n\n  asyncio.run(main())\n\nThis prints:\n\n.. code-block::\n\n    Status: 200\n    Content-type: text/html; charset=utf-8\n    Body: \u003c!doctype html\u003e ...\n\nComing from `requests \u003chttps://requests.readthedocs.io/\u003e`_ ? Read `why we need so many lines \u003chttps://aiohttp.readthedocs.io/en/latest/http_request_lifecycle.html\u003e`_.\n\nServer\n------\n\nAn example using a simple server:\n\n.. code-block:: python\n\n    # examples/server_simple.py\n    from aiohttp import web\n\n    async def handle(request):\n        name = request.match_info.get('name', \"Anonymous\")\n        text = \"Hello, \" + name\n        return web.Response(text=text)\n\n    async def wshandle(request):\n        ws = web.WebSocketResponse()\n        await ws.prepare(request)\n\n        async for msg in ws:\n            if msg.type == web.WSMsgType.text:\n                await ws.send_str(\"Hello, {}\".format(msg.data))\n            elif msg.type == web.WSMsgType.binary:\n                await ws.send_bytes(msg.data)\n            elif msg.type == web.WSMsgType.close:\n                break\n\n        return ws\n\n\n    app = web.Application()\n    app.add_routes([web.get('/', handle),\n                    web.get('/echo', wshandle),\n                    web.get('/{name}', handle)])\n\n    if __name__ == '__main__':\n        web.run_app(app)\n\n\nDocumentation\n=============\n\nhttps://aiohttp.readthedocs.io/\n\n\nDemos\n=====\n\nhttps://github.com/aio-libs/aiohttp-demos\n\n\nExternal links\n==============\n\n* `Third party libraries\n  \u003chttp://aiohttp.readthedocs.io/en/latest/third_party.html\u003e`_\n* `Built with aiohttp\n  \u003chttp://aiohttp.readthedocs.io/en/latest/built_with.html\u003e`_\n* `Powered by aiohttp\n  \u003chttp://aiohttp.readthedocs.io/en/latest/powered_by.html\u003e`_\n\nFeel free to make a Pull Request for adding your link to these pages!\n\n\nCommunication channels\n======================\n\n*aio-libs Discussions*: https://github.com/aio-libs/aiohttp/discussions\n\n*Matrix*: `#aio-libs:matrix.org \u003chttps://matrix.to/#/#aio-libs:matrix.org\u003e`_\n\nWe support `Stack Overflow\n\u003chttps://stackoverflow.com/questions/tagged/aiohttp\u003e`_.\nPlease add *aiohttp* tag to your question there.\n\nRequirements\n============\n\n- attrs_\n- multidict_\n- yarl_\n- frozenlist_\n\nOptionally you may install the aiodns_ library (highly recommended for sake of speed).\n\n.. _aiodns: https://pypi.python.org/pypi/aiodns\n.. _attrs: https://github.com/python-attrs/attrs\n.. _multidict: https://pypi.python.org/pypi/multidict\n.. _frozenlist: https://pypi.org/project/frozenlist/\n.. _yarl: https://pypi.python.org/pypi/yarl\n.. _async-timeout: https://pypi.python.org/pypi/async_timeout\n\nLicense\n=======\n\n``aiohttp`` is offered under the Apache 2 license.\n\n\nKeepsafe\n========\n\nThe aiohttp community would like to thank Keepsafe\n(https://www.getkeepsafe.com) for its support in the early days of\nthe project.\n\n\nSource code\n===========\n\nThe latest developer version is available in a GitHub repository:\nhttps://github.com/aio-libs/aiohttp\n\nBenchmarks\n==========\n\nIf you are interested in efficiency, the AsyncIO community maintains a\nlist of benchmarks on the official wiki:\nhttps://github.com/python/asyncio/wiki/Benchmarks\n\n--------\n\n.. image:: https://img.shields.io/matrix/aio-libs:matrix.org?label=Discuss%20on%20Matrix%20at%20%23aio-libs%3Amatrix.org\u0026logo=matrix\u0026server_fqdn=matrix.org\u0026style=flat\n   :target: https://matrix.to/#/%23aio-libs:matrix.org\n   :alt: Matrix Room — #aio-libs:matrix.org\n\n.. image:: https://img.shields.io/matrix/aio-libs-space:matrix.org?label=Discuss%20on%20Matrix%20at%20%23aio-libs-space%3Amatrix.org\u0026logo=matrix\u0026server_fqdn=matrix.org\u0026style=flat\n   :target: https://matrix.to/#/%23aio-libs-space:matrix.org\n   :alt: Matrix Space — #aio-libs-space:matrix.org\n\n.. image:: https://insights.linuxfoundation.org/api/badge/health-score?project=aiohttp\n   :target: https://insights.linuxfoundation.org/project/aiohttp\n   :alt: LFX Health Score\n",
+        "license": "Apache-2.0 AND MIT",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
+      "analyzed_at": "0001-01-01T00:00:00Z"
+    },
+    {
+      "name": "httpx",
+      "version": "==0.24.0",
+      "type": "production",
+      "registry": "pypi",
+      "threats": [
+        {
+          "id": "meta_84a244e7-fd2a-4676-89fc-78a0a609815c",
+          "package": "",
+          "registry": "",
+          "type": "incomplete_metadata",
+          "severity": 0,
+          "confidence": 0.4,
+          "description": "Package has incomplete metadata (missing author or description)",
+          "evidence": [
+            {
+              "type": "metadata",
+              "description": "",
+              "value": "incomplete"
+            }
+          ],
+          "detected_at": "0001-01-01T00:00:00Z",
+          "detection_method": ""
+        }
+      ],
+      "risk_level": 0,
+      "risk_score": 0.2,
+      "metadata": {
+        "name": "",
+        "version": "",
+        "registry": "",
+        "description": "\u003cp align=\"center\"\u003e\n  \u003ca href=\"https://www.python-httpx.org/\"\u003e\u003cimg width=\"350\" height=\"208\" src=\"https://raw.githubusercontent.com/encode/httpx/master/docs/img/butterfly.png\" alt='HTTPX'\u003e\u003c/a\u003e\n\u003c/p\u003e\n\n\u003cp align=\"center\"\u003e\u003cstrong\u003eHTTPX\u003c/strong\u003e \u003cem\u003e- A next-generation HTTP client for Python.\u003c/em\u003e\u003c/p\u003e\n\n\u003cp align=\"center\"\u003e\n\u003ca href=\"https://github.com/encode/httpx/actions\"\u003e\n    \u003cimg src=\"https://github.com/encode/httpx/workflows/Test%20Suite/badge.svg\" alt=\"Test Suite\"\u003e\n\u003c/a\u003e\n\u003ca href=\"https://pypi.org/project/httpx/\"\u003e\n    \u003cimg src=\"https://badge.fury.io/py/httpx.svg\" alt=\"Package version\"\u003e\n\u003c/a\u003e\n\u003c/p\u003e\n\nHTTPX is a fully featured HTTP client library for Python 3. It includes **an integrated command line client**, has support for both **HTTP/1.1 and HTTP/2**, and provides both **sync and async APIs**.\n\n---\n\nInstall HTTPX using pip:\n\n```shell\n$ pip install httpx\n```\n\nNow, let's get started:\n\n```pycon\n\u003e\u003e\u003e import httpx\n\u003e\u003e\u003e r = httpx.get('https://www.example.org/')\n\u003e\u003e\u003e r\n\u003cResponse [200 OK]\u003e\n\u003e\u003e\u003e r.status_code\n200\n\u003e\u003e\u003e r.headers['content-type']\n'text/html; charset=UTF-8'\n\u003e\u003e\u003e r.text\n'\u003c!doctype html\u003e\\n\u003chtml\u003e\\n\u003chead\u003e\\n\u003ctitle\u003eExample Domain\u003c/title\u003e...'\n```\n\nOr, using the command-line client.\n\n```shell\n$ pip install 'httpx[cli]'  # The command line client is an optional dependency.\n```\n\nWhich now allows us to use HTTPX directly from the command-line...\n\n\u003cp align=\"center\"\u003e\n  \u003cimg width=\"700\" src=\"https://raw.githubusercontent.com/encode/httpx/master/docs/img/httpx-help.png\" alt='httpx --help'\u003e\n\u003c/p\u003e\n\nSending a request...\n\n\u003cp align=\"center\"\u003e\n  \u003cimg width=\"700\" src=\"https://raw.githubusercontent.com/encode/httpx/master/docs/img/httpx-request.png\" alt='httpx http://httpbin.org/json'\u003e\n\u003c/p\u003e\n\n## Features\n\nHTTPX builds on the well-established usability of `requests`, and gives you:\n\n* A broadly [requests-compatible API](https://www.python-httpx.org/compatibility/).\n* An integrated command-line client.\n* HTTP/1.1 [and HTTP/2 support](https://www.python-httpx.org/http2/).\n* Standard synchronous interface, but with [async support if you need it](https://www.python-httpx.org/async/).\n* Ability to make requests directly to [WSGI applications](https://www.python-httpx.org/advanced/transports/#wsgi-transport) or [ASGI applications](https://www.python-httpx.org/advanced/transports/#asgi-transport).\n* Strict timeouts everywhere.\n* Fully type annotated.\n* 100% test coverage.\n\nPlus all the standard features of `requests`...\n\n* International Domains and URLs\n* Keep-Alive \u0026 Connection Pooling\n* Sessions with Cookie Persistence\n* Browser-style SSL Verification\n* Basic/Digest Authentication\n* Elegant Key/Value Cookies\n* Automatic Decompression\n* Automatic Content Decoding\n* Unicode Response Bodies\n* Multipart File Uploads\n* HTTP(S) Proxy Support\n* Connection Timeouts\n* Streaming Downloads\n* .netrc Support\n* Chunked Requests\n\n## Installation\n\nInstall with pip:\n\n```shell\n$ pip install httpx\n```\n\nOr, to include the optional HTTP/2 support, use:\n\n```shell\n$ pip install httpx[http2]\n```\n\nHTTPX requires Python 3.8+.\n\n## Documentation\n\nProject documentation is available at [https://www.python-httpx.org/](https://www.python-httpx.org/).\n\nFor a run-through of all the basics, head over to the [QuickStart](https://www.python-httpx.org/quickstart/).\n\nFor more advanced topics, see the [Advanced Usage](https://www.python-httpx.org/advanced/) section, the [async support](https://www.python-httpx.org/async/) section, or the [HTTP/2](https://www.python-httpx.org/http2/) section.\n\nThe [Developer Interface](https://www.python-httpx.org/api/) provides a comprehensive API reference.\n\nTo find out about tools that integrate with HTTPX, see [Third Party Packages](https://www.python-httpx.org/third_party_packages/).\n\n## Contribute\n\nIf you want to contribute with HTTPX check out the [Contributing Guide](https://www.python-httpx.org/contributing/) to learn how to start.\n\n## Dependencies\n\nThe HTTPX project relies on these excellent libraries:\n\n* `httpcore` - The underlying transport implementation for `httpx`.\n  * `h11` - HTTP/1.1 support.\n* `certifi` - SSL certificates.\n* `idna` - Internationalized domain name support.\n* `sniffio` - Async library autodetection.\n\nAs well as these optional installs:\n\n* `h2` - HTTP/2 support. *(Optional, with `httpx[http2]`)*\n* `socksio` - SOCKS proxy support. *(Optional, with `httpx[socks]`)*\n* `rich` - Rich terminal support. *(Optional, with `httpx[cli]`)*\n* `click` - Command line client support. *(Optional, with `httpx[cli]`)*\n* `brotli` or `brotlicffi` - Decoding for \"brotli\" compressed responses. *(Optional, with `httpx[brotli]`)*\n* `zstandard` - Decoding for \"zstd\" compressed responses. *(Optional, with `httpx[zstd]`)*\n\nA huge amount of credit is due to `requests` for the API layout that\nmuch of this work follows, as well as to `urllib3` for plenty of design\ninspiration around the lower-level networking details.\n\n---\n\n\u003cp align=\"center\"\u003e\u003ci\u003eHTTPX is \u003ca href=\"https://github.com/encode/httpx/blob/master/LICENSE.md\"\u003eBSD licensed\u003c/a\u003e code.\u003cbr/\u003eDesigned \u0026 crafted with care.\u003c/i\u003e\u003cbr/\u003e\u0026mdash; 🦋 \u0026mdash;\u003c/p\u003e\n\n## Release Information\n\n### Fixed\n\n* Reintroduced supposedly-private `URLTypes` shortcut. (#2673)\n\n\n---\n\n[Full changelog](https://github.com/encode/httpx/blob/master/CHANGELOG.md)\n",
+        "license": "BSD-3-Clause",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "has_install_script": false
+      },
       "analyzed_at": "0001-01-01T00:00:00Z"
     }
   ],
   "threats": [
     {
-      "id": "572d8b4ebc25ded0c77e858d4f152138",
-      "package": "react",
-      "version": "18.2.0",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 0,
-      "confidence": 0.6292397660818713,
-      "description": "Possible typosquatting detected: react-dom is similar to react (unknown)",
-      "similar_to": "react-dom",
-      "recommendation": "Verify if you intended to use react instead of react-dom",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:19.0769074+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "meta_1766073799078185400",
+      "id": "meta_f8b23013-6efa-4d0b-a7e4-2b12be2550a7",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1071,44 +511,7 @@
       "detection_method": ""
     },
     {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for react",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "0a51340cd618dcd4d36f914dbce711c7",
-      "package": "rceact",
-      "version": "18.2.0",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 3,
-      "confidence": 0.8159649122807017,
-      "description": "Possible typosquatting detected: react is similar to rceact (unknown)",
-      "similar_to": "react",
-      "recommendation": "Review usage of react carefully. Detected patterns: insertion_deletion",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[] [fb react-bot] true false false false false false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:19.3696686+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "meta_1766073799369668600",
+      "id": "meta_3fea7af9-9a64-4ce9-88e5-c30ed3d0439e",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1126,55 +529,7 @@
       "detection_method": ""
     },
     {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for rceact",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "9580d030feb1bd3c5eafaa0e230a3250",
-      "package": "expres",
-      "version": "4.18.2",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 3,
-      "confidence": 0.8833902939166096,
-      "description": "Possible typosquatting detected: express is similar to expres (unknown)",
-      "similar_to": "express",
-      "recommendation": "Review usage of express carefully. Detected patterns: insertion_deletion",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[cpsubrian] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:19.4598024+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for expres",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "meta_1766073799462740800",
+      "id": "meta_8fc0733b-42c3-473a-a938-195131a3430c",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1192,69 +547,7 @@
       "detection_method": ""
     },
     {
-      "id": "anomaly_1766073799462740800",
-      "package": "",
-      "registry": "",
-      "type": "version_anomaly",
-      "severity": 2,
-      "confidence": 0.8,
-      "description": "Package uses suspiciously high version number (indicative of Dependency Confusion)",
-      "evidence": [
-        {
-          "type": "version",
-          "description": "",
-          "value": "99.9.9"
-        }
-      ],
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": ""
-    },
-    {
-      "id": "conf_1766073799462740800",
-      "package": "",
-      "registry": "",
-      "type": "dependency_confusion",
-      "severity": 2,
-      "confidence": 0.7,
-      "description": "Package '@internal/billing-core' claims internal scope but is found in public dependency list",
-      "evidence": [
-        {
-          "type": "package_name",
-          "description": "",
-          "value": "@internal/billing-core"
-        }
-      ],
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": ""
-    },
-    {
-      "id": "2784aa9e329fa7b432d067fa2f530a96",
-      "package": "azure-sdk-js",
-      "version": "1.0.0",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 1,
-      "confidence": 0.7961218836565096,
-      "description": "Possible typosquatting detected: azure-sdk is similar to azure-sdk-js (unknown)",
-      "similar_to": "azure-sdk",
-      "recommendation": "Verify if you intended to use azure-sdk-js instead of azure-sdk",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[] [] true false false false false false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:20.1385808+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "meta_1766073800139112500",
+      "id": "meta_ede891ec-9c9b-4aad-a139-2e20383ef74a",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1272,44 +565,7 @@
       "detection_method": ""
     },
     {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for azure-sdk-js",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "085baa3c276d76bd69e5a29996b57105",
-      "package": "react-dom",
-      "version": "18.2.0",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 0,
-      "confidence": 0.6292397660818713,
-      "description": "Possible typosquatting detected: react is similar to react-dom (unknown)",
-      "similar_to": "react",
-      "recommendation": "Verify if you intended to use react-dom instead of react",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[fb react-bot] [fb react-bot] false false false false true false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:20.5167913+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "meta_1766073800517792800",
+      "id": "meta_a9a03ea8-29ff-40a7-a62e-a614d2c9df0c",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1327,81 +583,7 @@
       "detection_method": ""
     },
     {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for react-dom",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "da19fa3a67233b3c58e4840668865fa7",
-      "package": "loadsh",
-      "version": "4.17.21",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 1,
-      "confidence": 0.6912280701754386,
-      "description": "Possible typosquatting detected: lodash is similar to loadsh (unknown)",
-      "similar_to": "lodash",
-      "recommendation": "Verify if you intended to use loadsh instead of lodash",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[npm] [mathias jdalton bnjmnt4n] true false false false false false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:20.5920852+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for loadsh",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "45c4febf3f7168d7d1ad4c62b7f7e724",
-      "package": "chalk",
-      "version": "4.1.2",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 1,
-      "confidence": 0.6989097744360903,
-      "description": "Possible typosquatting detected: chai is similar to chalk (unknown)",
-      "similar_to": "chai",
-      "recommendation": "Verify if you intended to use chalk instead of chai",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[sindresorhus] [chaijs] true false false false false false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:20.6703505+01:00",
-      "detection_method": "enhanced_typosquatting"
-    },
-    {
-      "id": "meta_1766073800670350500",
+      "id": "meta_77272ff7-0a54-444e-93ac-8b43fc809ffe",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1419,106 +601,7 @@
       "detection_method": ""
     },
     {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "enterprise_policy",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "policy violation: typosquat requires multi-signal gating for chalk",
-      "detected_at": "0001-01-01T00:00:00Z",
-      "detection_method": "opa_policy"
-    },
-    {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "self_hosted_runner",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
-      "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
-      "evidence": [
-        {
-          "type": "workflow_file",
-          "description": "GitHub Actions workflow",
-          "value": "deploy.yml"
-        },
-        {
-          "type": "runner_type",
-          "description": "Runner configuration",
-          "value": "self-hosted"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:16.6524015+01:00",
-      "detection_method": "cicd_analysis",
-      "metadata": {
-        "file_name": "deploy.yml",
-        "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-      }
-    },
-    {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "cicd_injection",
-      "severity": 3,
-      "confidence": 0.95,
-      "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
-      "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
-      "evidence": [
-        {
-          "type": "workflow_file",
-          "description": "GitHub Actions workflow",
-          "value": "deploy.yml"
-        },
-        {
-          "type": "injection_patterns",
-          "description": "Vulnerable expressions",
-          "value": "github.event.issue.title; github.event.comment.body"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:16.6524015+01:00",
-      "detection_method": "cicd_analysis",
-      "metadata": {
-        "file_name": "deploy.yml",
-        "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
-        "injections": [
-          "github.event.issue.title",
-          "github.event.comment.body"
-        ]
-      }
-    },
-    {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "c2_channel",
-      "severity": 2,
-      "confidence": 0.8,
-      "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
-      "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
-      "evidence": [
-        {
-          "type": "workflow_file",
-          "description": "GitHub Actions workflow",
-          "value": "deploy.yml"
-        },
-        {
-          "type": "trigger_type",
-          "description": "Workflow trigger",
-          "value": "discussion/issues"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:16.6524015+01:00",
-      "detection_method": "cicd_analysis",
-      "metadata": {
-        "file_name": "deploy.yml",
-        "file_path": "C:\\Users\\aliko\\Desktop\\Typosentinel\\examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-      }
-    },
-    {
-      "id": "meta_1766073800674696700",
+      "id": "meta_81166c1e-2f09-4832-89d8-a274efd05b13",
       "package": "",
       "registry": "",
       "type": "incomplete_metadata",
@@ -1536,191 +619,106 @@
       "detection_method": ""
     },
     {
-      "id": "",
+      "id": "meta_bf028a9b-db89-486b-b08d-10c6d25f33ed",
       "package": "",
       "registry": "",
-      "type": "runtime_exfiltration",
-      "severity": 2,
-      "confidence": 0.8,
-      "description": "File 'index.js' contains potential data exfiltration patterns",
-      "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
       "evidence": [
         {
-          "type": "network_patterns",
-          "description": "Detected network indicators",
-          "value": "Connections to unknown domains: azur-cloud-storage.com"
-        },
-        {
-          "type": "file",
-          "description": "Source file",
-          "value": "index.js"
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
         }
       ],
-      "detected_at": "2025-12-18T17:03:20.6826789+01:00",
-      "detection_method": "static_network_analysis",
-      "metadata": {
-        "file_path": "node_modules\\azure-sdk-js\\index.js",
-        "indicators": [
-          "Connections to unknown domains: azur-cloud-storage.com"
-        ]
-      }
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
     },
     {
-      "id": "",
+      "id": "meta_7c4108a3-3c5b-4c9f-8e7b-0d03c8f60594",
       "package": "",
       "registry": "",
-      "type": "runtime_exfiltration",
-      "severity": 2,
-      "confidence": 0.8,
-      "description": "File 'analytics.js' contains potential data exfiltration patterns",
-      "recommendation": "Review network calls for unauthorized data exfiltration. Packages should not make external API calls during installation.",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
       "evidence": [
         {
-          "type": "network_patterns",
-          "description": "Detected network indicators",
-          "value": "Connections to unknown domains: malicious-site.com"
-        },
-        {
-          "type": "file",
-          "description": "Source file",
-          "value": "analytics.js"
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
         }
       ],
-      "detected_at": "2025-12-18T17:03:20.6826789+01:00",
-      "detection_method": "static_network_analysis",
-      "metadata": {
-        "file_path": "src\\analytics.js",
-        "indicators": [
-          "Connections to unknown domains: malicious-site.com"
-        ]
-      }
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
     },
     {
-      "id": "",
+      "id": "meta_c88b2937-a98c-476d-9972-8ecb89ab44d0",
       "package": "",
       "registry": "",
-      "type": "beacon_activity",
-      "severity": 2,
-      "confidence": 0.7,
-      "description": "File 'updater.js' contains potential beacon/C2 pattern (periodic network activity)",
-      "recommendation": "Packages should not make periodic network requests. This pattern is often used for command-and-control communication.",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
       "evidence": [
         {
-          "type": "beacon_pattern",
-          "description": "setInterval + network calls",
-          "value": "Detected"
-        },
-        {
-          "type": "file",
-          "description": "Source file",
-          "value": "updater.js"
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
         }
       ],
-      "detected_at": "2025-12-18T17:03:20.683207+01:00",
-      "detection_method": "static_network_analysis",
-      "metadata": {
-        "file_path": "src\\lib\\updater.js"
-      }
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
     },
     {
-      "id": "",
+      "id": "meta_4b2d7660-c2ce-43b9-8564-6aa30ff60d28",
       "package": "",
       "registry": "",
-      "type": "self_hosted_runner",
-      "severity": 2,
-      "confidence": 0.9,
-      "description": "Workflow 'deploy.yml' uses self-hosted runners (Shai-Hulud attack vector)",
-      "recommendation": "Self-hosted runners can be compromised to register backdoors. Review runner configuration and ensure it's legitimate. Consider using GitHub-hosted runners unless self-hosting is required.",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
       "evidence": [
         {
-          "type": "workflow_file",
-          "description": "GitHub Actions workflow",
-          "value": "deploy.yml"
-        },
-        {
-          "type": "runner_type",
-          "description": "Runner configuration",
-          "value": "self-hosted"
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
         }
       ],
-      "detected_at": "2025-12-18T17:03:20.6837328+01:00",
-      "detection_method": "cicd_analysis",
-      "metadata": {
-        "file_name": "deploy.yml",
-        "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-      }
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
     },
     {
-      "id": "",
+      "id": "meta_84a244e7-fd2a-4676-89fc-78a0a609815c",
       "package": "",
       "registry": "",
-      "type": "cicd_injection",
-      "severity": 3,
-      "confidence": 0.95,
-      "description": "Workflow 'deploy.yml' contains code injection vulnerabilities: github.event.issue.title, github.event.comment.body",
-      "recommendation": "CRITICAL: Code injection detected. Attackers can execute arbitrary commands via GitHub Discussions/Issues. Use ${{ toJSON(github.event) }} piped to a safe parser instead of using event fields directly in 'run' steps.",
+      "type": "incomplete_metadata",
+      "severity": 0,
+      "confidence": 0.4,
+      "description": "Package has incomplete metadata (missing author or description)",
       "evidence": [
         {
-          "type": "workflow_file",
-          "description": "GitHub Actions workflow",
-          "value": "deploy.yml"
-        },
-        {
-          "type": "injection_patterns",
-          "description": "Vulnerable expressions",
-          "value": "github.event.issue.title; github.event.comment.body"
+          "type": "metadata",
+          "description": "",
+          "value": "incomplete"
         }
       ],
-      "detected_at": "2025-12-18T17:03:20.6837328+01:00",
-      "detection_method": "cicd_analysis",
-      "metadata": {
-        "file_name": "deploy.yml",
-        "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml",
-        "injections": [
-          "github.event.issue.title",
-          "github.event.comment.body"
-        ]
-      }
+      "detected_at": "0001-01-01T00:00:00Z",
+      "detection_method": ""
     },
     {
-      "id": "",
-      "package": "",
-      "registry": "",
-      "type": "c2_channel",
-      "severity": 2,
-      "confidence": 0.8,
-      "description": "Workflow 'deploy.yml' is triggered by Discussions/Issues (potential C2 channel like Shai-Hulud)",
-      "recommendation": "Workflows triggered by 'discussion' or 'issues' events can be used as command-and-control channels. Review workflow purpose and ensure it's legitimate.",
-      "evidence": [
-        {
-          "type": "workflow_file",
-          "description": "GitHub Actions workflow",
-          "value": "deploy.yml"
-        },
-        {
-          "type": "trigger_type",
-          "description": "Workflow trigger",
-          "value": "discussion/issues"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:20.6837328+01:00",
-      "detection_method": "cicd_analysis",
-      "metadata": {
-        "file_name": "deploy.yml",
-        "file_path": "examples\\enterprise-demo\\.github\\workflows\\deploy.yml"
-      }
-    },
-    {
-      "id": "5a30bf375c3ae25da0794004443145ea",
-      "package": "rceact",
+      "id": "fe4c4dd575c6dec05d0e934bb961284b",
+      "package": "boto3",
       "version": "unknown",
-      "registry": "npm",
+      "registry": "pypi",
       "type": "typosquatting",
       "severity": 3,
-      "confidence": 0.8159649122807017,
-      "description": "Possible typosquatting detected: react is similar to rceact (unknown)",
-      "similar_to": "react",
-      "recommendation": "Review usage of react carefully. Detected patterns: insertion_deletion",
+      "confidence": 0.8342857142857143,
+      "description": "Possible typosquatting detected: boto is similar to boto3 (unknown)",
+      "similar_to": "boto",
+      "recommendation": "Review usage of boto carefully. Detected patterns: insertion_deletion",
       "evidence": [
         {
           "type": "similarity",
@@ -1730,55 +728,23 @@
         {
           "type": "signals",
           "description": "Multi-signal analysis",
-          "value": "{[] [fb react-bot] true false false false false false}"
+          "value": "{[Amazon Web Services ] [Mitch Garnaat ] true false false false false false}"
         }
       ],
-      "detected_at": "2025-12-18T17:03:21.0788764+01:00",
-      "detection_method": "enhanced_typosquatting",
-      "metadata": {
-        "ai_explanation": "The threat evidence provided suggests that there may be a typosquatting attack on the popular React library, which could lead to an unauthorized package being installed in the software supply chain. This is dangerous because it allows an attacker to gain access to a trusted component of the application, such as React, and potentially inject malicious code or data. Once installed, this package could have unintended consequences, including stealing sensitive data, modifying application behavior, or even completely taking over the application. By installing a malicious package, an attacker can gain a foothold in the system and move laterally to other parts of the network, causing significant damage. Therefore, it is essential to verify the authenticity of all packages in the software supply chain to prevent such attacks."
-      }
+      "detected_at": "2026-03-07T13:55:49.556447+01:00",
+      "detection_method": "enhanced_typosquatting"
     },
     {
-      "id": "41c77becbac31ed839c8d5aaeb3ffaa4",
-      "package": "expres",
+      "id": "17ff03869458bea67386152986d787b6",
+      "package": "botocore",
       "version": "unknown",
-      "registry": "npm",
-      "type": "typosquatting",
-      "severity": 3,
-      "confidence": 0.8833902939166096,
-      "description": "Possible typosquatting detected: express is similar to expres (unknown)",
-      "similar_to": "express",
-      "recommendation": "Review usage of express carefully. Detected patterns: insertion_deletion",
-      "evidence": [
-        {
-          "type": "similarity",
-          "description": "Typosquatting analysis result",
-          "value": "unknown"
-        },
-        {
-          "type": "signals",
-          "description": "Multi-signal analysis",
-          "value": "{[cpsubrian] [wesleytodd jonchurch ctcpip ulisesgascon sheplu] true false false false false false}"
-        }
-      ],
-      "detected_at": "2025-12-18T17:03:21.1552876+01:00",
-      "detection_method": "enhanced_typosquatting",
-      "metadata": {
-        "ai_explanation": "The potential software supply chain security threat posed by the \"expres\" package is dangerous because it leverages typosquatting, a common attack vector in which an attacker creates a malicious package with a similar name to a legitimate one. In this case, the malicious package \"expres\" is designed to resemble the popular package \"express\", which is likely to be trusted by users and organizations. If installed, the malicious package could potentially execute malicious code or steal sensitive information, compromising the security of the system or application. Additionally, the attacker could use this vulnerability to gain persistence on the target system, allowing them to maintain access even after the initial compromise."
-      }
-    },
-    {
-      "id": "c74b49a02576de42609858c6920f3c3b",
-      "package": "azure-sdk-js",
-      "version": "unknown",
-      "registry": "npm",
+      "registry": "pypi",
       "type": "typosquatting",
       "severity": 1,
-      "confidence": 0.7961218836565096,
-      "description": "Possible typosquatting detected: azure-sdk is similar to azure-sdk-js (unknown)",
-      "similar_to": "azure-sdk",
-      "recommendation": "Verify if you intended to use azure-sdk-js instead of azure-sdk",
+      "confidence": 0.7514424430059105,
+      "description": "Possible typosquatting detected: aiobotocore is similar to botocore (unknown)",
+      "similar_to": "aiobotocore",
+      "recommendation": "Verify if you intended to use botocore instead of aiobotocore",
       "evidence": [
         {
           "type": "similarity",
@@ -1788,23 +754,436 @@
         {
           "type": "signals",
           "description": "Multi-signal analysis",
-          "value": "{[] [] true false false false false false}"
+          "value": "{[Amazon Web Services ] [ ] true false false false false false}"
         }
       ],
-      "detected_at": "2025-12-18T17:03:21.213403+01:00",
-      "detection_method": "enhanced_typosquatting",
-      "metadata": {
-        "ai_explanation": "This threat is dangerous because it exploits a common security vulnerability in software supply chains known as typosquatting. Typosquatting occurs when an attacker creates a malicious package with a similar name to a legitimate package, tricking users into installing the wrong package. In this case, the attacker created \"azure-sdk-js\" with a slight variation from the legitimate \"azure-sdk\", which could be confusing for developers who are used to the original package.\n\nIf installed, the malicious package \"azure-sdk-js\" could potentially expose sensitive data or system functionality to the attacker, as it masquerades as a trusted package. For example, it could steal login credentials, inject malware, or gain unauthorized access to sensitive data. This is particularly concerning in software supply chains where packages are often developed and maintained by multiple parties, making it difficult to track changes and ensure their integrity."
-      }
+      "detected_at": "2026-03-07T13:55:51.059769+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "9112d2b24a49d0204c9957ae117acdf3",
+      "package": "botocore",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7554366685945633,
+      "description": "Possible typosquatting detected: moocore is similar to botocore (unknown)",
+      "similar_to": "moocore",
+      "recommendation": "Verify if you intended to use botocore instead of moocore",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Amazon Web Services ] [ ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:51.386469+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "212b907fb1bc2c03701803e2a9af046f",
+      "package": "awscli",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7947368421052631,
+      "description": "Possible typosquatting detected: awscliv2 is similar to awscli (unknown)",
+      "similar_to": "awscliv2",
+      "recommendation": "Verify if you intended to use awscli instead of awscliv2",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Amazon Web Services ] [Vlad Emelianov ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:51.715769+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "2dd102fd95554763d49367521a4b85b6",
+      "package": "awscli",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7671052631578947,
+      "description": "Possible typosquatting detected: awsebcli is similar to awscli (unknown)",
+      "similar_to": "awsebcli",
+      "recommendation": "Verify if you intended to use awscli instead of awsebcli",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Amazon Web Services ] [AWS Elastic Beanstalk ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:51.878299+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "63bf328108e3e8399f1bac5d86cfb129",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7602870813397129,
+      "description": "Possible typosquatting detected: python-docx is similar to python-jose (unknown)",
+      "similar_to": "python-docx",
+      "recommendation": "Verify if you intended to use python-jose instead of python-docx",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [ ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:52.249441+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "e1540885f5795eee1d7df83f9fc5a7cc",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7618282548476454,
+      "description": "Possible typosquatting detected: python-box is similar to python-jose (unknown)",
+      "similar_to": "python-box",
+      "recommendation": "Verify if you intended to use python-jose instead of python-box",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [Chris Griffith ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:52.394528+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "30599e7b3e3f25339dd2073448cef232",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7517804079576932,
+      "description": "Possible typosquatting detected: python-tds is similar to python-jose (unknown)",
+      "similar_to": "python-tds",
+      "recommendation": "Verify if you intended to use python-jose instead of python-tds",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [Mikhail Denisenko ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:52.535307+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "db2ab0d2fec77ad229423d0a424d2021",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7727071266683454,
+      "description": "Possible typosquatting detected: python-jwt is similar to python-jose (unknown)",
+      "similar_to": "python-jwt",
+      "recommendation": "Verify if you intended to use python-jose instead of python-jwt",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [David Halls ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:52.818408+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "d993b1b6cf6cec1ed46b01b6e928d257",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7863636363636364,
+      "description": "Possible typosquatting detected: python-hosts is similar to python-jose (unknown)",
+      "similar_to": "python-hosts",
+      "recommendation": "Verify if you intended to use python-jose instead of python-hosts",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [Jon Hadfield ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.026129+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "2ad407be3ecca3a8dc30e96fcf336f60",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7581681476418318,
+      "description": "Possible typosquatting detected: python-forge is similar to python-jose (unknown)",
+      "similar_to": "python-forge",
+      "recommendation": "Verify if you intended to use python-jose instead of python-forge",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [Devin Fee ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.10506+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "45de4ceb4ff381ba127c37acfb0829d1",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7646990682447745,
+      "description": "Possible typosquatting detected: python-ics is similar to python-jose (unknown)",
+      "similar_to": "python-ics",
+      "recommendation": "Verify if you intended to use python-jose instead of python-ics",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [ ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.177009+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "2155c33a0c2debd760e2e598479df44f",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 2,
+      "confidence": 0.8251473180559051,
+      "description": "Possible typosquatting detected: python-osc is similar to python-jose (unknown)",
+      "similar_to": "python-osc",
+      "recommendation": "Verify if you intended to use python-jose instead of python-osc",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [ ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.30541+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "ecc3903dd06cd101d3a47ec08557031c",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7603928481490808,
+      "description": "Possible typosquatting detected: python-okx is similar to python-jose (unknown)",
+      "similar_to": "python-okx",
+      "recommendation": "Verify if you intended to use python-jose instead of python-okx",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [okxv5api ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.351218+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "babef63bdad25136e03254e7884edb7f",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7517804079576932,
+      "description": "Possible typosquatting detected: python-tsp is similar to python-jose (unknown)",
+      "similar_to": "python-tsp",
+      "recommendation": "Verify if you intended to use python-jose instead of python-tsp",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [Fillipe Goulart ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.492949+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "58ae79a4124f54d1117cde34e67549fb",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7992113150007886,
+      "description": "Possible typosquatting detected: python-jobspy is similar to python-jose (unknown)",
+      "similar_to": "python-jobspy",
+      "recommendation": "Verify if you intended to use python-jose instead of python-jobspy",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [Cullen Watson ] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.689288+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "be1739c573ed1925586699802336f74c",
+      "package": "python-jose",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 1,
+      "confidence": 0.7545454545454545,
+      "description": "Possible typosquatting detected: python-must is similar to python-jose (unknown)",
+      "similar_to": "python-must",
+      "recommendation": "Verify if you intended to use python-jose instead of python-must",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Michael Davis ] [] true false false false false false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:53.885856+01:00",
+      "detection_method": "enhanced_typosquatting"
+    },
+    {
+      "id": "c8c6bdb684513749c4bddc616344977e",
+      "package": "pycryptodomex",
+      "version": "unknown",
+      "registry": "pypi",
+      "type": "typosquatting",
+      "severity": 2,
+      "confidence": 0.9380742826967081,
+      "description": "Possible typosquatting detected: pycryptodome is similar to pycryptodomex (unknown)",
+      "similar_to": "pycryptodome",
+      "recommendation": "Review usage of pycryptodome carefully. Detected patterns: insertion_deletion",
+      "evidence": [
+        {
+          "type": "similarity",
+          "description": "Typosquatting analysis result",
+          "value": "unknown"
+        },
+        {
+          "type": "signals",
+          "description": "Multi-signal analysis",
+          "value": "{[Helder Eijs ] [Helder Eijs ] false false false false true false}"
+        }
+      ],
+      "detected_at": "2026-03-07T13:55:54.007125+01:00",
+      "detection_method": "enhanced_typosquatting"
     }
   ],
   "warnings": null,
   "resolution": {
     "resolved": [
       {
-        "name": "@internal/billing-core",
-        "version": "99.9.9",
-        "registry": "npm",
+        "name": "aiohttp",
+        "version": "==3.8.4",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1818,9 +1197,9 @@
         }
       },
       {
-        "name": "axios",
-        "version": "1.6.0",
-        "registry": "npm",
+        "name": "aws-cdk",
+        "version": ".core==1.199.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1834,9 +1213,9 @@
         }
       },
       {
-        "name": "azure-sdk-js",
-        "version": "1.0.0",
-        "registry": "npm",
+        "name": "awscli",
+        "version": "==1.27.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1850,9 +1229,9 @@
         }
       },
       {
-        "name": "chalk",
-        "version": "4.1.2",
-        "registry": "npm",
+        "name": "boto3",
+        "version": "==1.26.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1866,9 +1245,9 @@
         }
       },
       {
-        "name": "ci-cd-infrastructure",
-        "version": "latest",
-        "registry": "internal",
+        "name": "botocore",
+        "version": "==1.29.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1882,9 +1261,9 @@
         }
       },
       {
-        "name": "expres",
-        "version": "4.18.2",
-        "registry": "npm",
+        "name": "cryptography",
+        "version": "==40.0.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1898,9 +1277,9 @@
         }
       },
       {
-        "name": "express",
-        "version": "4.18.2",
-        "registry": "npm",
+        "name": "disnake",
+        "version": "==2.9.1",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1914,9 +1293,9 @@
         }
       },
       {
-        "name": "loadsh",
-        "version": "4.17.21",
-        "registry": "npm",
+        "name": "httpx",
+        "version": "==0.24.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1930,9 +1309,9 @@
         }
       },
       {
-        "name": "lodash",
-        "version": "4.17.21",
-        "registry": "npm",
+        "name": "loguru",
+        "version": "==0.7.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1946,9 +1325,9 @@
         }
       },
       {
-        "name": "moment",
-        "version": "2.29.4",
-        "registry": "npm",
+        "name": "paramiko",
+        "version": "==3.0.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1962,9 +1341,9 @@
         }
       },
       {
-        "name": "project-files",
-        "version": "current",
-        "registry": "internal",
+        "name": "pycryptodomex",
+        "version": "==3.17.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -1978,41 +1357,9 @@
         }
       },
       {
-        "name": "rceact",
-        "version": "18.2.0",
-        "registry": "npm",
-        "source": "scanner",
-        "direct": true,
-        "development": false,
-        "metadata": {
-          "name": "",
-          "version": "",
-          "registry": "",
-          "created_at": "0001-01-01T00:00:00Z",
-          "updated_at": "0001-01-01T00:00:00Z",
-          "has_install_script": false
-        }
-      },
-      {
-        "name": "react",
-        "version": "18.2.0",
-        "registry": "npm",
-        "source": "scanner",
-        "direct": true,
-        "development": false,
-        "metadata": {
-          "name": "",
-          "version": "",
-          "registry": "",
-          "created_at": "0001-01-01T00:00:00Z",
-          "updated_at": "0001-01-01T00:00:00Z",
-          "has_install_script": false
-        }
-      },
-      {
-        "name": "react-dom",
-        "version": "18.2.0",
-        "registry": "npm",
+        "name": "python-jose",
+        "version": "==3.3.0",
+        "registry": "pypi",
         "source": "scanner",
         "direct": true,
         "development": false,
@@ -2030,12 +1377,12 @@
     "warnings": []
   },
   "summary": {
-    "critical_threats": 6,
-    "high_threats": 16,
-    "medium_threats": 4,
-    "low_threats": 9,
+    "critical_threats": 1,
+    "high_threats": 2,
+    "medium_threats": 15,
+    "low_threats": 12,
     "total_warnings": 0,
-    "clean_packages": -21,
+    "clean_packages": -18,
     "conflict_count": 0
   },
   "metadata": {}

@@ -126,6 +126,8 @@ func init() {
 	scanCmd.Flags().Bool("no-llm", false, "Disable LLM (AI) explanations")
 	scanCmd.Flags().Int("max-llm-calls", 10, "Maximum number of LLM explanations to generate")
 	scanCmd.Flags().Bool("no-sandbox", false, "Disable dynamic analysis (sandboxing)")
+	scanCmd.Flags().Bool("reachable-only", false, "Only report CVEs reachable from project entry points (reduces noise by ~80%)")
+	scanCmd.Flags().Bool("sandbox", false, "Run Docker behavioral sandbox on high-risk packages (requires Docker daemon)")
 	// Offline / air-gap flags
 	scanCmd.Flags().Bool("offline", false, "Use local SQLite CVE database instead of live network APIs (air-gap mode). Also activated by FALCN_OFFLINE=true env var.")
 	scanCmd.Flags().String("local-db", "", "Path to local CVE database for --offline mode (default: ~/.local/share/falcn/cve.db)")
@@ -200,6 +202,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 	disableLLM, _ := cmd.Flags().GetBool("no-llm")
 	maxLLMCalls, _ := cmd.Flags().GetInt("max-llm-calls")
 	disableSandbox, _ := cmd.Flags().GetBool("no-sandbox")
+	reachableOnly, _ := cmd.Flags().GetBool("reachable-only")
+	enableSandbox, _ := cmd.Flags().GetBool("sandbox")
 
 	// Get offline / air-gap options
 	offlineMode, _ := cmd.Flags().GetBool("offline")
@@ -227,6 +231,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 		DisableSandbox:         disableSandbox,
 		OfflineMode:            offlineMode,
 		LocalDBPath:            localDBPath,
+		ReachableOnly:          reachableOnly,
+		EnableSandbox:          enableSandbox,
 	}
 
 	// Map registry override to packageManagers if provided

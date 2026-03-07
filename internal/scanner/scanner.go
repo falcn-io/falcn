@@ -2,6 +2,8 @@ package scanner
 
 import (
 	"context"
+	"net/http"
+	"net/url"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -506,6 +508,10 @@ func (s *Scanner) analyzePackageThreats(pkg *types.Package) ([]*types.Threat, er
 	threats = append(threats, s.detectSuspiciousPatterns(pkg)...)
 	threats = append(threats, s.detectMaliciousIndicators(pkg)...)
 	threats = append(threats, s.detectVersionAnomalies(pkg)...)
+	confusionThreats, _ := s.detectDependencyConfusion(pkg)
+	for _, t := range confusionThreats {
+		threats = append(threats, t)
+	}
 
 	// Populate pkg.Threats so policy engine can see them
 	var currentThreats []types.Threat
@@ -1482,6 +1488,111 @@ func (s *Scanner) detectVersionAnomalies(pkg *types.Package) []*types.Threat {
 	}
 
 	return threats
+}
+
+// internalKeywords are namespace/name patterns that indicate a private package.
+var internalKeywords = []string{
+	"internal", "corp", "company", "private", "acme",
+	"backend", "frontend", "infra", "platform", "microservice",
+	"service", "lib", "sdk", "api", "auth", "payments",
+}
+
+// depConfusionCache caches public-registry check results (5-minute TTL).
+var (
+	depConfusionCacheMu sync.Mutex
+	depConfusionCache   = map[string]depConfusionEntry{}
+)
+
+type depConfusionEntry struct {
+	publicExists bool
+	expiresAt    time.Time
+}
+
+// detectDependencyConfusion checks whether a package with an internal-sounding
+// name also exists on the public npm/PyPI registry, which indicates a potential
+// dependency confusion attack surface.
+func (s *Scanner) detectDependencyConfusion(pkg *types.Package) ([]*types.Threat, error) {
+	name := pkg.Name
+	registry := strings.ToLower(pkg.Registry)
+
+	// Only meaningful for npm and PyPI (most common confusion targets)
+	if registry != "npm" && registry != "pypi" && registry != "" {
+		return nil, nil
+	}
+
+	// Strip npm scope: @company/ui-components → ui-components
+	stripped := name
+	if idx := strings.Index(name, "/"); idx >= 0 {
+		stripped = name[idx+1:]
+	}
+	lowerName := strings.ToLower(stripped)
+	lowerFull := strings.ToLower(name)
+
+	// Check whether the name contains internal-namespace keywords
+	isInternal := false
+	for _, kw := range internalKeywords {
+		if strings.Contains(lowerName, kw) || strings.Contains(lowerFull, kw) {
+			isInternal = true
+			break
+		}
+	}
+	// Also flag scoped packages (all @scope/ packages in npm are potential targets)
+	if strings.HasPrefix(name, "@") {
+		isInternal = true
+	}
+	if !isInternal {
+		return nil, nil
+	}
+
+	// Cache lookup
+	depConfusionCacheMu.Lock()
+	if entry, ok := depConfusionCache[name]; ok && time.Now().Before(entry.expiresAt) {
+		depConfusionCacheMu.Unlock()
+		if !entry.publicExists {
+			return nil, nil
+		}
+		// Falls through to threat creation
+	} else {
+		depConfusionCacheMu.Unlock()
+
+		// Check the public npm registry
+		var checkURL string
+		if registry == "pypi" {
+			checkURL = "https://pypi.org/pypi/" + url.PathEscape(stripped) + "/json"
+		} else {
+			checkURL = "https://registry.npmjs.org/" + url.PathEscape(stripped)
+		}
+
+		client := &http.Client{Timeout: 5 * time.Second}
+		resp, err := client.Head(checkURL)
+		publicExists := err == nil && resp.StatusCode == 200
+
+		depConfusionCacheMu.Lock()
+		depConfusionCache[name] = depConfusionEntry{
+			publicExists: publicExists,
+			expiresAt:    time.Now().Add(5 * time.Minute),
+		}
+		depConfusionCacheMu.Unlock()
+
+		if !publicExists {
+			return nil, nil
+		}
+	}
+
+	// Package exists publicly — potential confusion attack surface
+	return []*types.Threat{{
+		Package:     pkg.Name,
+		Version:     pkg.Version,
+		Registry:    pkg.Registry,
+		Type:        types.ThreatTypeDependencyConfusion,
+		Severity:    types.SeverityCritical,
+		Confidence:  0.80,
+		Description: fmt.Sprintf("Dependency confusion risk: %q has an internal-sounding name but also exists on the public registry. An attacker could publish a malicious version that gets resolved instead of your private package.", name),
+		Recommendation: "Pin to your private registry using an .npmrc or pip.conf scope override. " +
+			"Add this package to your allowlist policy.",
+		DetectedAt:      time.Now(),
+		DetectionMethod: "cross_registry_confusion_check",
+	}}, nil
 }
 
 // getPopularPackages returns popular packages for the given registry

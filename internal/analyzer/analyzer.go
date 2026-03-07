@@ -16,11 +16,13 @@ import (
 	"github.com/falcn-io/falcn/internal/cache"
 	"github.com/falcn-io/falcn/internal/config"
 	"github.com/falcn-io/falcn/internal/detector"
+	"github.com/falcn-io/falcn/internal/sandbox"
 	"github.com/falcn-io/falcn/internal/edge"
 	internalevent "github.com/falcn-io/falcn/internal/events"
 	"github.com/falcn-io/falcn/internal/llm"
 	"github.com/falcn-io/falcn/internal/ml"
 	"github.com/falcn-io/falcn/internal/registry"
+	"github.com/falcn-io/falcn/internal/reachability"
 	"github.com/falcn-io/falcn/internal/scanner"
 	"github.com/falcn-io/falcn/internal/vulnerability"
 	pkgevents "github.com/falcn-io/falcn/pkg/events"
@@ -123,6 +125,8 @@ type ScanOptions struct {
 	// Offline / air-gap options
 	OfflineMode bool   // Use local SQLite CVE database instead of network calls
 	LocalDBPath string // Path to local CVE database; DefaultLocalDBPath() used if empty
+	ReachableOnly  bool // Filter threats to only CVEs reachable from entry points
+	EnableSandbox  bool // Run Docker behavioral sandbox on high-risk packages
 }
 
 // ScanResult contains the results of a security scan
@@ -317,6 +321,56 @@ func (a *Analyzer) Scan(path string, options *ScanOptions) (*ScanResult, error) 
 
 	result.Threats = append(result.Threats, threats...)
 	result.Warnings = append(result.Warnings, warnings...)
+
+	// Behavioral sandbox scan — run Docker container for high-risk packages
+	if options.EnableSandbox {
+		sbThreats := runBehavioralSandboxScan(context.Background(), filteredDeps, result.Threats)
+		result.Threats = append(result.Threats, sbThreats...)
+	}
+
+	// Wire reachability analysis — tag CVE threats with Reachable + CallPath
+	reachAnalyzer, raErr := reachability.New(path)
+	if raErr == nil {
+		// Collect unique package names for CVE threats
+		pkgNames := map[string]bool{}
+		for _, t := range result.Threats {
+			if t.Type == types.ThreatTypeVulnerable {
+				pkgNames[t.Package] = true
+			}
+		}
+		if len(pkgNames) > 0 {
+			names := make([]string, 0, len(pkgNames))
+			for n := range pkgNames {
+				names = append(names, n)
+			}
+			reachResults := reachAnalyzer.CheckMultiple(names)
+			for i, t := range result.Threats {
+				if t.Type != types.ThreatTypeVulnerable {
+					continue
+				}
+				if rr, ok := reachResults[t.Package]; ok {
+					reachable := rr.Reachable
+					result.Threats[i].Reachable = &reachable
+					result.Threats[i].CallPath = rr.CallPath
+				}
+			}
+		}
+	} else {
+		logrus.Debugf("Reachability analysis skipped: %v", raErr)
+	}
+
+	// Filter to reachable-only if requested
+	if options.ReachableOnly {
+		filtered := result.Threats[:0]
+		for _, t := range result.Threats {
+			// Keep non-CVE threats (typosquatting, etc.) always
+			// For CVE threats, keep only if Reachable==nil (unknown) or Reachable==true
+			if t.Type != types.ThreatTypeVulnerable || t.Reachable == nil || *t.Reachable {
+				filtered = append(filtered, t)
+			}
+		}
+		result.Threats = filtered
+	}
 
 	result.Duration = time.Since(start)
 	result.Summary = a.calculateSummary(result.Threats, result.Warnings, result.TotalPackages)
@@ -1398,4 +1452,55 @@ func (r *ScanResult) OutputHTML(w io.Writer) error {
 </body>
 </html>`)
 	return err
+}
+
+// runBehavioralSandboxScan runs the Docker behavioral engine on high-risk dependencies.
+// Gracefully degrades if Docker is unavailable (logs warning, returns nil).
+func runBehavioralSandboxScan(ctx context.Context, deps []types.Dependency, existingThreats []types.Threat) []types.Threat {
+	// Identify high-risk deps already flagged by static analysis
+	highRisk := highRiskDepsFromThreats(deps, existingThreats)
+	if len(highRisk) == 0 {
+		return nil
+	}
+
+	sb, err := sandbox.NewDockerSandbox(&sandbox.SandboxConfig{
+		MemoryLimit: 512 * 1024 * 1024,
+		NetworkMode: "bridge",
+	})
+	if err != nil {
+		logrus.Warnf("Behavioral sandbox unavailable (Docker not running?): %v — skipping sandbox scan", err)
+		return nil
+	}
+
+	engine := detector.NewBehavioralEngine(sb)
+	var out []types.Threat
+	for _, dep := range highRisk {
+		logrus.Infof("Sandbox: analyzing %s@%s...", dep.Name, dep.Version)
+		ts, err := engine.AnalyzeBehavior(ctx, dep)
+		if err != nil {
+			logrus.Warnf("Sandbox error for %s@%s: %v", dep.Name, dep.Version, err)
+			continue
+		}
+		out = append(out, ts...)
+	}
+	logrus.Infof("Sandbox scan complete: %d behavioral threats found", len(out))
+	return out
+}
+
+// highRiskDepsFromThreats returns dependencies already flagged as HIGH+ or typosquatted.
+func highRiskDepsFromThreats(deps []types.Dependency, threats []types.Threat) []types.Dependency {
+	riskSet := map[string]bool{}
+	for _, t := range threats {
+		if t.Severity >= types.SeverityHigh || t.Type == types.ThreatTypeTyposquatting ||
+			t.Type == types.ThreatTypeDependencyConfusion {
+			riskSet[t.Package] = true
+		}
+	}
+	var out []types.Dependency
+	for _, d := range deps {
+		if riskSet[d.Name] {
+			out = append(out, d)
+		}
+	}
+	return out
 }

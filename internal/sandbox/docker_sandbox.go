@@ -26,7 +26,8 @@ type DockerSandbox struct {
 type SandboxConfig struct {
 	MemoryLimit int64 // Bytes
 	CPUShares   int64
-	NetworkMode string // "none", "bridge", etc.
+	NetworkMode string        // "none", "bridge", etc.
+	Timeout     time.Duration // Max execution time per sandbox run
 }
 
 func NewDockerSandbox(cfg *SandboxConfig) (*DockerSandbox, error) {
