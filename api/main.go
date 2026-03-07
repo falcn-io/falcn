@@ -1627,6 +1627,45 @@ func main() {
 		}
 	})).Methods("GET")
 
+
+	// Serve the embedded web UI for all non-API routes (SPA catch-all)
+	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		urlPath := req.URL.Path
+		// Try to serve an exact file from the embedded dist
+		filePath := "web_dist" + urlPath
+		if urlPath == "/" || urlPath == "" {
+			filePath = "web_dist/index.html"
+		}
+		data, err := WebDist.ReadFile(filePath)
+		if err != nil {
+			// Fall back to index.html for client-side routing (React Router)
+			data, err = WebDist.ReadFile("web_dist/index.html")
+			if err != nil {
+				http.Error(w, "UI not available", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(data)
+			return
+		}
+		// Set content type based on file extension
+		switch {
+		case strings.HasSuffix(urlPath, ".js"):
+			w.Header().Set("Content-Type", "application/javascript")
+		case strings.HasSuffix(urlPath, ".css"):
+			w.Header().Set("Content-Type", "text/css")
+		case strings.HasSuffix(urlPath, ".svg"):
+			w.Header().Set("Content-Type", "image/svg+xml")
+		case strings.HasSuffix(urlPath, ".png"):
+			w.Header().Set("Content-Type", "image/png")
+		case strings.HasSuffix(urlPath, ".html"):
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		default:
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+		w.Write(data)
+	})
+
 	// Wrap router with CORS
 	handler := c.Handler(r)
 

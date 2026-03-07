@@ -6,9 +6,14 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
+
+	"path/filepath"
 
 	"github.com/falcn-io/falcn/internal/analyzer"
 	"github.com/falcn-io/falcn/internal/config"
+	"github.com/falcn-io/falcn/internal/gitutil"
+	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,7 +22,7 @@ import (
 // Scan command constants — avoid magic numbers in flag definitions.
 const (
 	defaultSimilarityThreshold = 0.8 // typosquatting detection similarity threshold
-	defaultMaxLLMCalls         = 0   // 0 = unlimited LLM explanation calls
+	defaultMaxLLMCalls         = 5   // default max AI explanations (HIGH+ threats only)
 )
 
 func init() {
@@ -124,13 +129,15 @@ func init() {
 	scanCmd.Flags().Int("content-max-workers", 0, "Content scanning max workers")
 	// Reliability & Control flags
 	scanCmd.Flags().Bool("no-llm", false, "Disable LLM (AI) explanations")
-	scanCmd.Flags().Int("max-llm-calls", 10, "Maximum number of LLM explanations to generate")
+	scanCmd.Flags().Int("max-llm-calls", defaultMaxLLMCalls, "Maximum number of AI explanations to generate (for HIGH+ threats only; 0 = disabled)")
 	scanCmd.Flags().Bool("no-sandbox", false, "Disable dynamic analysis (sandboxing)")
 	scanCmd.Flags().Bool("reachable-only", false, "Only report CVEs reachable from project entry points (reduces noise by ~80%)")
 	scanCmd.Flags().Bool("sandbox", false, "Run Docker behavioral sandbox on high-risk packages (requires Docker daemon)")
 	// Offline / air-gap flags
 	scanCmd.Flags().Bool("offline", false, "Use local SQLite CVE database instead of live network APIs (air-gap mode). Also activated by FALCN_OFFLINE=true env var.")
 	scanCmd.Flags().String("local-db", "", "Path to local CVE database for --offline mode (default: ~/.local/share/falcn/cve.db)")
+	scanCmd.Flags().String("diff", "", "Only scan manifests changed since this git ref (e.g. HEAD~1, main, origin/main)")
+	scanCmd.Flags().Bool("watch", false, "Watch manifest files for changes and re-scan automatically")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -235,6 +242,28 @@ func runScan(cmd *cobra.Command, args []string) error {
 		EnableSandbox:          enableSandbox,
 	}
 
+	// Diff-mode: only scan changed manifest files
+	diffBase, _ := cmd.Flags().GetString("diff")
+	if diffBase != "" {
+		changed, diffErr := gitutil.ChangedManifests(path, diffBase)
+		if diffErr != nil {
+			logrus.Warnf("git diff failed: %v — running full scan instead", diffErr)
+		} else if len(changed) == 0 {
+			fmt.Printf("No dependency files changed since %s\n", diffBase)
+			return nil
+		} else {
+			fmt.Printf("Diff mode: %d changed manifest(s) since %s\n", len(changed), diffBase)
+			for _, f := range changed {
+				fmt.Printf("  - %s\n", f)
+			}
+			// Scan only the first changed manifest specifically
+			// (subsequent ones will be auto-detected if in same dir)
+			if len(changed) == 1 {
+				options.SpecificFile = filepath.Join(path, changed[0])
+			}
+		}
+	}
+
 	// Map registry override to packageManagers if provided
 	if registryOverride != "" {
 		options.PackageManagers = []string{strings.ToLower(registryOverride)}
@@ -273,5 +302,88 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Output results
 	outputScanResult(result, outputFormat)
+
+	// Watch mode: re-scan on manifest file changes
+	watchMode, _ := cmd.Flags().GetBool("watch")
+	if watchMode {
+		if err := watchAndRescan(path, options, outputFormat, cmd); err != nil {
+			logrus.Warnf("watch mode exited: %v", err)
+		}
+	}
 	return nil
+}
+
+// watchAndRescan watches manifest files in projectRoot for changes and
+// re-runs the scan when they are modified. It blocks until the watcher
+// is stopped (Ctrl+C / signal) or an unrecoverable error occurs.
+func watchAndRescan(projectRoot string, options *analyzer.ScanOptions, outputFormat string, cmd *cobra.Command) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("create watcher: %w", err)
+	}
+	defer watcher.Close()
+
+	// Watch the project directory (not individual files) to catch new manifests.
+	if err := watcher.Add(projectRoot); err != nil {
+		return fmt.Errorf("watch %s: %w", projectRoot, err)
+	}
+
+	fmt.Printf("\n\033[36m◈ Watch mode active\033[0m — monitoring %s for changes (Ctrl+C to stop)\n\n", projectRoot)
+
+	// debounce timer: collect rapid consecutive events and fire once.
+	debounce := time.NewTimer(0)
+	<-debounce.C // drain the initial tick so it doesn't fire immediately
+
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return nil
+			}
+			// Only re-scan when a manifest file changes.
+			if !gitutil.IsManifestFile(filepath.Base(event.Name)) {
+				continue
+			}
+			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove) == 0 {
+				continue
+			}
+			// Reset the debounce timer on each qualifying event.
+			if !debounce.Stop() {
+				select {
+				case <-debounce.C:
+				default:
+				}
+			}
+			debounce.Reset(300 * time.Millisecond)
+
+		case <-debounce.C:
+			fmt.Printf("\n\033[90m[%s] Change detected — re-scanning...\033[0m\n",
+				time.Now().Format("15:04:05"))
+			cfg, err := config.LoadConfig(configFile)
+			if err != nil {
+				cfg = createDefaultConfig()
+			}
+			a, err := analyzer.New(cfg)
+			if err != nil {
+				fmt.Printf("analyzer error: %v\n", err)
+				continue
+			}
+			result, err := a.Scan(projectRoot, options)
+			if err != nil {
+				fmt.Printf("scan error: %v\n", err)
+				continue
+			}
+			// Persist the latest result for `falcn report`.
+			if jsonBytes, jsonErr := json.MarshalIndent(result, "", "  "); jsonErr == nil {
+				_ = os.WriteFile("falcn_report.json", jsonBytes, 0600)
+			}
+			outputScanResult(result, outputFormat)
+
+		case watchErr, ok := <-watcher.Errors:
+			if !ok {
+				return nil
+			}
+			logrus.Warnf("watcher error: %v", watchErr)
+		}
+	}
 }

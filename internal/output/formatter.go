@@ -110,18 +110,30 @@ func (f *FuturisticFormatter) PrintScanResults(result *analyzer.ScanResult) {
 					reachabilityBadge = "  \033[90m[not reachable]\033[0m"
 				}
 			}
+			// Transitive badge — shown for packages that are not direct dependencies.
+			transitiveBadge := ""
+			if !g.IsDirect && g.ThreatCount > 0 {
+				transitiveBadge = "  \033[90m[transitive]\033[0m"
+			}
 
 			displayName := g.PackageName
 			if g.Version != "" {
 				displayName = g.PackageName + "@" + g.Version
 			}
-			fmt.Printf("  %s%s  %s\033[0m%s\n", severityColor, strings.ToUpper(g.MaxSeverity.String()), displayName, reachabilityBadge)
+			fmt.Printf("  %s%s  %s\033[0m%s%s\n", severityColor, strings.ToUpper(g.MaxSeverity.String()), displayName, reachabilityBadge, transitiveBadge)
 			fmt.Printf("  \033[90m│\033[0m Types: %s\n", strings.Join(g.Types, ", "))
 			if len(g.CVEIDs) > 0 {
 				fmt.Printf("  \033[90m│\033[0m CVEs (%d): %s\n", len(g.CVEIDs), strings.Join(g.CVEIDs, ", "))
 			}
 			if g.FixedVersion != "" {
 				fmt.Printf("  \033[90m│\033[0m Fix: upgrade to %s\n", g.FixedVersion)
+			}
+			if len(g.CallChain) > 0 {
+				chain := strings.Join(g.CallChain, " → ")
+				if len(chain) > 80 {
+					chain = chain[:77] + "..."
+				}
+				fmt.Printf("  \033[90m│\033[0m Chain: %s\n", chain)
 			}
 			if g.ThreatCount > 1 {
 				fmt.Printf("  \033[90m│\033[0m Issues: %d threats grouped\n", g.ThreatCount)

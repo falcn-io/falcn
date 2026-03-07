@@ -17,6 +17,12 @@ type ThreatGroup struct {
 	FixedVersion string
 	Reachable    *bool
 	Types        []string
+	// IsDirect is true when the package is a direct dependency (not transitive).
+	// Populated from threat metadata["is_direct"] when available.
+	IsDirect bool
+	// CallChain is the dependency chain leading to this package, e.g.
+	// ["app", "webpack", "lodash"]. Populated from Threat.CallPath when available.
+	CallChain []string
 }
 
 // GroupThreatsByPackage aggregates a flat threat list into per-package groups,
@@ -60,6 +66,14 @@ func GroupThreatsByPackage(threats []types.Threat) []ThreatGroup {
 		if t.Reachable != nil && g.Reachable == nil {
 			r := *t.Reachable
 			g.Reachable = &r
+		}
+		// Populate direct/transitive flag from threat metadata.
+		if isD, ok := t.Metadata["is_direct"].(bool); ok && isD {
+			g.IsDirect = true
+		}
+		// Capture call/dependency chain from CallPath (first threat wins).
+		if len(t.CallPath) > 0 && len(g.CallChain) == 0 {
+			g.CallChain = t.CallPath
 		}
 		typeStr := string(t.Type)
 		found := false

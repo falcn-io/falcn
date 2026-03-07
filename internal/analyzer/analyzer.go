@@ -870,10 +870,8 @@ func (a *Analyzer) detectThreats(ctx context.Context, deps []types.Dependency, o
 				break
 			}
 			t := &allThreats[i]
-			// Only explain High/Critical/Medium threats to conserve tokens.
-			if t.Severity != types.SeverityCritical &&
-				t.Severity != types.SeverityHigh &&
-				t.Severity != types.SeverityMedium {
+			// Only explain HIGH+ threats to avoid noise.
+			if t.Severity < types.SeverityHigh {
 				continue
 			}
 

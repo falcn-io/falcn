@@ -50,6 +50,22 @@ VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 .PHONY: all
 all: clean build
 
+# Build the React web dashboard and copy to api/web_dist for embedding
+.PHONY: build-ui
+build-ui: ## Build the React web dashboard
+	@echo "Building web UI..."
+	@cd web && npm run build
+	@rm -rf api/web_dist
+	@cp -r web/dist api/web_dist
+	@echo "Web UI built and copied to api/web_dist/"
+
+# Build the API server binary (with embedded web UI — run build-ui first)
+.PHONY: build-api
+build-api: ## Build the standalone API server binary
+	@echo "Building falcn-api..."
+	@mkdir -p $(BUILD_DIR)
+	$(GOBUILD) $(BUILD_FLAGS) -o $(BUILD_DIR)/falcn-api ./api
+
 # Build the binary
 .PHONY: build
 build:

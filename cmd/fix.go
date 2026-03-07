@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -22,6 +25,9 @@ func init() {
 	fixCmd.Flags().BoolP("script", "s", false, "Emit a shell script of remediation commands (one per line) instead of the full report")
 	fixCmd.Flags().StringP("min-severity", "m", "low", "Minimum severity to include: low|medium|high|critical")
 	fixCmd.Flags().BoolP("patch-file", "p", false, "Emit a machine-readable patch manifest (JSON) instead of a human report")
+	fixCmd.Flags().Bool("apply", false, "Apply fixes directly to manifest files (modifies files in place)")
+	fixCmd.Flags().Bool("dry-run", false, "Preview what --apply would change without writing files")
+	fixCmd.Flags().String("project", ".", "Project root directory for locating manifest files with --apply")
 }
 
 var fixCmd = &cobra.Command{
@@ -96,6 +102,12 @@ func runFix(cmd *cobra.Command, args []string) error {
 	scriptMode, _ := cmd.Flags().GetBool("script")
 	minSeverityStr, _ := cmd.Flags().GetString("min-severity")
 	patchFile, _ := cmd.Flags().GetBool("patch-file")
+	apply, _ := cmd.Flags().GetBool("apply")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	projectRoot, _ := cmd.Flags().GetString("project")
+	if len(args) > 0 && projectRoot == "." {
+		projectRoot = args[0]
+	}
 
 	minSev := parseSeverity(minSeverityStr)
 
@@ -161,7 +173,20 @@ func runFix(cmd *cobra.Command, args []string) error {
 	if scriptMode {
 		return emitScript(entries)
 	}
-	return emitHumanReport(entries)
+	if err := emitHumanReport(entries); err != nil {
+		if apply || dryRun {
+			if applyErr := applyFixes(entries, projectRoot, dryRun); applyErr != nil {
+				fmt.Fprintf(os.Stderr, "apply warning: %v\n", applyErr)
+			}
+		}
+		return err
+	}
+	if apply || dryRun {
+		if applyErr := applyFixes(entries, projectRoot, dryRun); applyErr != nil {
+			fmt.Fprintf(os.Stderr, "apply warning: %v\n", applyErr)
+		}
+	}
+	return nil
 }
 
 // loadThreats reads threats from a JSON scan report or runs a quick scan.
@@ -427,3 +452,182 @@ func severityLevel(s types.Severity) int {
 	}
 }
 
+
+// applyFixes writes package version updates directly to manifest files.
+func applyFixes(entries []remediationEntry, projectRoot string, dryRun bool) error {
+	if len(entries) == 0 {
+		return nil
+	}
+
+	absRoot, err := filepath.Abs(projectRoot)
+	if err != nil {
+		return fmt.Errorf("resolve project root: %w", err)
+	}
+
+	mode := "Applying"
+	if dryRun {
+		mode = "Dry-run"
+	}
+	fmt.Printf("\n%s fixes in %s:\n", mode, absRoot)
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	var applied int
+	var errs []string
+
+	for _, e := range entries {
+		if e.fixedAt == "" {
+			continue
+		}
+		registry := strings.ToLower(e.registry)
+		var manifestFile, changeDesc string
+		var applyErr error
+
+		switch registry {
+		case "npm", "node", "nodejs":
+			manifestFile = "package.json"
+			changeDesc, applyErr = applyNPMFix(absRoot, e.pkg, e.fixedAt, dryRun)
+		case "pypi", "python", "pip":
+			manifestFile = "requirements.txt"
+			changeDesc, applyErr = applyPyPIFix(absRoot, e.pkg, e.fixedAt, dryRun)
+		case "go", "golang":
+			manifestFile = "go.mod"
+			changeDesc, applyErr = applyGoFix(absRoot, e.pkg, e.fixedAt, dryRun)
+		case "cargo", "rust", "crates.io":
+			manifestFile = "Cargo.toml"
+			changeDesc, applyErr = applyCargoFix(absRoot, e.pkg, e.fixedAt, dryRun)
+		default:
+			// For other ecosystems, just print the remediation command
+			manifestFile = "(manual)"
+			changeDesc = e.remediation
+			if !dryRun && e.remediation != "" && !strings.HasPrefix(e.remediation, "#") {
+				applyErr = runShellCommand(absRoot, e.remediation)
+			}
+		}
+
+		if applyErr != nil {
+			errs = append(errs, fmt.Sprintf("%s: %v", e.pkg, applyErr))
+			fmt.Fprintf(w, "  \u2716\t%s\t%s %s \u2192 %s\t%v\n", manifestFile, e.pkg, e.version, e.fixedAt, applyErr)
+		} else {
+			_ = changeDesc
+			fmt.Fprintf(w, "  \u2714\t%s\t%s %s \u2192 %s\n", manifestFile, e.pkg, e.version, e.fixedAt)
+			applied++
+		}
+	}
+	w.Flush()
+
+	if dryRun {
+		fmt.Printf("\n%d fix(es) would be applied. Run without --dry-run to write changes.\n", applied)
+	} else {
+		fmt.Printf("\n%d fix(es) applied.\n", applied)
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("%d fix(es) failed: %s", len(errs), strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+// applyNPMFix updates a package version in package.json.
+func applyNPMFix(root, pkg, fixedAt string, dryRun bool) (string, error) {
+	pkgFile := filepath.Join(root, "package.json")
+	data, err := os.ReadFile(pkgFile)
+	if err != nil {
+		return "", fmt.Errorf("read package.json: %w", err)
+	}
+
+	var manifest map[string]interface{}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return "", fmt.Errorf("parse package.json: %w", err)
+	}
+
+	updated := false
+	depSections := []string{"dependencies", "devDependencies", "peerDependencies", "optionalDependencies"}
+	for _, section := range depSections {
+		if deps, ok := manifest[section].(map[string]interface{}); ok {
+			if _, exists := deps[pkg]; exists {
+				deps[pkg] = "^" + fixedAt
+				updated = true
+			}
+		}
+	}
+	if !updated {
+		return "", fmt.Errorf("package %q not found in package.json", pkg)
+	}
+	if dryRun {
+		return fmt.Sprintf("package.json: %s \u2192 ^%s", pkg, fixedAt), nil
+	}
+	out, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("marshal package.json: %w", err)
+	}
+	return "", os.WriteFile(pkgFile, append(out, '\n'), 0600)
+}
+
+// applyPyPIFix updates a package version in requirements.txt.
+func applyPyPIFix(root, pkg, fixedAt string, dryRun bool) (string, error) {
+	// Try requirements.txt first, then requirements-*.txt
+	candidates := []string{"requirements.txt", "requirements-prod.txt", "requirements-base.txt"}
+	for _, filename := range candidates {
+		reqFile := filepath.Join(root, filename)
+		data, err := os.ReadFile(reqFile)
+		if err != nil {
+			continue
+		}
+		lines := strings.Split(string(data), "\n")
+		// Match: package, Package, PACKAGE (case-insensitive), with or without version spec
+		re := regexp.MustCompile(`(?i)^(` + regexp.QuoteMeta(pkg) + `)\s*([>=<~!].*)$`)
+		rePlain := regexp.MustCompile(`(?i)^(` + regexp.QuoteMeta(pkg) + `)\s*$`)
+		updated := false
+		for i, line := range lines {
+			if re.MatchString(line) {
+				lines[i] = pkg + "==" + fixedAt
+				updated = true
+			} else if rePlain.MatchString(line) {
+				lines[i] = pkg + "==" + fixedAt
+				updated = true
+			}
+		}
+		if updated {
+			if dryRun {
+				return fmt.Sprintf("%s: %s \u2192 ==%s", filename, pkg, fixedAt), nil
+			}
+			return "", os.WriteFile(reqFile, []byte(strings.Join(lines, "\n")), 0600)
+		}
+	}
+	return "", fmt.Errorf("package %q not found in requirements files", pkg)
+}
+
+// applyGoFix runs `go get pkg@vFixedAt` in the project root.
+func applyGoFix(root, pkg, fixedAt string, dryRun bool) (string, error) {
+	target := pkg + "@v" + fixedAt
+	if dryRun {
+		return fmt.Sprintf("go get %s", target), nil
+	}
+	return "", runShellCommand(root, "go get "+target)
+}
+
+// applyCargoFix updates a package version in Cargo.toml using sed-style replacement.
+func applyCargoFix(root, pkg, fixedAt string, dryRun bool) (string, error) {
+	cargoFile := filepath.Join(root, "Cargo.toml")
+	data, err := os.ReadFile(cargoFile)
+	if err != nil {
+		return "", fmt.Errorf("read Cargo.toml: %w", err)
+	}
+	re := regexp.MustCompile(`(?m)^(` + regexp.QuoteMeta(pkg) + `\s*=\s*)".+"`)
+	newContent := re.ReplaceAllString(string(data), `${1}"`+fixedAt+`"`)
+	if newContent == string(data) {
+		return "", fmt.Errorf("package %q not found in Cargo.toml", pkg)
+	}
+	if dryRun {
+		return fmt.Sprintf("Cargo.toml: %s \u2192 %s", pkg, fixedAt), nil
+	}
+	return "", os.WriteFile(cargoFile, []byte(newContent), 0600)
+}
+
+// runShellCommand executes a shell command in the given directory.
+func runShellCommand(dir, command string) error {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
