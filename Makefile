@@ -15,7 +15,11 @@ BINARY_WINDOWS=$(BINARY_NAME).exe
 BINARY_DARWIN=$(BINARY_NAME)_darwin
 
 # Build flags
-LDFLAGS=-ldflags "-X main.Version=$(shell git describe --tags --always --dirty) -X main.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S') -s -w"
+GIT_VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+GIT_BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
+CMD_PKG=github.com/falcn-io/falcn/cmd
+LDFLAGS=-ldflags "-X $(CMD_PKG).Version=$(GIT_VERSION) -X $(CMD_PKG).BuildTime=$(GIT_BUILD_TIME) -X $(CMD_PKG).Commit=$(GIT_COMMIT) -s -w"
 BUILD_FLAGS=-trimpath $(LDFLAGS)
 
 # Directories

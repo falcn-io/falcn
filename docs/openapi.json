@@ -1,0 +1,729 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Falcn Supply Chain Security API",
+    "description": "Falcn detects malicious packages, typosquatting, embedded secrets, CI/CD vulnerabilities, and CVEs across npm, PyPI, Maven, Go, NuGet, RubyGems, Cargo, and Composer. Includes reachability analysis, VEX output, and EU CRA compliance.\n\n## Authentication\n\nAll endpoints except `/health`, `/ready`, `/v1/status`, and `/v1/auth/token` require authentication.\n\nTwo methods are supported:\n- **Bearer JWT** — Exchange your API key for a 24h JWT via `POST /v1/auth/token`\n- **API Key** — Pass your key directly in the `X-API-Key` header\n\n## Rate Limits by Tier\n\n| Tier | Requests/min |\n|------|--------------|\n| Free (no auth) | 10 |\n| Viewer | 50 |\n| Analyst | 200 |\n| Admin | 1000 |\n",
+    "version": "2.3.0",
+    "contact": {
+      "name": "Falcn Security",
+      "url": "https://falcn.io",
+      "email": "security@falcn.io"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.falcn.io",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT obtained from POST /v1/auth/token"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Raw API key for simple integrations"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string", "example": "Invalid API key" },
+          "message": { "type": "string" }
+        }
+      },
+      "RateLimitError": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Rate limit exceeded" },
+          "message": { "type": "string", "example": "Your tier allows 200 requests/minute." },
+          "retry_after": { "type": "string", "example": "60 seconds" },
+          "tier": { "type": "string", "example": "analyst" }
+        }
+      },
+      "TokenRequest": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "Your Falcn API key",
+            "example": "fk_live_abc123"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string", "description": "JWT access token" },
+          "expires_in": { "type": "integer", "example": 86400, "description": "Seconds until expiry" },
+          "token_type": { "type": "string", "example": "Bearer" }
+        }
+      },
+      "AnalyzeRequest": {
+        "type": "object",
+        "required": ["package_name", "registry"],
+        "properties": {
+          "package_name": {
+            "type": "string",
+            "example": "lodash",
+            "description": "Package name to analyze"
+          },
+          "version": {
+            "type": "string",
+            "example": "4.17.11",
+            "description": "Specific version (optional — analyzes latest if omitted)"
+          },
+          "registry": {
+            "type": "string",
+            "enum": ["npm", "pypi", "go", "maven", "cargo", "rubygems", "composer", "nuget"],
+            "example": "npm"
+          },
+          "check_vulnerabilities": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include CVE vulnerability scanning"
+          },
+          "check_reachability": {
+            "type": "boolean",
+            "default": false,
+            "description": "Run reachability analysis to identify exploitable call paths"
+          },
+          "llm_explanation": {
+            "type": "boolean",
+            "default": false,
+            "description": "Generate AI-powered threat explanations (requires LLM backend)"
+          }
+        }
+      },
+      "Threat": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "package": { "type": "string", "example": "lodash" },
+          "version": { "type": "string", "example": "4.17.11" },
+          "registry": { "type": "string", "example": "npm" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "vulnerable", "malicious_package", "malicious", "typosquatting",
+              "embedded_secret", "obfuscated_code", "install_script",
+              "supply_chain_risk", "cicd_injection", "unexpected_binary",
+              "low_reputation", "unknown_package"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "description": { "type": "string" },
+          "cves": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["CVE-2019-10744"]
+          },
+          "fixed_version": {
+            "type": "string",
+            "example": "4.17.21",
+            "description": "Version that resolves this vulnerability (if known)"
+          },
+          "reachable": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this vulnerability is reachable from an entry point (null = not analyzed)"
+          },
+          "remediation": {
+            "type": "string",
+            "example": "npm install lodash@4.17.21",
+            "description": "Ecosystem-specific remediation command"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AnalyzeResponse": {
+        "type": "object",
+        "properties": {
+          "scan_id": { "type": "string", "format": "uuid" },
+          "package_name": { "type": "string" },
+          "version": { "type": "string" },
+          "registry": { "type": "string" },
+          "threat_count": { "type": "integer" },
+          "threats": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Threat" }
+          },
+          "scanned_at": { "type": "string", "format": "date-time" },
+          "duration_ms": { "type": "integer" }
+        }
+      },
+      "BatchAnalyzeRequest": {
+        "type": "object",
+        "required": ["packages"],
+        "properties": {
+          "packages": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": ["package_name", "registry"],
+              "properties": {
+                "package_name": { "type": "string" },
+                "version": { "type": "string" },
+                "registry": {
+                  "type": "string",
+                  "enum": ["npm", "pypi", "go", "maven", "cargo", "rubygems", "composer", "nuget"]
+                }
+              }
+            }
+          },
+          "check_vulnerabilities": { "type": "boolean", "default": true },
+          "check_reachability": { "type": "boolean", "default": false }
+        }
+      },
+      "BatchAnalyzeResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AnalyzeResponse" }
+          },
+          "total_packages": { "type": "integer" },
+          "total_threats": { "type": "integer" },
+          "duration_ms": { "type": "integer" }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "version": { "type": "string", "example": "v2.3.0" },
+          "uptime_seconds": { "type": "integer" },
+          "ml_model": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "size_bytes": { "type": "integer" },
+              "loaded_at": { "type": "string", "format": "date-time" },
+              "using_heuristic": { "type": "boolean" }
+            }
+          },
+          "vulnerability_dbs": {
+            "type": "object",
+            "properties": {
+              "osv": { "type": "boolean" },
+              "github": { "type": "boolean" },
+              "nvd": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "ImageAnalyzeRequest": {
+        "type": "object",
+        "required": ["image"],
+        "properties": {
+          "image": {
+            "type": "string",
+            "example": "nginx:1.25.0",
+            "description": "Container image reference (name:tag or digest)"
+          },
+          "check_vulnerabilities": { "type": "boolean", "default": true },
+          "os_packages": { "type": "boolean", "default": true, "description": "Scan OS-level packages" },
+          "language_packages": { "type": "boolean", "default": true, "description": "Scan language-specific packages inside the image" }
+        }
+      },
+      "ReportRequest": {
+        "type": "object",
+        "required": ["scan_id", "format"],
+        "properties": {
+          "scan_id": { "type": "string", "format": "uuid" },
+          "format": {
+            "type": "string",
+            "enum": ["pdf", "sarif", "cyclonedx", "spdx"],
+            "description": "Report format"
+          },
+          "vex": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include VEX (Vulnerability Exploitability eXchange) data in CycloneDX output"
+          }
+        }
+      },
+      "PolicyViolation": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "framework": { "type": "string", "example": "EU_CRA" },
+          "article": { "type": "string", "example": "Art.14§1" }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or invalid credentials",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "X-RateLimit-Limit": {
+            "schema": { "type": "integer" },
+            "description": "Requests allowed per minute for your tier"
+          },
+          "Retry-After": {
+            "schema": { "type": "integer" },
+            "description": "Seconds until the rate limit resets"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RateLimitError" }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    { "BearerAuth": [] },
+    { "ApiKeyAuth": [] }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Liveness check",
+        "description": "Returns 200 when the server is running. Used by load balancers and Kubernetes liveness probes.",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "ready",
+        "summary": "Readiness check",
+        "description": "Returns 200 when the server is ready to accept traffic (vulnerability DBs loaded, model loaded).",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": { "description": "Server is ready" },
+          "503": { "description": "Server is not ready yet (still initializing)" }
+        }
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "operationId": "getStatus",
+        "summary": "API status and model info",
+        "description": "Returns ML model status, vulnerability DB connectivity, version information, and uptime.",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Status information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/token": {
+      "post": {
+        "operationId": "issueToken",
+        "summary": "Exchange API key for JWT",
+        "description": "Trade a static API key for a 24-hour JWT Bearer token. Use the JWT for all subsequent calls to benefit from identity-based rate limiting.",
+        "tags": ["Authentication"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TokenRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT issued",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponse" }
+              }
+            }
+          },
+          "400": { "description": "Missing api_key field" },
+          "401": { "description": "Invalid API key" }
+        }
+      }
+    },
+    "/v1/analyze": {
+      "post": {
+        "operationId": "analyzePackage",
+        "summary": "Analyze a package for supply chain threats",
+        "description": "Scans a single package for malicious code, typosquatting, embedded secrets, CVEs, and supply chain risks. Optionally runs reachability analysis to identify exploitable call paths and LLM-powered threat explanations.",
+        "tags": ["Analysis"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalyzeRequest" },
+              "example": {
+                "package_name": "lodash",
+                "version": "4.17.11",
+                "registry": "npm",
+                "check_vulnerabilities": true,
+                "check_reachability": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnalyzeResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request (missing required fields)" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/v1/analyze/batch": {
+      "post": {
+        "operationId": "analyzePackageBatch",
+        "summary": "Analyze up to 100 packages in one call",
+        "description": "Parallel analysis of a batch of packages. Maximum 100 packages per request. Results are returned in the same order as the input list.",
+        "tags": ["Analysis"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchAnalyzeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch analysis results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BatchAnalyzeResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request or batch exceeds 100 packages" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/v1/analyze/image": {
+      "post": {
+        "operationId": "analyzeContainerImage",
+        "summary": "Analyze a container image for vulnerable packages",
+        "description": "Scans all OS-level and language-level packages inside a container image. Supports Docker Hub, ECR, GCR, and any OCI-compliant registry.",
+        "tags": ["Analysis"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ImageAnalyzeRequest" },
+              "example": {
+                "image": "nginx:1.25.0",
+                "check_vulnerabilities": true,
+                "os_packages": true,
+                "language_packages": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image analysis results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnalyzeResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid image reference" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/v1/scans": {
+      "get": {
+        "operationId": "listScans",
+        "summary": "List recent scans",
+        "description": "Returns the most recent scan records (up to 500), newest first.",
+        "tags": ["Scans & Threats"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 500, "default": 50 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of scan records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scans": { "type": "array", "items": { "$ref": "#/components/schemas/AnalyzeResponse" } },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/threats": {
+      "get": {
+        "operationId": "listThreats",
+        "summary": "List all detected threats",
+        "description": "Returns all threats detected across all scans, filterable by severity, type, and reachability.",
+        "tags": ["Scans & Threats"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "parameters": [
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by threat type (e.g. vulnerable, typosquatting)"
+          },
+          {
+            "name": "reachable",
+            "in": "query",
+            "schema": { "type": "boolean" },
+            "description": "Filter by reachability (true = reachable only)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of threats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "threats": { "type": "array", "items": { "$ref": "#/components/schemas/Threat" } },
+                    "total": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/vulnerabilities": {
+      "get": {
+        "operationId": "listVulnerabilities",
+        "summary": "List CVEs from all vulnerability databases",
+        "description": "Returns CVE data aggregated from OSV, GitHub Advisory, and NVD databases for packages scanned so far.",
+        "tags": ["Scans & Threats"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "CVE list",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/stats": {
+      "get": {
+        "operationId": "getStats",
+        "summary": "Aggregated scan statistics",
+        "description": "Returns counts of scans, threats by severity, packages analyzed, and top threat types.",
+        "tags": ["Dashboard"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Scan statistics",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/dashboard/metrics": {
+      "get": {
+        "operationId": "getDashboardMetrics",
+        "summary": "Dashboard metrics for UI rendering",
+        "description": "Returns time-series data suitable for dashboard charts: threats over time, scan throughput, and severity distribution.",
+        "tags": ["Dashboard"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Dashboard metrics",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/dashboard/performance": {
+      "get": {
+        "operationId": "getDashboardPerformance",
+        "summary": "API performance metrics",
+        "description": "Returns p50/p95/p99 latency, error rates, and throughput data for the API itself.",
+        "tags": ["Dashboard"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Performance metrics",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/reports/generate": {
+      "post": {
+        "operationId": "generateReport",
+        "summary": "Generate a compliance report",
+        "description": "Generates a report from a previous scan in PDF, SARIF, CycloneDX (with VEX), or SPDX format. CycloneDX output includes EU CRA-compliant VEX analysis fields.",
+        "tags": ["Reports"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReportRequest" },
+              "example": {
+                "scan_id": "550e8400-e29b-41d4-a716-446655440000",
+                "format": "cyclonedx",
+                "vex": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated report",
+            "content": {
+              "application/json": { "schema": { "type": "object" } },
+              "application/pdf": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "400": { "description": "Invalid scan_id or unsupported format" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "description": "Scan not found" }
+        }
+      }
+    },
+    "/v1/stream": {
+      "get": {
+        "operationId": "streamEvents",
+        "summary": "Real-time threat events via SSE",
+        "description": "Server-Sent Events (SSE) stream. Connect once and receive `threat` and `done` events as scans complete. Each `threat` event contains a JSON-encoded Threat object.\n\nExample:\n```\nevent: threat\ndata: {\"id\":\"...\",\"type\":\"malicious_package\",...}\n\nevent: done\ndata: {\"scan_id\":\"...\",\"total_threats\":3}\n```",
+        "tags": ["Streaming"],
+        "security": [{ "BearerAuth": [] }, { "ApiKeyAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "SSE stream opened",
+            "content": {
+              "text/event-stream": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System",
+      "description": "Health checks and API status (no authentication required)"
+    },
+    {
+      "name": "Authentication",
+      "description": "Issue JWT tokens from API keys"
+    },
+    {
+      "name": "Analysis",
+      "description": "Package and container image threat analysis"
+    },
+    {
+      "name": "Scans & Threats",
+      "description": "Browse historical scans and detected threats"
+    },
+    {
+      "name": "Dashboard",
+      "description": "Metrics and statistics for the Falcn UI"
+    },
+    {
+      "name": "Reports",
+      "description": "Generate compliance reports (PDF, SARIF, CycloneDX, SPDX)"
+    },
+    {
+      "name": "Streaming",
+      "description": "Real-time event streaming via SSE"
+    }
+  ]
+}

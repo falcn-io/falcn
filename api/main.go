@@ -139,7 +139,27 @@ type BatchSummary struct {
 	NoThreats  int `json:"no_threats"`
 }
 
-// Rate limiter for API endpoints
+// rateLimitForRole returns the per-minute request quota for the given role.
+// This implements the freemium tier model:
+//
+//	free / unauthenticated → 10 req/min  (existing default)
+//	viewer                 → 50 req/min  (read-only users)
+//	analyst                → 200 req/min (full scan users)
+//	admin / owner          → 1000 req/min (operators)
+func rateLimitForRole(role string) int {
+	switch strings.ToLower(role) {
+	case "admin", "owner":
+		return 1000
+	case "analyst":
+		return 200
+	case "viewer":
+		return 50
+	default: // unauthenticated, dev mode, unknown
+		return defaultRateLimit
+	}
+}
+
+// Rate limiter for API endpoints — supports per-identity tiered limits.
 type RateLimiter struct {
 	limiters map[string]*rate.Limiter
 	mu       sync.RWMutex
@@ -151,27 +171,37 @@ func NewRateLimiter() *RateLimiter {
 	}
 }
 
-func (rl *RateLimiter) getLimiter(ip string) *rate.Limiter {
+// getLimiterForCapacity returns (creating if needed) a token-bucket limiter for
+// the given key with the given per-minute capacity.
+// If an existing limiter has a different rate (tier changed), it is replaced.
+func (rl *RateLimiter) getLimiterForCapacity(key string, perMinute int) *rate.Limiter {
+	r := rate.Every(time.Minute / time.Duration(perMinute))
 	rl.mu.RLock()
-	limiter, exists := rl.limiters[ip]
+	limiter, exists := rl.limiters[key]
 	rl.mu.RUnlock()
 
 	if !exists {
 		rl.mu.Lock()
-		// Double-check pattern
-		if limiter, exists = rl.limiters[ip]; !exists {
-			// Allow defaultRateLimit requests per minute per IP.
-			limiter = rate.NewLimiter(rate.Every(time.Minute/defaultRateLimit), defaultRateLimit)
-			rl.limiters[ip] = limiter
+		if limiter, exists = rl.limiters[key]; !exists {
+			limiter = rate.NewLimiter(r, perMinute)
+			rl.limiters[key] = limiter
 		}
 		rl.mu.Unlock()
 	}
-
 	return limiter
 }
 
+// Allow checks the per-IP free-tier limit (backwards-compatible helper).
 func (rl *RateLimiter) Allow(ip string) bool {
-	return rl.getLimiter(ip).Allow()
+	return rl.getLimiterForCapacity(ip, defaultRateLimit).Allow()
+}
+
+// AllowTiered checks the rate limit for an authenticated identity.
+// key is the stable user identity (userID from JWT, or IP as fallback).
+// role is the JWT role claim ("viewer", "analyst", "admin", etc.).
+func (rl *RateLimiter) AllowTiered(key, role string) bool {
+	quota := rateLimitForRole(role)
+	return rl.getLimiterForCapacity(key, quota).Allow()
 }
 
 // StartEviction runs a background goroutine that removes idle limiter entries
@@ -621,18 +651,36 @@ func readyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-// Rate limiting middleware
+// Rate limiting middleware — applies tiered limits based on the authenticated role.
+// Authenticated users are keyed by userID (from JWT context) so that changing
+// IPs (VPN, mobile) don't reset their quota. Unauthenticated / dev-mode
+// requests fall back to IP-keyed free-tier limits.
 func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ip := getClientIP(r)
-		if !rateLimiter.Allow(ip) {
+		// Extract identity and role injected by authMiddleware.
+		userID, _ := r.Context().Value(security.ContextKeyUserID).(string)
+		role, _ := r.Context().Value(security.ContextKeyRole).(string)
+
+		// Choose a stable rate-limit key: prefer userID over IP so that
+		// authenticated users share one bucket across IPs.
+		key := userID
+		if key == "" {
+			key = getClientIP(r)
+		}
+
+		allowed := rateLimiter.AllowTiered(key, role)
+		if !allowed {
 			apimetrics.RecordRateLimitHit(r.URL.Path)
+			quota := rateLimitForRole(role)
 			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", quota))
+			w.Header().Set("Retry-After", "60")
 			w.WriteHeader(http.StatusTooManyRequests)
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"error":       "Rate limit exceeded",
-				"message":     "Too many requests. Please try again later.",
+				"message":     fmt.Sprintf("Too many requests. Your tier allows %d requests/minute.", quota),
 				"retry_after": "60 seconds",
+				"tier":        strings.ToLower(role),
 			})
 			return
 		}

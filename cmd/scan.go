@@ -32,8 +32,64 @@ var scanCmd = &cobra.Command{
 Falcn automatically detects project types (Node.js, Python, Go, Rust, Java, .NET, PHP, Ruby)
 based on manifest files and creates appropriate registry connectors. Use --recursive for monorepos
 and multi-project directories. Specify --package-manager to limit scanning to specific ecosystems.`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: runScan,
+	Args:    cobra.MaximumNArgs(1),
+	PreRunE: validateScanFlags,
+	RunE:    runScan,
+}
+
+// validateScanFlags performs pre-flight validation before the scan runs.
+func validateScanFlags(cmd *cobra.Command, args []string) error {
+	// 1. Validate the target path (if provided).
+	if len(args) > 0 {
+		fi, err := os.Stat(args[0])
+		if err != nil {
+			return fmt.Errorf("path %q does not exist or is not accessible: %w", args[0], err)
+		}
+		specificFile, _ := cmd.Flags().GetString("file")
+		if !fi.IsDir() && specificFile == "" {
+			return fmt.Errorf("path %q is a file, not a directory — use --file to scan a specific manifest file", args[0])
+		}
+	}
+
+	// 2. Validate --file flag (if set, the file must exist).
+	if specificFile, _ := cmd.Flags().GetString("file"); specificFile != "" {
+		if _, err := os.Stat(specificFile); err != nil {
+			return fmt.Errorf("manifest file %q does not exist: %w", specificFile, err)
+		}
+	}
+
+	// 3. Validate --sbom-format value.
+	if sbomFmt, _ := cmd.Flags().GetString("sbom-format"); sbomFmt != "" {
+		validFormats := map[string]bool{"spdx": true, "cyclonedx": true}
+		if !validFormats[strings.ToLower(sbomFmt)] {
+			return fmt.Errorf("invalid --sbom-format %q: must be one of: spdx, cyclonedx", sbomFmt)
+		}
+	}
+
+	// 4. Validate --threshold range.
+	if t, _ := cmd.Flags().GetFloat64("threshold"); t < 0.0 || t > 1.0 {
+		return fmt.Errorf("invalid --threshold %.2f: must be between 0.0 and 1.0", t)
+	}
+
+	// 5. Validate --registry value.
+	validRegistries := map[string]bool{
+		"npm": true, "pypi": true, "go": true, "maven": true,
+		"cargo": true, "rubygems": true, "composer": true, "nuget": true, "": true,
+	}
+	if reg, _ := cmd.Flags().GetString("registry"); !validRegistries[strings.ToLower(reg)] {
+		return fmt.Errorf("invalid --registry %q: must be one of: npm, pypi, go, maven, cargo, rubygems, composer, nuget", reg)
+	}
+
+	// 6. Validate --local-db path when --offline is set.
+	if offline, _ := cmd.Flags().GetBool("offline"); offline {
+		if localDB, _ := cmd.Flags().GetString("local-db"); localDB != "" {
+			if _, err := os.Stat(localDB); err != nil {
+				return fmt.Errorf("local CVE database %q does not exist (required for --offline mode): %w", localDB, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func init() {

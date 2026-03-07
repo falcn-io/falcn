@@ -46,7 +46,35 @@ fixed version.
   # CI gate: fail if any high+ vulnerabilities have available fixes
   falcn fix --input scan-report.json --min-severity high
   echo $?  # non-zero when fixable high+ CVEs exist`,
-	RunE: runFix,
+	PreRunE: validateFixFlags,
+	RunE:    runFix,
+}
+
+// validateFixFlags performs pre-flight validation before running fix.
+func validateFixFlags(cmd *cobra.Command, args []string) error {
+	// 1. If --input is provided, the file must exist.
+	if inputFile, _ := cmd.Flags().GetString("input"); inputFile != "" {
+		if _, err := os.Stat(inputFile); err != nil {
+			return fmt.Errorf("input file %q does not exist: %w", inputFile, err)
+		}
+	}
+
+	// 2. --min-severity must be a known value.
+	if sev, _ := cmd.Flags().GetString("min-severity"); sev != "" {
+		valid := map[string]bool{"low": true, "medium": true, "high": true, "critical": true}
+		if !valid[strings.ToLower(sev)] {
+			return fmt.Errorf("invalid --min-severity %q: must be one of: low, medium, high, critical", sev)
+		}
+	}
+
+	// 3. --script and --patch-file are mutually exclusive output modes.
+	script, _ := cmd.Flags().GetBool("script")
+	patchFile, _ := cmd.Flags().GetBool("patch-file")
+	if script && patchFile {
+		return fmt.Errorf("--script and --patch-file are mutually exclusive: pick one output format")
+	}
+
+	return nil
 }
 
 // remediationEntry groups everything we know about one fixable threat.
