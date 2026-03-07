@@ -1,18 +1,27 @@
 {
   "cv": {
-    "cv_f1_mean": 1.0,
-    "cv_f1_std": 0.0,
-    "cv_auc_mean": 1.0,
-    "cv_auc_std": 0.0
+    "cv_f1_mean": 0.8794621532257786,
+    "cv_f1_std": 0.0033239853137677897,
+    "cv_auc_mean": 0.9054346087949743,
+    "cv_auc_std": 0.0036805139104588397
   },
   "test": {
-    "auc": 1.0,
-    "f1": 1.0,
-    "precision": 1.0,
-    "recall": 1.0,
-    "false_positive_rate": 0.0
+    "auc": 0.9283648104491592,
+    "auc_pr": 0.8531092785696591,
+    "f1": 0.8991282689912827,
+    "precision": 0.971736204576043,
+    "recall": 0.8366164542294322,
+    "false_positive_rate": 0.004022988505747126,
+    "threshold": 0.11000000000000001,
+    "confusion_matrix": {
+      "tn": 5199,
+      "fp": 21,
+      "fn": 141,
+      "tp": 722
+    }
   },
-  "n_train": 16000,
-  "n_test": 4000,
-  "n_features": 25
+  "n_train": 24330,
+  "n_test": 6083,
+  "n_features": 25,
+  "data_source": "real+synthetic"
 }

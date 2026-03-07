@@ -1,104 +1,104 @@
 {
   "features": [
     {
-      "name": "age_days",
-      "importance": 0.09239293158227882
-    },
-    {
-      "name": "days_between_versions",
-      "importance": 0.07254999154498813
-    },
-    {
-      "name": "days_since_update",
-      "importance": 0.062038706594514416
-    },
-    {
-      "name": "domain_age_days",
-      "importance": 0.04634527679819247
-    },
-    {
       "name": "dependency_delta",
-      "importance": 0.03952965271280172
+      "importance": 0.06571949700969623
     },
     {
       "name": "executable_binary_count",
-      "importance": 0.03745094732994254
-    },
-    {
-      "name": "maintainer_count",
-      "importance": 0.036734069739556854
-    },
-    {
-      "name": "log_stars",
-      "importance": 0.025901373054748055
+      "importance": 0.05735002015440199
     },
     {
       "name": "maintainer_velocity",
-      "importance": 0.023457093773784056
+      "importance": 0.05168875351573157
     },
     {
-      "name": "log_forks",
-      "importance": 0.022840918849493436
-    },
-    {
-      "name": "install_script_kb",
-      "importance": 0.01935325143287246
+      "name": "days_since_update",
+      "importance": 0.041024669120011514
     },
     {
       "name": "entropy_max_file",
-      "importance": 0.011583445826183916
+      "importance": 0.037975687183066036
     },
     {
-      "name": "namespace_age_days",
-      "importance": 0.008648301351133645
+      "name": "days_between_versions",
+      "importance": 0.0372054740885436
     },
     {
-      "name": "verified_flags",
-      "importance": 0.007908802762908049
-    },
-    {
-      "name": "maintainer_change_count",
-      "importance": 0.0063253183272074355
-    },
-    {
-      "name": "log_version_count",
-      "importance": 0.004319701217960132
-    },
-    {
-      "name": "download_star_anomaly",
-      "importance": 0.002536625736338933
-    },
-    {
-      "name": "has_install_script",
-      "importance": 0.0023898948010374005
-    },
-    {
-      "name": "log_downloads",
-      "importance": 0.0012239717143162705
+      "name": "domain_age_days",
+      "importance": 0.03424582981313457
     },
     {
       "name": "malware_reports",
-      "importance": 0.0012073738913933594
+      "importance": 0.016394691216836507
+    },
+    {
+      "name": "maintainer_count",
+      "importance": 0.013981481989305761
+    },
+    {
+      "name": "install_script_kb",
+      "importance": 0.011637831533772727
+    },
+    {
+      "name": "age_days",
+      "importance": 0.010708207986185022
+    },
+    {
+      "name": "namespace_age_days",
+      "importance": 0.009349579718168662
+    },
+    {
+      "name": "log_version_count",
+      "importance": 0.008872275122243586
+    },
+    {
+      "name": "log_downloads",
+      "importance": 0.006074313113172103
+    },
+    {
+      "name": "download_star_anomaly",
+      "importance": 0.005199684433443344
+    },
+    {
+      "name": "maintainer_change_count",
+      "importance": 0.004749284100198089
     },
     {
       "name": "network_code_files",
-      "importance": 0.0009706147184591647
+      "importance": 0.004393191237326101
     },
     {
-      "name": "vuln_count",
-      "importance": 0.00037310610393759643
+      "name": "verified_flags",
+      "importance": 0.003167847936934729
+    },
+    {
+      "name": "log_forks",
+      "importance": 0.0031345822652303896
     },
     {
       "name": "log_total_files",
-      "importance": 0.0001637466903020517
+      "importance": 0.0031129713733033817
     },
     {
-      "name": "has_postinstall",
-      "importance": 8.856081020052256e-05
+      "name": "log_stars",
+      "importance": 0.002704161948193895
+    },
+    {
+      "name": "has_install_script",
+      "importance": 0.0011797685638579901
     },
     {
       "name": "has_preinstall",
-      "importance": 8.039914416994726e-05
+      "importance": 0.0011453175414010868
+    },
+    {
+      "name": "vuln_count",
+      "importance": 0.0008672627727917062
+    },
+    {
+      "name": "has_postinstall",
+      "importance": 0.0007459370113682523
     }
   ]
 }

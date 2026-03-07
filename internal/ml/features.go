@@ -231,62 +231,64 @@ func ExtractFeatures(data InputData) []float32 {
 
 // FeatureMeans and FeatureStdDevs contain z-score normalization statistics
 // computed from the trained model dataset (resources/models/scaler_stats.json).
-// These values were produced by scripts/train_ml_model.py on 2026-03-06.
+// These values were produced by scripts/train_ml_model.py on 2026-03-07 using
+// real malicious package data (413 real samples, 47 confirmed malicious) combined
+// with 30,000 synthetic samples. AUC=0.9284, F1=0.8991, FPR=0.004.
 // Update whenever the model is retrained.
 var FeatureMeans = [FeatureVectorSize]float32{
-	9.4735,   // [0]  log_downloads
-	3.2159,   // [1]  maintainer_count
-	786.5998, // [2]  age_days
-	107.6925, // [3]  days_since_update
-	0.4189,   // [4]  vuln_count
-	0.0266,   // [5]  malware_reports
-	0.6683,   // [6]  verified_flags
-	0.4178,   // [7]  has_install_script
-	1.5797,   // [8]  install_script_kb
-	0.1448,   // [9]  has_preinstall
-	0.1889,   // [10] has_postinstall
-	0.3524,   // [11] maintainer_change_count
-	0.0070,   // [12] maintainer_velocity
-	1484.767, // [13] domain_age_days
-	0.1858,   // [14] executable_binary_count
-	1.2570,   // [15] network_code_files
-	2.4407,   // [16] log_total_files
-	4.7618,   // [17] entropy_max_file
-	1.1554,   // [18] dependency_delta
-	1.8660,   // [19] log_version_count
-	57.4083,  // [20] days_between_versions
-	4.5383,   // [21] log_stars
-	2.7612,   // [22] log_forks
-	970.8500, // [23] namespace_age_days
-	0.0344,   // [24] download_star_anomaly
+	8.5274,    // [0]  log_downloads
+	3.0345,    // [1]  maintainer_count
+	863.1455,  // [2]  age_days
+	100.1726,  // [3]  days_since_update
+	0.3227,    // [4]  vuln_count
+	0.0181,    // [5]  malware_reports
+	0.5991,    // [6]  verified_flags
+	0.3940,    // [7]  has_install_script
+	1.6441,    // [8]  install_script_kb
+	0.1573,    // [9]  has_preinstall
+	0.2025,    // [10] has_postinstall
+	0.3029,    // [11] maintainer_change_count
+	0.0080,    // [12] maintainer_velocity
+	1368.9699, // [13] domain_age_days
+	0.1642,    // [14] executable_binary_count
+	1.1356,    // [15] network_code_files
+	2.3529,    // [16] log_total_files
+	4.8091,    // [17] entropy_max_file
+	1.4168,    // [18] dependency_delta
+	1.9753,    // [19] log_version_count
+	57.5715,   // [20] days_between_versions
+	4.1669,    // [21] log_stars
+	2.5384,    // [22] log_forks
+	1008.9310, // [23] namespace_age_days
+	0.0290,    // [24] download_star_anomaly
 }
 
 var FeatureStdDevs = [FeatureVectorSize]float32{
-	4.2145,   // [0]
-	1.7344,   // [1]
-	824.5095, // [2]
-	121.2384, // [3]
-	0.7070,   // [4]
-	0.2125,   // [5]
-	0.9464,   // [6]
-	0.4932,   // [7]  binary 0/1
-	4.2164,   // [8]
-	0.3519,   // [9]
-	0.3914,   // [10]
-	0.7706,   // [11]
-	0.0286,   // [12]
-	1465.122, // [13]
-	0.6708,   // [14]
-	1.3426,   // [15]
-	1.0117,   // [16]
-	1.3660,   // [17]
-	4.9371,   // [18]
-	1.1974,   // [19]
-	59.4247,  // [20]
-	3.1188,   // [21]
-	2.0472,   // [22]
-	983.2851, // [23]
-	0.1535,   // [24]
+	4.7613,    // [0]  log_downloads
+	1.7308,    // [1]  maintainer_count
+	1034.0280, // [2]  age_days
+	146.1347,  // [3]  days_since_update
+	0.6153,    // [4]  vuln_count
+	0.1731,    // [5]  malware_reports
+	0.9207,    // [6]  verified_flags
+	0.4886,    // [7]  has_install_script
+	4.7617,    // [8]  install_script_kb
+	0.3641,    // [9]  has_preinstall
+	0.4019,    // [10] has_postinstall
+	0.8459,    // [11] maintainer_change_count
+	0.0392,    // [12] maintainer_velocity
+	1451.1911, // [13] domain_age_days
+	0.6145,    // [14] executable_binary_count
+	1.3557,    // [15] network_code_files
+	1.0634,    // [16] log_total_files
+	1.5142,    // [17] entropy_max_file
+	4.6145,    // [18] dependency_delta
+	1.2868,    // [19] log_version_count
+	64.1508,   // [20] days_between_versions
+	3.3991,    // [21] log_stars
+	2.2319,    // [22] log_forks
+	1098.4330, // [23] namespace_age_days
+	0.1425,    // [24] download_star_anomaly
 }
 
 // NormalizeFeatures applies z-score normalization using training statistics.
