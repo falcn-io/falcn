@@ -18,6 +18,73 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Pre-compiled regexes (compiled once at package init, not per-file scan)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Pattern detection regexes
+var (
+	reBase64         = regexp.MustCompile(`[A-Za-z0-9+/]{50,}={0,2}`)
+	reHexEncoding    = regexp.MustCompile(`\\x[0-9a-fA-F]{2}`)
+	reUnicodeEscape  = regexp.MustCompile(`\\u[0-9a-fA-F]{4}`)
+	reSingleCharVar  = regexp.MustCompile(`\b[a-z]\s*=\s*`)
+	reSetTimeout     = regexp.MustCompile(`setTimeout\s*\(\s*[^,]+,\s*(\d+)\s*\)`)
+	reSetInterval    = regexp.MustCompile(`setInterval\s*\(\s*[^,]+,\s*(\d+)\s*\)`)
+	reDateCheck      = regexp.MustCompile(`(new\s+Date\(\)|Date\.now\(\))\s*[><=]+`)
+)
+
+// Secret detection regexes
+var (
+	reGenericAPIKey   = regexp.MustCompile(`(?i)(api[_-]?key|apikey)["\s:=]+[a-zA-Z0-9]{20,}`)
+	reAWSKey          = regexp.MustCompile(`AKIA[0-9A-Z]{16}`)
+	reGitHubToken     = regexp.MustCompile(`ghp_[a-zA-Z0-9]{36}`)
+	reGenericSecret   = regexp.MustCompile(`(?i)(secret|password|passwd|pwd)["\s:=]+[^\s"']{8,}`)
+	rePrivateKeyHdr   = regexp.MustCompile(`-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----`)
+	reJWTToken        = regexp.MustCompile(`eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*`)
+)
+
+// Network indicator regexes
+var (
+	reIPAddress     = regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`)
+	reURL           = regexp.MustCompile(`https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
+	reDomainExtract = regexp.MustCompile(`https?://([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})`)
+)
+
+// Credential harvesting regex
+var reCredentialPaths = regexp.MustCompile(`(?i)(\.ssh|\.aws|\.kube|\.config/gcloud|\.config/sysmon|\.npmrc|\.pypirc|\.docker/config|\.gnupg|\.netrc|\.gitconfig|\.git-credentials|\.config/gh|id_rsa|id_ed25519|credentials\.json|service_account\.json)`)
+
+// OS persistence regexes
+var (
+	reSystemdCreate  = regexp.MustCompile(`(?i)(systemctl\s+(enable|start|daemon-reload)|\.config/systemd/user|ExecStart\s*=)`)
+	reSystemdUnit    = regexp.MustCompile(`(?s)\[Unit\].*\[Service\].*ExecStart`)
+	reCronInstall    = regexp.MustCompile(`(?i)(crontab\s+-[elr]|/etc/cron\.\w+/|sched\.scheduler\(\))`)
+	reLaunchdMac     = regexp.MustCompile(`(?i)(launchctl\s+(load|submit)|LaunchAgents|LaunchDaemons|ProgramArguments)`)
+	reWindowsRunKey  = regexp.MustCompile(`(?i)(CurrentVersion\\\\Run|HKCU\\\\Software\\\\Microsoft|reg\s+add\s+.*\\\\Run|schtasks\s+/create)`)
+	reWindowsStartup = regexp.MustCompile(`(?i)(Startup\\\\|shell:startup|APPDATA.*\\\\Microsoft\\\\Windows\\\\Start Menu)`)
+)
+
+// Anti-forensics regexes
+var (
+	reJSSelfDelete     = regexp.MustCompile(`fs\.(unlink|unlinkSync|rmSync)\s*\(\s*__filename`)
+	reJSFileRemoval    = regexp.MustCompile(`fs\.(unlink|unlinkSync|rmSync)\s*\(\s*(__dirname|__filename|process\.argv\[1\])`)
+	rePySelfDelete     = regexp.MustCompile(`os\.(remove|unlink)\s*\(\s*__file__`)
+	rePyPathlibDelete  = regexp.MustCompile(`Path\s*\(\s*__file__\s*\)\s*\.unlink`)
+	reShellSelfDelete  = regexp.MustCompile(`rm\s+(-f\s+)?"?\$0"?|shred\s+-u\s+"?\$0"?`)
+	rePkgJsonCleanup   = regexp.MustCompile(`(?i)(writeFileSync|writeFile)\s*\(.*package\.json`)
+	reHistoryWipe      = regexp.MustCompile(`(?i)(history\s+-c|>.*\.bash_history|rm\s+.*\.log|unset\s+HISTFILE)`)
+)
+
+// Custom cipher regexes
+var (
+	reJSCharCodeXOR   = regexp.MustCompile(`charCodeAt\s*\([^)]*\)\s*\^`)
+	reJSFromCharXOR   = regexp.MustCompile(`String\.fromCharCode\s*\([^)]*\^`)
+	rePyByteXOR       = regexp.MustCompile(`(?:ord|chr)\s*\([^)]*\)\s*\^`)
+	rePyBytearrayXOR  = regexp.MustCompile(`(?:bytes|bytearray)\s*\(\s*\[?[^]]*\^`)
+	reNamedDeobfFunc  = regexp.MustCompile(`(?i)(?:function|def|const|var|let)\s+_?(?:trans|decode|decrypt|deobfuscate|unpack)_?\d*\s*[=(]`)
+	reBufferXOR       = regexp.MustCompile(`(?:Buffer\.from|new\s+Uint8Array)\s*\([^)]*\).*\^`)
+	reStringRevDecode = regexp.MustCompile(`(?:reverse|split\s*\(\s*['"]{2}\s*\)\s*\.reverse|\[::\-1\]).*(?:base64|atob|b64decode)`)
+)
+
 // ContentScanner scans package contents for malicious patterns
 type ContentScanner struct {
 	maxFileSize       int64
@@ -79,8 +146,12 @@ func NewContentScanner() *ContentScanner {
 			"0.0.0.0",
 		},
 		suspiciousDomains: []string{
-			// Suspicious TLDs and patterns
-			".tk", ".ml", ".ga", ".cf", // Free TLDs often used by attackers
+			// Free TLDs often used by attackers
+			".tk", ".ml", ".ga", ".cf", ".gq",
+			// TLDs commonly used in brand-impersonation supply chain attacks
+			".zone", ".cloud", ".xyz", ".top", ".icu", ".buzz",
+			".site", ".online", ".fun", ".click", ".link",
+			".work", ".rest", ".live", ".sbs", ".cfd",
 		},
 	}
 }
@@ -113,18 +184,18 @@ func (cs *ContentScanner) ScanDirectory(path string) ([]types.Threat, error) {
 				}
 			}
 			if !matched {
-				logrus.Infof("DEBUG: Skipped %s (Not in includeGlobs: %v)", rel, cs.includeGlobs)
+				logrus.Debugf("Skipped %s (Not in includeGlobs: %v)", rel, cs.includeGlobs)
 				return nil
 			}
 		}
 		for _, g := range cs.excludeGlobs {
 			if ok, _ := filepath.Match(g, rel); ok {
-				logrus.Infof("DEBUG: Skipped %s (Excluded by glob: %s)", rel, g)
+				logrus.Debugf("Skipped %s (Excluded by glob: %s)", rel, g)
 				return nil
 			}
 		}
 		if cs.maxFiles > 0 && scannedFiles >= cs.maxFiles {
-			logrus.Infof("DEBUG: Skipped %s (Max files limit reached)", rel)
+			logrus.Debugf("Skipped %s (Max files limit reached)", rel)
 			return nil
 		}
 		if len(cs.whitelistExt) > 0 {
@@ -137,19 +208,19 @@ func (cs *ContentScanner) ScanDirectory(path string) ([]types.Threat, error) {
 				}
 			}
 			if !ok {
-				logrus.Infof("DEBUG: Skipped %s (Extension %s not in whitelist: %v)", rel, ext, cs.whitelistExt)
+				logrus.Debugf("Skipped %s (Extension %s not in whitelist: %v)", rel, ext, cs.whitelistExt)
 				return nil
 			}
 		}
 		if info.Size() > cs.maxFileSize {
-			logrus.Infof("DEBUG: Skipped %s (Size %d > %d)", rel, info.Size(), cs.maxFileSize)
+			logrus.Debugf("Skipped %s (Size %d > %d)", rel, info.Size(), cs.maxFileSize)
 			return nil
 		}
 		if cs.isBinaryFile(filePath) {
-			logrus.Infof("DEBUG: Skipped %s (Detected as binary)", rel)
+			logrus.Debugf("Skipped %s (Detected as binary)", rel)
 			return nil
 		}
-		logrus.Infof("DEBUG: ACCEPTED file %s", rel)
+		logrus.Debugf("ACCEPTED file %s", rel)
 		files = append(files, filePath)
 		scannedFiles++
 		return nil
@@ -245,6 +316,26 @@ func (cs *ContentScanner) scanFile(filePath string) []types.Threat {
 		threats = append(threats, cs.createNetworkThreat(filePath, networks))
 	}
 
+	// Phase 4: Advanced supply chain attack detection (2026 real-world attacks)
+	if t := cs.detectCredentialHarvesting(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectOSPersistence(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectAntiForensics(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectCompoundBehaviors(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectCustomCiphers(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectPythonAutoExec(filePath, contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+
 	return threats
 }
 
@@ -257,6 +348,7 @@ func (cs *ContentScanner) scanFileStream(filePath string) []types.Threat {
 	defer f.Close()
 	buf := make([]byte, 64*1024)
 	carry := ""
+	var fullContent strings.Builder // accumulate for Phase 4 detectors that need full context
 	var threats []types.Threat
 	var spansAll []entropySpan
 	pattSet := map[string]struct{}{}
@@ -266,7 +358,9 @@ func (cs *ContentScanner) scanFileStream(filePath string) []types.Threat {
 	for {
 		n, er := f.Read(buf)
 		if n > 0 {
-			segment := carry + string(buf[:n])
+			chunk := string(buf[:n])
+			fullContent.WriteString(chunk)
+			segment := carry + chunk
 			if spans := cs.detectHighEntropySpans(segment, cs.windowSize, cs.entropyThreshold); len(spans) > 0 {
 				spansAll = append(spansAll, spans...)
 			}
@@ -332,6 +426,28 @@ func (cs *ContentScanner) scanFileStream(filePath string) []types.Threat {
 		}
 		threats = append(threats, cs.createNetworkThreat(filePath, nets))
 	}
+
+	// Phase 4 detectors require full file content (compound behaviors, credential harvesting, etc.)
+	contentStr := fullContent.String()
+	if t := cs.detectCredentialHarvesting(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectOSPersistence(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectAntiForensics(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectCompoundBehaviors(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectCustomCiphers(contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+	if t := cs.detectPythonAutoExec(filePath, contentStr); len(t) > 0 {
+		threats = append(threats, t...)
+	}
+
 	return threats
 }
 
@@ -429,11 +545,30 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 		patterns = append(patterns, "Multiple eval calls (potential code injection)")
 	}
 
-	// Base64 encoded payloads
-	base64Regex := regexp.MustCompile(`[A-Za-z0-9+/]{50,}={0,2}`)
-	if matches := base64Regex.FindAllString(content, -1); len(matches) > 5 {
-		// Try to decode to see if it's actual base64
-		for _, match := range matches[:min(5, len(matches))] {
+	// Base64 encoded payloads — two tiers:
+	// Tier 1: single large blob (>200 chars) that decodes → HIGH (catches LiteLLM-style single payload)
+	// Tier 2: many blobs (>5 matches of 50+ chars) → existing behavior
+	allBase64 := reBase64.FindAllString(content, -1)
+	// Tier 1: single large base64 blob
+	for _, match := range allBase64 {
+		if len(match) < 200 {
+			continue
+		}
+		if decoded, err := base64.StdEncoding.DecodeString(match); err == nil && len(decoded) > 50 {
+			patterns = append(patterns, fmt.Sprintf("Large base64 payload detected (%d chars, decodes to %d bytes)", len(match), len(decoded)))
+			// Double-base64 detection (LiteLLM v1.82.8 nested encoding)
+			inner64 := reBase64.FindString(string(decoded))
+			if len(inner64) > 100 {
+				if _, err2 := base64.StdEncoding.DecodeString(inner64); err2 == nil {
+					patterns = append(patterns, "CRITICAL: Double-base64 encoding detected (nested payload)")
+				}
+			}
+			break
+		}
+	}
+	// Tier 2: many base64 blobs (existing behavior)
+	if len(allBase64) > 5 {
+		for _, match := range allBase64[:min(5, len(allBase64))] {
 			if decoded, err := base64.StdEncoding.DecodeString(match); err == nil && len(decoded) > 20 {
 				patterns = append(patterns, "Large base64 encoded strings detected")
 				break
@@ -442,14 +577,12 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 	}
 
 	// Hex encoded strings
-	hexRegex := regexp.MustCompile(`\\x[0-9a-fA-F]{2}`)
-	if hexMatches := hexRegex.FindAllString(content, -1); len(hexMatches) > 20 {
+	if hexMatches := reHexEncoding.FindAllString(content, -1); len(hexMatches) > 20 {
 		patterns = append(patterns, "Extensive hex encoding (potential obfuscation)")
 	}
 
 	// Unicode escapes
-	unicodeRegex := regexp.MustCompile(`\\u[0-9a-fA-F]{4}`)
-	if unicodeMatches := unicodeRegex.FindAllString(content, -1); len(unicodeMatches) > 20 {
+	if unicodeMatches := reUnicodeEscape.FindAllString(content, -1); len(unicodeMatches) > 20 {
 		patterns = append(patterns, "Extensive unicode escaping (potential obfuscation)")
 	}
 
@@ -466,17 +599,13 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 	}
 
 	// Minified variables (single char names in excess)
-	singleCharRegex := regexp.MustCompile(`\b[a-z]\s*=\s*`)
-	if singleCharMatches := singleCharRegex.FindAllString(content, -1); len(singleCharMatches) > 30 {
+	if singleCharMatches := reSingleCharVar.FindAllString(content, -1); len(singleCharMatches) > 30 {
 		patterns = append(patterns, "Excessive single-character variables (minification or obfuscation)")
 	}
 
 	// Phase 1: Dormancy Detection (SUNBURST-style time delays)
 	// Detect long setTimeout/setInterval (> 7 days in milliseconds = 604800000)
-	timeoutRegex := regexp.MustCompile(`setTimeout\s*\(\s*[^,]+,\s*(\d+)\s*\)`)
-	intervalRegex := regexp.MustCompile(`setInterval\s*\(\s*[^,]+,\s*(\d+)\s*\)`)
-
-	for _, match := range timeoutRegex.FindAllStringSubmatch(content, -1) {
+	for _, match := range reSetTimeout.FindAllStringSubmatch(content, -1) {
 		if len(match) > 1 {
 			if delay := match[1]; len(delay) > 0 {
 				// Simple check: if delay > 7 days (in ms)
@@ -487,7 +616,7 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 		}
 	}
 
-	for _, match := range intervalRegex.FindAllStringSubmatch(content, -1) {
+	for _, match := range reSetInterval.FindAllStringSubmatch(content, -1) {
 		if len(match) > 1 {
 			if delay := match[1]; len(delay) > 0 {
 				if len(delay) > 8 || (len(delay) == 8 && delay[0] >= '6') {
@@ -498,10 +627,9 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 	}
 
 	// Detect date-based activation conditionals
-	dateCheckRegex := regexp.MustCompile(`(new\s+Date\(\)|Date\.now\(\))\s*[><=]+`)
-	if dateCheckRegex.MatchString(content) {
+	if reDateCheck.MatchString(content) {
 		// Count occurrences
-		if len(dateCheckRegex.FindAllString(content, -1)) > 2 {
+		if len(reDateCheck.FindAllString(content, -1)) > 2 {
 			patterns = append(patterns, "Multiple date-based conditionals (potential time-delayed activation)")
 		}
 	}
@@ -531,14 +659,14 @@ func (cs *ContentScanner) detectSuspiciousPatterns(content string) []string {
 func (cs *ContentScanner) detectEmbeddedSecrets(content string) []string {
 	var secrets []string
 
-	// API Key patterns
+	// API Key patterns (using pre-compiled regexes)
 	patterns := map[string]*regexp.Regexp{
-		"Generic API Key":    regexp.MustCompile(`(?i)(api[_-]?key|apikey)["\s:=]+[a-zA-Z0-9]{20,}`),
-		"AWS Key":            regexp.MustCompile(`AKIA[0-9A-Z]{16}`),
-		"GitHub Token":       regexp.MustCompile(`ghp_[a-zA-Z0-9]{36}`),
-		"Generic Secret":     regexp.MustCompile(`(?i)(secret|password|passwd|pwd)["\s:=]+[^\s"']{8,}`),
-		"Private Key Header": regexp.MustCompile(`-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----`),
-		"JWT Token":          regexp.MustCompile(`eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*`),
+		"Generic API Key":    reGenericAPIKey,
+		"AWS Key":            reAWSKey,
+		"GitHub Token":       reGitHubToken,
+		"Generic Secret":     reGenericSecret,
+		"Private Key Header": rePrivateKeyHdr,
+		"JWT Token":          reJWTToken,
 	}
 
 	for secretType, pattern := range patterns {
@@ -554,18 +682,25 @@ func (cs *ContentScanner) detectEmbeddedSecrets(content string) []string {
 func (cs *ContentScanner) detectNetworkIndicators(content string) []string {
 	var indicators []string
 
-	// IP address pattern
-	ipRegex := regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`)
-	ips := ipRegex.FindAllString(content, -1)
+	// IP address pattern (pre-compiled)
+	ips := reIPAddress.FindAllString(content, -1)
 
-	// Filter out common safe IPs (localhost, private networks)
-	safeIPPrefixes := []string{"127.", "192.168.", "10.", "172.16."}
+	// Filter out common safe IPs (localhost, private RFC 1918 networks)
+	safeIPPrefixes := []string{"127.", "192.168.", "10.", "0.0.0.", "169.254."}
 	for _, ip := range ips {
 		isSafe := false
 		for _, prefix := range safeIPPrefixes {
 			if strings.HasPrefix(ip, prefix) {
 				isSafe = true
 				break
+			}
+		}
+		// Check 172.16.0.0/12 range (172.16.x.x - 172.31.x.x) properly
+		if !isSafe && strings.HasPrefix(ip, "172.") {
+			parsedIP := net.ParseIP(ip)
+			_, rfc1918, _ := net.ParseCIDR("172.16.0.0/12")
+			if parsedIP != nil && rfc1918 != nil && rfc1918.Contains(parsedIP) {
+				isSafe = true
 			}
 		}
 		if !isSafe {
@@ -582,11 +717,31 @@ func (cs *ContentScanner) detectNetworkIndicators(content string) []string {
 		}
 	}
 
-	// Check for HTTP/HTTPS requests to external domains
-	urlRegex := regexp.MustCompile(`https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
-	urls := urlRegex.FindAllString(content, -1)
-	if len(urls) > 5 {
-		indicators = append(indicators, fmt.Sprintf("Multiple external URLs (%d found)", len(urls)))
+	// Check for HTTP/HTTPS requests to external domains (pre-compiled)
+	urls := reURL.FindAllString(content, -1)
+	// Whitelist known-safe domains (registries, CDNs, documentation)
+	safeURLDomains := map[string]bool{
+		"registry.npmjs.org": true, "www.npmjs.com": true, "npmjs.com": true,
+		"pypi.org": true, "pypi.python.org": true, "files.pythonhosted.org": true,
+		"cdn.jsdelivr.net": true, "unpkg.com": true, "cdnjs.cloudflare.com": true,
+		"github.com": true, "raw.githubusercontent.com": true, "api.github.com": true,
+		"gitlab.com": true, "bitbucket.org": true,
+		"nodejs.org": true, "yarnpkg.com": true, "pnpm.io": true,
+		"crates.io": true, "rubygems.org": true, "repo1.maven.org": true,
+		"api.nuget.org": true, "packagist.org": true,
+		"fonts.googleapis.com": true, "fonts.gstatic.com": true,
+		"docs.rs": true, "docs.python.org": true,
+	}
+	var suspiciousURLs []string
+	for _, u := range urls {
+		if m := reDomainExtract.FindStringSubmatch(u); len(m) > 1 {
+			if !safeURLDomains[strings.ToLower(m[1])] {
+				suspiciousURLs = append(suspiciousURLs, u)
+			}
+		}
+	}
+	if len(suspiciousURLs) > 0 {
+		indicators = append(indicators, fmt.Sprintf("Non-whitelisted URLs detected (%d): %s", len(suspiciousURLs), strings.Join(suspiciousURLs[:min(3, len(suspiciousURLs))], ", ")))
 	}
 
 	return indicators
@@ -608,8 +763,7 @@ func (cs *ContentScanner) inCIDRs(ipStr string, cidrs []string) bool {
 
 func (cs *ContentScanner) detectBase64Previews(content string) []string {
 	var previews []string
-	re := regexp.MustCompile(`[A-Za-z0-9+/]{50,}={0,2}`)
-	matches := re.FindAllString(content, -1)
+	matches := reBase64.FindAllString(content, -1)
 	max := min(3, len(matches))
 	for i := 0; i < max; i++ {
 		m := matches[i]
@@ -841,6 +995,328 @@ func extractInstallHooks(content []byte) []string {
 		}
 	}
 	return hooks
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 4: Advanced Supply Chain Attack Detection (2026 real-world attacks)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// detectCredentialHarvesting detects code that reads sensitive credential files.
+// Catches: LiteLLM attack (reads ~/.ssh, ~/.aws, ~/.kube, ~/.config).
+func (cs *ContentScanner) detectCredentialHarvesting(content string) []types.Threat {
+	readOps := []string{
+		"open(", "readFile", "readFileSync", "readdir", "readdirSync",
+		"os.listdir", "os.walk", "glob(", "glob.glob", "Path(",
+		"io.ReadFile", "ioutil.ReadFile",
+	}
+
+	pathHits := 0
+	var matchedPaths []string
+	for _, m := range reCredentialPaths.FindAllString(content, -1) {
+		pathHits++
+		if len(matchedPaths) < 5 {
+			matchedPaths = append(matchedPaths, m)
+		}
+	}
+
+	hasReadOp := false
+	for _, op := range readOps {
+		if strings.Contains(content, op) {
+			hasReadOp = true
+			break
+		}
+	}
+
+	if pathHits >= 2 && hasReadOp {
+		return []types.Threat{{
+			Type:            types.ThreatTypeCredentialHarvesting,
+			Severity:        types.SeverityCritical,
+			Confidence:      0.92,
+			Description:     fmt.Sprintf("Code accesses %d sensitive credential paths (%s) with file read operations — matches credential harvesting pattern used in supply chain attacks (LiteLLM, SANDWORM)", pathHits, strings.Join(matchedPaths, ", ")),
+			DetectionMethod: "credential_harvesting_analysis",
+			Recommendation:  "CRITICAL: This code reads credential files from the system. Libraries should never access SSH keys, cloud credentials, or authentication tokens. Do NOT install this package.",
+			Evidence: []types.Evidence{
+				{Type: "credential_paths", Description: "Matched credential paths", Value: strings.Join(matchedPaths, "; ")},
+			},
+			Metadata:   map[string]interface{}{"path_hits": pathHits, "has_read_op": hasReadOp},
+			DetectedAt: time.Now(),
+		}}
+	}
+	return nil
+}
+
+// detectOSPersistence detects code that installs OS-level persistence mechanisms.
+// Catches: LiteLLM attack (systemd service), Axios attack (Windows Run key, LaunchAgent).
+func (cs *ContentScanner) detectOSPersistence(content string) []types.Threat {
+	persistencePatterns := []struct {
+		name    string
+		pattern *regexp.Regexp
+	}{
+		// systemd (pre-compiled)
+		{"systemd service creation", reSystemdCreate},
+		{"systemd unit file", reSystemdUnit},
+		// cron
+		{"cron job installation", reCronInstall},
+		// launchd (macOS)
+		{"macOS LaunchAgent/Daemon", reLaunchdMac},
+		// Windows
+		{"Windows Run key persistence", reWindowsRunKey},
+		{"Windows startup folder", reWindowsStartup},
+	}
+
+	var matched []string
+	for _, pp := range persistencePatterns {
+		if pp.pattern.MatchString(content) {
+			matched = append(matched, pp.name)
+		}
+	}
+
+	if len(matched) > 0 {
+		return []types.Threat{{
+			Type:            types.ThreatTypeOSPersistence,
+			Severity:        types.SeverityHigh,
+			Confidence:      0.88,
+			Description:     fmt.Sprintf("Code installs OS-level persistence: %s — library packages should never create system services, cron jobs, or startup entries", strings.Join(matched, "; ")),
+			DetectionMethod: "os_persistence_analysis",
+			Recommendation:  "DANGER: This package attempts to install persistent background services on your system. This is a strong indicator of malware. Do NOT install.",
+			Evidence: []types.Evidence{
+				{Type: "persistence_mechanisms", Description: "Detected persistence patterns", Value: strings.Join(matched, "; ")},
+			},
+			Metadata:   map[string]interface{}{"mechanisms": matched},
+			DetectedAt: time.Now(),
+		}}
+	}
+	return nil
+}
+
+// detectAntiForensics detects self-deleting scripts and evidence cleanup.
+// Catches: Axios attack (setup.js deletes itself, restores clean package.json).
+func (cs *ContentScanner) detectAntiForensics(content string) []types.Threat {
+	antiForensicPatterns := []struct {
+		name    string
+		pattern *regexp.Regexp
+	}{
+		// JavaScript self-deletion (pre-compiled)
+		{"JS self-deleting script", reJSSelfDelete},
+		{"JS file removal after run", reJSFileRemoval},
+		// Python self-deletion
+		{"Python self-deleting script", rePySelfDelete},
+		{"Python pathlib self-deletion", rePyPathlibDelete},
+		// Shell self-deletion
+		{"Shell self-deleting script", reShellSelfDelete},
+		// package.json manipulation (restoring clean state after attack)
+		{"package.json post-attack cleanup", rePkgJsonCleanup},
+		// Log/history wiping
+		{"history/log wiping", reHistoryWipe},
+	}
+
+	var matched []string
+	for _, pp := range antiForensicPatterns {
+		if pp.pattern.MatchString(content) {
+			matched = append(matched, pp.name)
+		}
+	}
+
+	if len(matched) > 0 {
+		return []types.Threat{{
+			Type:            types.ThreatTypeAntiForensics,
+			Severity:        types.SeverityCritical,
+			Confidence:      0.90,
+			Description:     fmt.Sprintf("Code contains anti-forensic techniques: %s — self-deleting scripts and evidence cleanup are hallmarks of supply chain malware", strings.Join(matched, "; ")),
+			DetectionMethod: "anti_forensics_analysis",
+			Recommendation:  "CRITICAL: This package uses anti-forensic techniques to hide its activity. Self-deleting install scripts are a strong malware indicator. Do NOT install.",
+			Evidence: []types.Evidence{
+				{Type: "anti_forensic_patterns", Description: "Detected anti-forensic techniques", Value: strings.Join(matched, "; ")},
+			},
+			Metadata:   map[string]interface{}{"patterns": matched},
+			DetectedAt: time.Now(),
+		}}
+	}
+	return nil
+}
+
+// detectCompoundBehaviors detects dangerous co-occurrence of multiple attack signals.
+// Catches: LiteLLM (base64+exec), Axios (eval+fetch+self-delete), SANDWORM (env+POST).
+func (cs *ContentScanner) detectCompoundBehaviors(content string) []types.Threat {
+	// Classify content into signal categories
+	type signal struct {
+		name    string
+		present bool
+	}
+	signals := []signal{
+		{"base64_decode", strings.Contains(content, "atob(") || strings.Contains(content, "base64.b64decode") || strings.Contains(content, "Buffer.from") || strings.Contains(content, "base64.decode") || strings.Contains(content, "b64decode")},
+		{"exec_eval", strings.Contains(content, "eval(") || strings.Contains(content, "exec(") || strings.Contains(content, "subprocess") || strings.Contains(content, "child_process") || strings.Contains(content, "os.system(") || strings.Contains(content, "os.popen(")},
+		{"network_call", strings.Contains(content, "fetch(") || strings.Contains(content, "curl") || strings.Contains(content, "wget") || strings.Contains(content, "requests.post") || strings.Contains(content, "requests.get") || strings.Contains(content, "http.request") || strings.Contains(content, "https.request") || strings.Contains(content, "urllib") || strings.Contains(content, "XMLHttpRequest") || strings.Contains(content, "axios")},
+		{"file_write", strings.Contains(content, "writeFile") || strings.Contains(content, "writeFileSync") || strings.Contains(content, "os.WriteFile") || strings.Contains(content, "open(") && (strings.Contains(content, `"w"`) || strings.Contains(content, `'w'`) || strings.Contains(content, `"w+"`) || strings.Contains(content, `"a"`))},
+		{"chmod_exec", strings.Contains(content, "chmod") || strings.Contains(content, "0o755") || strings.Contains(content, "0755") || strings.Contains(content, "+x")},
+		{"env_access", strings.Contains(content, "os.environ") || strings.Contains(content, "os.getenv(") || (strings.Contains(content, "process.env[") || strings.Contains(content, "process.env.") && !strings.Contains(content, "process.env.NODE_ENV"))},
+		{"credential_read", strings.Contains(content, ".ssh") || strings.Contains(content, ".aws") || strings.Contains(content, ".npmrc") || strings.Contains(content, ".kube")},
+	}
+
+	// Define dangerous compound patterns
+	type compound struct {
+		name       string
+		requires   []string // signal names that must ALL be present
+		severity   types.Severity
+		confidence float64
+	}
+	compounds := []compound{
+		{"base64 decode + code execution", []string{"base64_decode", "exec_eval"}, types.SeverityCritical, 0.93},
+		{"code execution + network call", []string{"exec_eval", "network_call"}, types.SeverityCritical, 0.88},
+		{"file write + make executable", []string{"file_write", "chmod_exec"}, types.SeverityHigh, 0.82},
+		{"credential read + network exfiltration", []string{"credential_read", "network_call"}, types.SeverityCritical, 0.95},
+		{"environment access + network exfiltration", []string{"env_access", "network_call"}, types.SeverityHigh, 0.80},
+		{"base64 decode + file write + network call", []string{"base64_decode", "file_write", "network_call"}, types.SeverityCritical, 0.95},
+	}
+
+	// Build signal lookup
+	sigMap := make(map[string]bool)
+	for _, s := range signals {
+		if s.present {
+			sigMap[s.name] = true
+		}
+	}
+
+	var threats []types.Threat
+	for _, c := range compounds {
+		allPresent := true
+		for _, req := range c.requires {
+			if !sigMap[req] {
+				allPresent = false
+				break
+			}
+		}
+		if allPresent {
+			threats = append(threats, types.Threat{
+				Type:            types.ThreatTypeCompoundObfuscation,
+				Severity:        c.severity,
+				Confidence:      c.confidence,
+				Description:     fmt.Sprintf("Dangerous compound behavior detected: %s — this combination of operations is characteristic of supply chain malware", c.name),
+				DetectionMethod: "compound_behavior_analysis",
+				Recommendation:  "Multiple dangerous operations co-occur in a single file. Legitimate libraries rarely combine encoding, execution, and network calls. Review this package carefully before installing.",
+				Evidence: []types.Evidence{
+					{Type: "compound_pattern", Description: c.name, Value: strings.Join(c.requires, " + ")},
+				},
+				Metadata:   map[string]interface{}{"pattern": c.name, "signals": c.requires},
+				DetectedAt: time.Now(),
+			})
+			break // report highest-severity compound match only
+		}
+	}
+	return threats
+}
+
+// detectCustomCiphers detects XOR byte manipulation and custom encoding schemes.
+// Catches: Axios attack (two-layer XOR with _trans_1, _trans_2 functions).
+func (cs *ContentScanner) detectCustomCiphers(content string) []types.Threat {
+	cipherPatterns := []struct {
+		name    string
+		pattern *regexp.Regexp
+	}{
+		// JavaScript XOR (pre-compiled)
+		{"JS charCode XOR", reJSCharCodeXOR},
+		{"JS String.fromCharCode XOR", reJSFromCharXOR},
+		// Python XOR
+		{"Python byte XOR", rePyByteXOR},
+		{"Python bytearray XOR", rePyBytearrayXOR},
+		// Named decode/deobfuscation functions
+		{"Named deobfuscation function", reNamedDeobfFunc},
+		// Buffer-based XOR loops
+		{"Buffer XOR loop", reBufferXOR},
+		// Reverse string + base64 combo (Axios _trans_2 pattern)
+		{"String reversal + decode", reStringRevDecode},
+	}
+
+	var matched []string
+	for _, pp := range cipherPatterns {
+		if pp.pattern.MatchString(content) {
+			matched = append(matched, pp.name)
+		}
+	}
+
+	if len(matched) >= 1 {
+		sev := types.SeverityMedium
+		conf := 0.70
+		if len(matched) >= 2 {
+			sev = types.SeverityHigh
+			conf = 0.85
+		}
+		return []types.Threat{{
+			Type:            types.ThreatTypeCustomCipher,
+			Severity:        sev,
+			Confidence:      conf,
+			Description:     fmt.Sprintf("Custom cipher/obfuscation detected: %s — XOR byte manipulation and custom decode functions are used to evade static analysis in supply chain attacks", strings.Join(matched, "; ")),
+			DetectionMethod: "custom_cipher_analysis",
+			Recommendation:  "This code uses custom encoding/decryption routines. While not always malicious, XOR-based obfuscation combined with other suspicious indicators is a strong supply chain attack signal.",
+			Evidence: []types.Evidence{
+				{Type: "cipher_patterns", Description: "Detected cipher/obfuscation patterns", Value: strings.Join(matched, "; ")},
+			},
+			Metadata:   map[string]interface{}{"patterns": matched, "count": len(matched)},
+			DetectedAt: time.Now(),
+		}}
+	}
+	return nil
+}
+
+// detectPythonAutoExec detects Python-specific auto-execution vectors.
+// Catches: LiteLLM attack (.pth file with import statement auto-executes on Python startup).
+func (cs *ContentScanner) detectPythonAutoExec(filePath, content string) []types.Threat {
+	base := filepath.Base(filePath)
+	ext := strings.ToLower(filepath.Ext(filePath))
+
+	// .pth files: auto-executed if they contain "import" statements
+	if ext == ".pth" {
+		hasImport := strings.Contains(content, "import ") || strings.Contains(content, "__import__")
+		hasExec := strings.Contains(content, "exec(") || strings.Contains(content, "eval(") || strings.Contains(content, "subprocess")
+		if hasImport || hasExec {
+			return []types.Threat{{
+				Type:            types.ThreatTypePythonAutoExec,
+				Severity:        types.SeverityCritical,
+				Confidence:      0.95,
+				Description:     fmt.Sprintf("Python .pth file '%s' contains executable code (import/exec statements). .pth files in site-packages auto-execute on every Python interpreter startup — this is the exact technique used in the LiteLLM supply chain attack (March 2026)", base),
+				DetectionMethod: "python_pth_analysis",
+				Recommendation:  "CRITICAL: .pth files with import statements execute automatically when Python starts. This is a persistence mechanism used by supply chain malware. Remove this package immediately and audit your environment.",
+				Evidence: []types.Evidence{
+					{Type: "python_auto_exec", Description: ".pth file with executable code", Value: base},
+				},
+				Metadata:   map[string]interface{}{"file": base, "has_import": hasImport, "has_exec": hasExec},
+				DetectedAt: time.Now(),
+			}}
+		}
+	}
+
+	// sitecustomize.py, usercustomize.py: auto-imported by Python on startup
+	// NOTE: conftest.py excluded — it's a standard pytest fixture file and causes too many false positives
+	autoImportFiles := map[string]bool{
+		"sitecustomize.py":  true,
+		"usercustomize.py":  true,
+	}
+	if autoImportFiles[base] {
+		dangerousOps := []string{"subprocess", "os.system", "exec(", "eval(", "requests.", "urllib", "http.client", "socket."}
+		var found []string
+		for _, op := range dangerousOps {
+			if strings.Contains(content, op) {
+				found = append(found, op)
+			}
+		}
+		if len(found) > 0 {
+			return []types.Threat{{
+				Type:            types.ThreatTypePythonAutoExec,
+				Severity:        types.SeverityHigh,
+				Confidence:      0.85,
+				Description:     fmt.Sprintf("Python auto-import file '%s' contains dangerous operations: %s — this file executes automatically on Python startup", base, strings.Join(found, ", ")),
+				DetectionMethod: "python_auto_import_analysis",
+				Recommendation:  fmt.Sprintf("The file '%s' is auto-imported by Python and contains suspicious operations. Review carefully.", base),
+				Evidence: []types.Evidence{
+					{Type: "python_auto_exec", Description: "Auto-import file with dangerous ops", Value: strings.Join(found, "; ")},
+				},
+				Metadata:   map[string]interface{}{"file": base, "dangerous_ops": found},
+				DetectedAt: time.Now(),
+			}}
+		}
+	}
+
+	return nil
 }
 
 func min(a, b int) int {

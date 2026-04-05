@@ -30,7 +30,7 @@ type FeedbackRecord struct {
 	Version     string       `json:"version"`
 	Type        FeedbackType `json:"type"`
 	ModelScore  float64      `json:"model_score"`
-	// Features stores the 25-element feature vector as JSON for retraining.
+	// Features stores the 30-element feature vector as JSON for retraining.
 	Features  []float32 `json:"features"`
 	Comment   string    `json:"comment"`
 	CreatedAt time.Time `json:"created_at"`
@@ -150,7 +150,7 @@ func (s *FeedbackStore) Stats() (FeedbackStats, error) {
 }
 
 // ExportTrainingCSV writes all feedback records as a CSV suitable for model retraining.
-// Columns match the 25 FEATURE_NAMES + label (0=benign/1=malicious).
+// Columns match the 30 FEATURE_NAMES + label (0=benign/1=malicious).
 func (s *FeedbackStore) ExportTrainingCSV(outputPath string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -178,7 +178,9 @@ func (s *FeedbackStore) ExportTrainingCSV(outputPath string) (int, error) {
 		"maintainer_change_count,maintainer_velocity,domain_age_days," +
 		"executable_binary_count,network_code_files,log_total_files," +
 		"entropy_max_file,dependency_delta,log_version_count,days_between_versions," +
-		"log_stars,log_forks,namespace_age_days,download_star_anomaly,label\n"
+		"log_stars,log_forks,namespace_age_days,download_star_anomaly," +
+		"has_credential_harvesting,has_os_persistence,has_anti_forensics," +
+		"has_compound_obfuscation,new_dependency_count,label\n"
 	if _, err := f.WriteString(header); err != nil {
 		return 0, err
 	}

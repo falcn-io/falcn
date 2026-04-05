@@ -79,6 +79,34 @@ const (
 	EntryPointCLICommand  EntryPointKind = "cli_command"  // cobra/click command handlers
 )
 
+// CallGraphNode represents a single function in the project-wide call graph.
+type CallGraphNode struct {
+	// Function is the fully qualified function name (e.g. "main()", "helper()").
+	Function string
+	// File is the source file path (relative to project root).
+	File string
+	// Line is the 1-based line number of the function declaration.
+	Line int
+	// Callees is the list of function names this function calls.
+	Callees []string
+}
+
+// TransitiveCallPath represents a multi-hop call chain from entry point to
+// the target package usage.
+type TransitiveCallPath struct {
+	Hops []CallPathHop
+}
+
+// CallPathHop represents one hop in a transitive call path.
+type CallPathHop struct {
+	// Function is the function name at this hop.
+	Function string
+	// File is the source file path (relative to project root).
+	File string
+	// Line is the 1-based line number.
+	Line int
+}
+
 // ReachabilityResult is the output of analysing one project against one
 // vulnerable package.
 type ReachabilityResult struct {
@@ -90,6 +118,15 @@ type ReachabilityResult struct {
 	// CallPath is the shortest chain from an entry point to the first
 	// call site, e.g. ["main()", "setupRouter()", "gin.New()"].
 	CallPath []string
+	// TransitivePath is the detailed multi-hop call path with file/line info.
+	// Populated when transitive analysis finds a path through the call graph.
+	TransitivePath []CallPathHop
+	// Depth is the number of hops from an entry point to the call site.
+	// 0 means the call is directly in an entry point; >0 means transitive.
+	Depth int
+	// GraphSize is the total number of functions in the call graph.
+	// Useful for diagnostics and understanding analysis scope.
+	GraphSize int
 	// CallSites lists all detected call sites for the package.
 	CallSites []CallSite
 	// Imports lists all import statements for the package.

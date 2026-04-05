@@ -58,6 +58,49 @@ func (a *pythonAnalyzer) Analyse(packageName string) (imports []ImportRef, callS
 	return
 }
 
+// pyCallRe matches function calls like foo(), bar.baz(), self.method()
+var pyCallRe = regexp.MustCompile(`\b(\w+(?:\.\w+)?)\s*\(`)
+
+// extractPythonFunctionCalls parses a Python file and returns a map of
+// callerFunc → []calleeFunc for building the project-wide call graph.
+func extractPythonFunctionCalls(path string) map[string][]string {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	graph := make(map[string][]string)
+	currentFunc := "<module>"
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Track enclosing function
+		if m := pyFuncDefRe.FindStringSubmatch(line); m != nil {
+			currentFunc = m[1] + "()"
+		}
+
+		// Find all function calls on this line
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		for _, m := range pyCallRe.FindAllStringSubmatch(trimmed, -1) {
+			callee := m[1] + "()"
+			// Skip common keywords that look like calls
+			base := strings.Split(m[1], ".")[0]
+			switch base {
+			case "if", "for", "while", "return", "print", "range", "len", "str", "int", "float", "list", "dict", "set", "tuple", "type", "isinstance", "hasattr", "getattr", "super":
+				continue
+			}
+			graph[currentFunc] = append(graph[currentFunc], callee)
+		}
+	}
+	return graph
+}
+
 func (a *pythonAnalyzer) analyseFile(path, basePkg string) ([]ImportRef, []CallSite) {
 	rel, _ := filepath.Rel(a.projectRoot, path)
 

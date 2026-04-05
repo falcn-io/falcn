@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	reg "github.com/falcn-io/falcn/internal/registry"
@@ -13,11 +14,47 @@ import (
 	"github.com/spf13/viper"
 )
 
+// maxSignalChecks limits the number of registry lookups per DetectEnhanced call
+// to avoid unbounded HTTP traffic when many candidates match.
+const maxSignalChecks = 3
+
+// signalCache caches registry lookups to avoid repeated HTTP calls for the same package pair.
+type signalCache struct {
+	mu    sync.RWMutex
+	items map[string]*cachedSignal
+}
+
+type cachedSignal struct {
+	data   multiSignals
+	expiry time.Time
+}
+
+func newSignalCache() *signalCache {
+	return &signalCache{items: make(map[string]*cachedSignal)}
+}
+
+func (c *signalCache) get(key string) (multiSignals, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	item, ok := c.items[key]
+	if !ok || time.Now().After(item.expiry) {
+		return multiSignals{}, false
+	}
+	return item.data, true
+}
+
+func (c *signalCache) set(key string, data multiSignals, ttl time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.items[key] = &cachedSignal{data: data, expiry: time.Now().Add(ttl)}
+}
+
 // EnhancedTyposquattingDetector implements advanced typosquatting detection
 type EnhancedTyposquattingDetector struct {
 	keyboardLayouts []KeyboardLayout
 	substitutions   []CharacterSubstitution
 	config          *EnhancedDetectionConfig
+	sigCache        *signalCache
 }
 
 // EnhancedDetectionConfig contains configuration for enhanced detection
@@ -37,6 +74,7 @@ type EnhancedDetectionConfig struct {
 // NewEnhancedTyposquattingDetector creates a new enhanced detector
 func NewEnhancedTyposquattingDetector() *EnhancedTyposquattingDetector {
 	detector := &EnhancedTyposquattingDetector{
+		sigCache: newSignalCache(),
 		config: &EnhancedDetectionConfig{
 			KeyboardProximityWeight:  0.3,
 			VisualSimilarityWeight:   0.4,
@@ -60,6 +98,7 @@ func NewEnhancedTyposquattingDetector() *EnhancedTyposquattingDetector {
 // DetectEnhanced performs enhanced typosquatting detection
 func (etd *EnhancedTyposquattingDetector) DetectEnhanced(target types.Dependency, allPackages []string, threshold float64) []types.Threat {
 	var threats []types.Threat
+	signalChecks := 0
 
 	for _, pkg := range allPackages {
 		if pkg == target.Name {
@@ -102,7 +141,12 @@ func (etd *EnhancedTyposquattingDetector) DetectEnhanced(target types.Dependency
 			continue
 		}
 
-		ms := etd.collectSignals(target, pkg)
+		// Limit the number of registry lookups per call to avoid unbounded HTTP traffic.
+		var ms multiSignals
+		if signalChecks < maxSignalChecks {
+			ms = etd.collectSignals(target, pkg)
+			signalChecks++
+		}
 		reglc := strings.ToLower(target.Registry)
 		requireMS := viper.GetBool("detector.registry.require_multi_signal."+reglc) || viper.GetBool("detector.require_multi_signal")
 		if requireMS {
@@ -202,10 +246,20 @@ type multiSignals struct {
 
 func (etd *EnhancedTyposquattingDetector) collectSignals(target types.Dependency, candidate string) multiSignals {
 	s := multiSignals{}
-	ctx := context.Background()
 	if strings.TrimSpace(target.Registry) == "" {
 		return s
 	}
+
+	// Check cache first to avoid redundant registry lookups.
+	cacheKey := fmt.Sprintf("%s:%s:%s", target.Registry, target.Name, candidate)
+	if cached, ok := etd.sigCache.get(cacheKey); ok {
+		return cached
+	}
+
+	// 5-second timeout for all registry lookups combined.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	switch strings.ToLower(target.Registry) {
 	case "maven":
 		g1, a1, ok1 := parseGroupArtifact(target.Name)
@@ -308,6 +362,9 @@ func (etd *EnhancedTyposquattingDetector) collectSignals(target types.Dependency
 		s.MaintainerMismatch = !hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 		s.LegitimacyStrong = hasOverlap(s.MaintainersTarget, s.MaintainersCandidate)
 	}
+
+	// Cache the result for 10 minutes to avoid redundant lookups.
+	etd.sigCache.set(cacheKey, s, 10*time.Minute)
 	return s
 }
 
@@ -560,7 +617,86 @@ func (etd *EnhancedTyposquattingDetector) hasHomographs(target, candidate string
 // Assuming they existed but were cut off or I need to implement them to make it compile:
 
 func (etd *EnhancedTyposquattingDetector) analyzeTyposquattingType(s1, s2 string) string {
-	return "unknown" // Simplified
+	a := strings.ToLower(s1)
+	b := strings.ToLower(s2)
+
+	// Identical strings
+	if a == b {
+		return "exact match"
+	}
+
+	// Check for character transposition first (swap of two adjacent chars — most common typo)
+	if len(a) == len(b) && len(a) >= 2 {
+		for i := 0; i < len(a)-1; i++ {
+			swapped := a[:i] + string(a[i+1]) + string(a[i]) + a[i+2:]
+			if swapped == b {
+				return "character transposition"
+			}
+		}
+	}
+
+	// Check for character substitution (1-2 char differences at same length)
+	if len(a) == len(b) {
+		diffs := 0
+		for i := 0; i < len(a); i++ {
+			if a[i] != b[i] {
+				diffs++
+			}
+		}
+		if diffs == 1 {
+			return "single character substitution"
+		}
+		if diffs == 2 {
+			return "character substitution"
+		}
+	}
+
+	// Check for missing/extra character
+	if abs(len(a)-len(b)) == 1 {
+		shorter, longer := a, b
+		if len(a) > len(b) {
+			shorter, longer = b, a
+		}
+		// Try inserting each char from longer into shorter
+		for i := 0; i < len(longer); i++ {
+			if longer[:i]+longer[i+1:] == shorter {
+				return "missing/extra character"
+			}
+		}
+	}
+
+	// Check for hyphen/separator manipulation
+	if strings.ReplaceAll(a, "-", "") == strings.ReplaceAll(b, "-", "") {
+		return "separator manipulation"
+	}
+	if strings.ReplaceAll(a, "_", "") == strings.ReplaceAll(b, "_", "") {
+		return "separator manipulation"
+	}
+
+	// Check for prefix/suffix manipulation
+	if strings.HasPrefix(a, b) || strings.HasPrefix(b, a) {
+		return "prefix/suffix addition"
+	}
+	if strings.HasSuffix(a, b) || strings.HasSuffix(b, a) {
+		return "prefix/suffix addition"
+	}
+
+	// Check for common combosquatting patterns
+	comboSuffixes := []string{"-js", "-node", "-npm", "-cli", "-api", "-sdk", "-lib", "-core", "-utils", "-dev"}
+	for _, suffix := range comboSuffixes {
+		if a+suffix == b || b+suffix == a {
+			return "combosquatting (common suffix)"
+		}
+	}
+
+	return "general similarity"
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 func (etd *EnhancedTyposquattingDetector) generateThreatDescription(target, candidate, analysis string) string {

@@ -99,6 +99,23 @@ const (
 	ThreatTypeRuntimeExfiltration ThreatType = "runtime_exfiltration"
 	ThreatTypeEnvironmentAware    ThreatType = "environment_aware"
 	ThreatTypeBeaconActivity      ThreatType = "beacon_activity"
+	// AI / LLM hallucination attack vectors
+	// Slopsquatting: attackers register plausible-but-fake package names that
+	// LLM code assistants commonly hallucinate (e.g. "requests-extended",
+	// "flask-sqlalchemy-utils"). Unlike typosquatting (character confusion),
+	// slopsquatted names are semantically plausible combinations of real components.
+	ThreatTypeSlopsquatting ThreatType = "slopsquatting"
+	// Phase 4: Advanced Supply Chain Attack Detection (2026 attacks)
+	ThreatTypeCredentialHarvesting  ThreatType = "credential_harvesting"
+	ThreatTypeOSPersistence         ThreatType = "os_persistence"
+	ThreatTypeAntiForensics         ThreatType = "anti_forensics"
+	ThreatTypePythonAutoExec        ThreatType = "python_auto_exec"
+	ThreatTypeCompoundObfuscation   ThreatType = "compound_obfuscation"
+	ThreatTypeCustomCipher          ThreatType = "custom_cipher"
+	ThreatTypeDependencyDiffAnomaly ThreatType = "dependency_diff_anomaly"
+	ThreatTypeProvenanceMismatch    ThreatType = "provenance_mismatch"
+	ThreatTypePythonInstallHook     ThreatType = "python_install_hook"
+	ThreatTypeNewlyRegisteredDomain ThreatType = "newly_registered_domain"
 )
 
 // Dependency represents a package dependency

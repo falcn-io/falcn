@@ -138,6 +138,9 @@ func init() {
 	scanCmd.Flags().String("local-db", "", "Path to local CVE database for --offline mode (default: ~/.local/share/falcn/cve.db)")
 	scanCmd.Flags().String("diff", "", "Only scan manifests changed since this git ref (e.g. HEAD~1, main, origin/main)")
 	scanCmd.Flags().Bool("watch", false, "Watch manifest files for changes and re-scan automatically")
+	// Fast mode & report output flags (used by CI/CD templates)
+	scanCmd.Flags().Bool("fast", false, "Heuristics-only mode — skip deep analysis for faster scans (<100ms per package)")
+	scanCmd.Flags().String("report", "", "Custom output path for the scan report file (default: falcn_report.json)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -216,6 +219,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	offlineMode, _ := cmd.Flags().GetBool("offline")
 	localDBPath, _ := cmd.Flags().GetString("local-db")
 
+	// Get fast mode & report path options
+	fastMode, _ := cmd.Flags().GetBool("fast")
+	reportFile, _ := cmd.Flags().GetString("report")
+
 	options := &analyzer.ScanOptions{
 		OutputFormat:           outputFormat,
 		SpecificFile:           specificFile,
@@ -240,6 +247,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 		LocalDBPath:            localDBPath,
 		ReachableOnly:          reachableOnly,
 		EnableSandbox:          enableSandbox,
+		FastMode:               fastMode,
+		ReportFile:             reportFile,
 	}
 
 	// Diff-mode: only scan changed manifest files
@@ -290,8 +299,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Always save to local JSON for report command
+	reportPath := "falcn_report.json"
+	if reportFile != "" {
+		reportPath = reportFile
+	}
 	if jsonBytes, err := json.MarshalIndent(result, "", "  "); err == nil {
-		_ = os.WriteFile("falcn_report.json", jsonBytes, 0600)
+		_ = os.WriteFile(reportPath, jsonBytes, 0600)
 	}
 
 	// Handle SBOM generation if requested
@@ -306,7 +319,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Watch mode: re-scan on manifest file changes
 	watchMode, _ := cmd.Flags().GetBool("watch")
 	if watchMode {
-		if err := watchAndRescan(path, options, outputFormat, cmd); err != nil {
+		if err := watchAndRescan(path, options, outputFormat, reportPath, cmd); err != nil {
 			logrus.Warnf("watch mode exited: %v", err)
 		}
 	}
@@ -316,7 +329,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 // watchAndRescan watches manifest files in projectRoot for changes and
 // re-runs the scan when they are modified. It blocks until the watcher
 // is stopped (Ctrl+C / signal) or an unrecoverable error occurs.
-func watchAndRescan(projectRoot string, options *analyzer.ScanOptions, outputFormat string, cmd *cobra.Command) error {
+func watchAndRescan(projectRoot string, options *analyzer.ScanOptions, outputFormat string, reportPath string, cmd *cobra.Command) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("create watcher: %w", err)
@@ -375,7 +388,7 @@ func watchAndRescan(projectRoot string, options *analyzer.ScanOptions, outputFor
 			}
 			// Persist the latest result for `falcn report`.
 			if jsonBytes, jsonErr := json.MarshalIndent(result, "", "  "); jsonErr == nil {
-				_ = os.WriteFile("falcn_report.json", jsonBytes, 0600)
+				_ = os.WriteFile(reportPath, jsonBytes, 0600)
 			}
 			outputScanResult(result, outputFormat)
 

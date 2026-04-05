@@ -127,6 +127,8 @@ type ScanOptions struct {
 	LocalDBPath string // Path to local CVE database; DefaultLocalDBPath() used if empty
 	ReachableOnly  bool // Filter threats to only CVEs reachable from entry points
 	EnableSandbox  bool // Run Docker behavioral sandbox on high-risk packages
+	FastMode       bool   // Heuristics-only mode, skip deep analysis (<100ms per package)
+	ReportFile     string // Custom output path for the scan report file
 }
 
 // ScanResult contains the results of a security scan

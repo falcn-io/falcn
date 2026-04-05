@@ -6,8 +6,8 @@ import (
 )
 
 // FeatureVectorSize is the number of features used by the model.
-// Extended from 7 to 25 to cover behavioral, ecosystem, and metadata signals.
-const FeatureVectorSize = 25
+// Extended from 25 to 30 to cover advanced supply chain attack signals (2026).
+const FeatureVectorSize = 30
 
 // InputData represents the raw data required for ML feature extraction.
 type InputData struct {
@@ -43,9 +43,21 @@ type InputData struct {
 	DaysBetweenVersions  float64 // avg days between the last 3 version releases
 
 	// Ecosystem popularity signals (features 21-23)
+	// StarCount and ForkCount are the GitHub stars/forks count.
+	// Set HasGitHubData=true only when you have actually fetched these values from GitHub.
+	// When HasGitHubData=false the download_star_anomaly detector (feature [24]) is suppressed
+	// to avoid false positives on packages where we simply haven't queried GitHub.
 	StarCount        int
 	ForkCount        int
-	NamespaceAgeDays int // age of the owning org/user namespace in days
+	NamespaceAgeDays int  // age of the owning org/user namespace in days
+	HasGitHubData    bool // true = StarCount/ForkCount came from the GitHub API
+
+	// Advanced supply chain signals (features 25-29, added for 2026 attack detection)
+	HasCredentialHarvestingPattern bool // code reads ~/.ssh, ~/.aws, ~/.kube etc.
+	HasOSPersistencePattern        bool // installs systemd/cron/launchd/Run key persistence
+	HasAntiForensicsPattern        bool // self-deleting scripts, evidence cleanup
+	HasCompoundObfuscation         bool // base64+exec, eval+fetch, or similar combo
+	NewDependencyCount             int  // number of new deps added vs previous version
 }
 
 // ExtractFeatures converts InputData into a normalized feature vector.
@@ -77,6 +89,11 @@ type InputData struct {
 //	[22] Log(ForkCount+1)               — higher = safer
 //	[23] NamespaceAgeDays               — young namespace = riskier
 //	[24] DownloadStarRatioAnomaly       — very high downloads but zero stars = suspicious
+//	[25] HasCredentialHarvestingPattern — reads credential files (0/1)
+//	[26] HasOSPersistencePattern        — installs persistence mechanisms (0/1)
+//	[27] HasAntiForensicsPattern        — self-deleting scripts, cleanup (0/1)
+//	[28] HasCompoundObfuscation         — dangerous signal combinations (0/1)
+//	[29] NewDependencyCount             — deps added vs previous version
 func ExtractFeatures(data InputData) []float32 {
 	features := make([]float32, FeatureVectorSize)
 	now := time.Now()
@@ -214,17 +231,50 @@ func ExtractFeatures(data InputData) []float32 {
 	}
 	features[23] = float32(na)
 
-	// [24] DownloadStarRatioAnomaly — high downloads with zero community signals = suspicious
-	// Ratio = log(downloads+1) / (log(stars+1) + log(forks+1) + 1)
-	// Anomaly when ratio > 10 and stars == 0.
+	// [24] DownloadStarRatioAnomaly — high downloads with confirmed zero community signals.
+	// Only computed when HasGitHubData=true so that packages where we simply did not
+	// query GitHub are not penalised.  This prevents train/serve skew: the training
+	// data only sets anomaly>0 when the registry metadata confirmed "no repository",
+	// so inference must mirror that condition rather than treating StarCount=0 (unset)
+	// as confirmed zero stars.
 	anomaly := 0.0
-	if data.StarCount == 0 && data.ForkCount == 0 && data.DownloadCount > 10000 {
+	if data.HasGitHubData && data.StarCount == 0 && data.ForkCount == 0 && data.DownloadCount > 10000 {
 		anomaly = math.Log1p(float64(data.DownloadCount)) / 10.0
 		if anomaly > 1.0 {
 			anomaly = 1.0
 		}
 	}
 	features[24] = float32(anomaly)
+
+	// [25] HasCredentialHarvestingPattern (0/1) — very strong malware signal
+	if data.HasCredentialHarvestingPattern {
+		features[25] = 1.0
+	}
+
+	// [26] HasOSPersistencePattern (0/1) — strong malware signal
+	if data.HasOSPersistencePattern {
+		features[26] = 1.0
+	}
+
+	// [27] HasAntiForensicsPattern (0/1) — strong malware signal
+	if data.HasAntiForensicsPattern {
+		features[27] = 1.0
+	}
+
+	// [28] HasCompoundObfuscation (0/1) — combined dangerous operations
+	if data.HasCompoundObfuscation {
+		features[28] = 1.0
+	}
+
+	// [29] NewDependencyCount (capped at 10)
+	ndc := data.NewDependencyCount
+	if ndc > 10 {
+		ndc = 10
+	}
+	if ndc < 0 {
+		ndc = 0
+	}
+	features[29] = float32(ndc)
 
 	return features
 }
@@ -233,17 +283,18 @@ func ExtractFeatures(data InputData) []float32 {
 // computed from the trained model dataset (resources/models/scaler_stats.json).
 // These values were produced by scripts/train_ml_model.py on 2026-03-07 using
 // real malicious package data (413 real samples, 47 confirmed malicious) combined
-// with 30,000 synthetic samples. AUC=0.9284, F1=0.8991, FPR=0.004.
+// with 30,000 synthetic samples. AUC=0.9256, F1=0.8991, FPR=0.004.
+// Production threshold: 0.40 (from real-data calibration, not synthetic test set).
 // Update whenever the model is retrained.
 var FeatureMeans = [FeatureVectorSize]float32{
-	8.5274,    // [0]  log_downloads
-	3.0345,    // [1]  maintainer_count
-	863.1455,  // [2]  age_days
-	100.1726,  // [3]  days_since_update
+	8.6336,    // [0]  log_downloads
+	3.0340,    // [1]  maintainer_count
+	863.7800,  // [2]  age_days
+	100.6505,  // [3]  days_since_update
 	0.3227,    // [4]  vuln_count
 	0.0181,    // [5]  malware_reports
 	0.5991,    // [6]  verified_flags
-	0.3940,    // [7]  has_install_script
+	0.4002,    // [7]  has_install_script
 	1.6441,    // [8]  install_script_kb
 	0.1573,    // [9]  has_preinstall
 	0.2025,    // [10] has_postinstall
@@ -255,23 +306,28 @@ var FeatureMeans = [FeatureVectorSize]float32{
 	2.3529,    // [16] log_total_files
 	4.8091,    // [17] entropy_max_file
 	1.4168,    // [18] dependency_delta
-	1.9753,    // [19] log_version_count
-	57.5715,   // [20] days_between_versions
+	1.9741,    // [19] log_version_count
+	57.5615,   // [20] days_between_versions
 	4.1669,    // [21] log_stars
 	2.5384,    // [22] log_forks
-	1008.9310, // [23] namespace_age_days
+	1009.5655, // [23] namespace_age_days
 	0.0290,    // [24] download_star_anomaly
+	0.0,       // [25] has_credential_harvesting (new — passthrough until retrain)
+	0.0,       // [26] has_os_persistence (new — passthrough until retrain)
+	0.0,       // [27] has_anti_forensics (new — passthrough until retrain)
+	0.0,       // [28] has_compound_obfuscation (new — passthrough until retrain)
+	0.0,       // [29] new_dependency_count (new — passthrough until retrain)
 }
 
 var FeatureStdDevs = [FeatureVectorSize]float32{
-	4.7613,    // [0]  log_downloads
-	1.7308,    // [1]  maintainer_count
-	1034.0280, // [2]  age_days
-	146.1347,  // [3]  days_since_update
+	4.7660,    // [0]  log_downloads
+	1.7296,    // [1]  maintainer_count
+	1036.4093, // [2]  age_days
+	147.8479,  // [3]  days_since_update
 	0.6153,    // [4]  vuln_count
 	0.1731,    // [5]  malware_reports
 	0.9207,    // [6]  verified_flags
-	0.4886,    // [7]  has_install_script
+	0.4899,    // [7]  has_install_script
 	4.7617,    // [8]  install_script_kb
 	0.3641,    // [9]  has_preinstall
 	0.4019,    // [10] has_postinstall
@@ -283,12 +339,17 @@ var FeatureStdDevs = [FeatureVectorSize]float32{
 	1.0634,    // [16] log_total_files
 	1.5142,    // [17] entropy_max_file
 	4.6145,    // [18] dependency_delta
-	1.2868,    // [19] log_version_count
-	64.1508,   // [20] days_between_versions
+	1.2847,    // [19] log_version_count
+	64.0913,   // [20] days_between_versions
 	3.3991,    // [21] log_stars
 	2.2319,    // [22] log_forks
-	1098.4330, // [23] namespace_age_days
+	1100.5909, // [23] namespace_age_days
 	0.1425,    // [24] download_star_anomaly
+	1.0,       // [25] has_credential_harvesting (new — passthrough until retrain)
+	1.0,       // [26] has_os_persistence (new — passthrough until retrain)
+	1.0,       // [27] has_anti_forensics (new — passthrough until retrain)
+	1.0,       // [28] has_compound_obfuscation (new — passthrough until retrain)
+	1.0,       // [29] new_dependency_count (new — passthrough until retrain)
 }
 
 // NormalizeFeatures applies z-score normalization using training statistics.

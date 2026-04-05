@@ -61,8 +61,10 @@ FEATURE_NAMES = [
     "entropy_max_file", "dependency_delta", "log_version_count",
     "days_between_versions", "log_stars", "log_forks", "namespace_age_days",
     "download_star_anomaly",
+    "has_credential_harvesting", "has_os_persistence", "has_anti_forensics",
+    "has_compound_obfuscation", "new_dependency_count",
 ]
-N_FEATURES = len(FEATURE_NAMES)  # 25
+N_FEATURES = len(FEATURE_NAMES)  # 30
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Synthetic data generator
@@ -71,7 +73,7 @@ N_FEATURES = len(FEATURE_NAMES)  # 25
 def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
     """
     Generate labeled synthetic training data reflecting realistic distributions.
-    Returns (X, y) where X.shape == (n_samples, 25), y.dtype == int64.
+    Returns (X, y) where X.shape == (n_samples, 30), y.dtype == int64.
 
     Key improvements over v1:
     - Class overlap: ~8% of benign packages intentionally look risky (ambiguous cases)
@@ -116,6 +118,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.clip(rng.normal(3.0, 2.2, k), 0, 12)
             r[:, 23] = rng.exponential(1050, k) + 90
             r[:, 24] = np.zeros(k)
+            # [25-29] advanced signals: benign normal packages almost never trigger these
+            r[:, 25] = np.zeros(k)  # has_credential_harvesting
+            r[:, 26] = np.zeros(k)  # has_os_persistence
+            r[:, 27] = np.zeros(k)  # has_anti_forensics
+            r[:, 28] = np.zeros(k)  # has_compound_obfuscation
+            r[:, 29] = np.zeros(k)  # new_dependency_count
             return r
 
         def _edgy(k):
@@ -146,6 +154,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.zeros(k)
             r[:, 23] = rng.exponential(150, k) + 14
             r[:, 24] = np.zeros(k)
+            # [25-29] edgy benign: very rare false-positive-like triggers
+            r[:, 25] = (rng.random(k) < 0.02).astype(np.float32)  # rare credential read
+            r[:, 26] = (rng.random(k) < 0.01).astype(np.float32)  # very rare persistence
+            r[:, 27] = np.zeros(k)
+            r[:, 28] = (rng.random(k) < 0.01).astype(np.float32)
+            r[:, 29] = rng.poisson(0.3, k).astype(np.float32)
             return r
 
         rows[:n_normal] = _normal(n_normal)
@@ -193,6 +207,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.zeros(k)
             r[:, 23] = rng.exponential(50, k) + 1
             r[:, 24] = np.zeros(k)
+            # [25-29] typosquatting: moderate credential harvesting & obfuscation
+            r[:, 25] = (rng.random(k) < 0.45).astype(np.float32)  # credential harvesting
+            r[:, 26] = (rng.random(k) < 0.20).astype(np.float32)  # OS persistence
+            r[:, 27] = (rng.random(k) < 0.30).astype(np.float32)  # anti-forensics
+            r[:, 28] = (rng.random(k) < 0.55).astype(np.float32)  # compound obfuscation
+            r[:, 29] = rng.poisson(1.5, k).astype(np.float32)     # new deps
             return r
 
         def _depconf(k):
@@ -222,6 +242,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.zeros(k)
             r[:, 23] = rng.exponential(80, k)
             r[:, 24] = np.clip(rng.normal(0.72, 0.18, k), 0, 1)
+            # [25-29] dep confusion: heavy credential harvesting & persistence
+            r[:, 25] = (rng.random(k) < 0.60).astype(np.float32)
+            r[:, 26] = (rng.random(k) < 0.40).astype(np.float32)
+            r[:, 27] = (rng.random(k) < 0.35).astype(np.float32)
+            r[:, 28] = (rng.random(k) < 0.50).astype(np.float32)
+            r[:, 29] = rng.poisson(3.0, k).astype(np.float32)
             return r
 
         def _hijack(k):
@@ -251,6 +277,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.clip(rng.normal(5.2, 2.0, k), 0, 10)
             r[:, 23] = rng.exponential(900, k) + 200
             r[:, 24] = np.zeros(k)
+            # [25-29] hijack: persistence and anti-forensics are common
+            r[:, 25] = (rng.random(k) < 0.35).astype(np.float32)
+            r[:, 26] = (rng.random(k) < 0.50).astype(np.float32)
+            r[:, 27] = (rng.random(k) < 0.45).astype(np.float32)
+            r[:, 28] = (rng.random(k) < 0.40).astype(np.float32)
+            r[:, 29] = rng.poisson(2.0, k).astype(np.float32)
             return r
 
         def _known_bad(k):
@@ -280,6 +312,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.zeros(k)
             r[:, 23] = rng.exponential(75, k)
             r[:, 24] = np.clip(rng.normal(0.48, 0.28, k), 0, 1)
+            # [25-29] known bad: very high rates across all advanced signals
+            r[:, 25] = (rng.random(k) < 0.70).astype(np.float32)
+            r[:, 26] = (rng.random(k) < 0.55).astype(np.float32)
+            r[:, 27] = (rng.random(k) < 0.60).astype(np.float32)
+            r[:, 28] = (rng.random(k) < 0.65).astype(np.float32)
+            r[:, 29] = rng.poisson(2.5, k).astype(np.float32)
             return r
 
         def _slowburn(k):
@@ -310,6 +348,12 @@ def generate_synthetic_data(n_samples: int = 30000, seed: int = 42) -> tuple:
             r[:, 22] = np.clip(rng.normal(6.0, 2.0, k), 0, 10)
             r[:, 23] = rng.exponential(1200, k) + 400
             r[:, 24] = np.zeros(k)
+            # [25-29] slow-burn: subtle — lower rates but still present
+            r[:, 25] = (rng.random(k) < 0.25).astype(np.float32)
+            r[:, 26] = (rng.random(k) < 0.30).astype(np.float32)
+            r[:, 27] = (rng.random(k) < 0.40).astype(np.float32)
+            r[:, 28] = (rng.random(k) < 0.20).astype(np.float32)
+            r[:, 29] = rng.poisson(1.0, k).astype(np.float32)
             return r
 
         rows[:n_typo]                         = _typo(n_typo)

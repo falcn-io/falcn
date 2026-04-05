@@ -9,9 +9,13 @@ registry API calls for benign popular packages.
 Does NOT use the slow GitHub recursive tree API. All malicious packages are sourced from
 public security incident reports and can be verified.
 
+GitHub stars/forks are fetched when GITHUB_TOKEN is set (5000 req/hr) or when the
+unauthenticated rate limit permits (60 req/hr). Without a token only ~60 packages get
+star data; the rest use anomaly=0 which matches Go inference behaviour when HasGitHubData=false.
+
 Usage:
     python3 scripts/fetch_real_data.py --out data/training/real_packages.csv
-    python3 scripts/fetch_real_data.py --out data/training/real_packages.csv --workers 10
+    GITHUB_TOKEN=ghp_xxx python3 scripts/fetch_real_data.py --out data/training/real_packages.csv
 """
 
 import json
@@ -32,6 +36,9 @@ from typing import Optional
 _REQUEST_DELAY = 0.08   # seconds between calls per thread
 _TIMEOUT       = 10     # HTTP timeout
 _MAX_WORKERS   = 10
+
+# GitHub API token (optional but strongly recommended — raises rate limit from 60 to 5000/hr)
+_GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
 
 FEATURE_NAMES = [
     "log_downloads", "maintainer_count", "age_days", "days_since_update",
@@ -258,14 +265,47 @@ BENIGN_PYPI = [
 # HTTP helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _get(url: str) -> Optional[dict]:
+def _get(url: str, github_auth: bool = False) -> Optional[dict]:
     req = urllib.request.Request(url)
     req.add_header("User-Agent", "falcn-ml-trainer/2.0 (github.com/falcn-io/falcn)")
+    if github_auth and _GITHUB_TOKEN:
+        req.add_header("Authorization", f"Bearer {_GITHUB_TOKEN}")
     try:
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
             return json.loads(resp.read().decode())
     except Exception:
         return None
+
+
+def _extract_github_owner_repo(repo_field) -> tuple:
+    """Return (owner, repo) from a repository dict or string URL, or (None, None)."""
+    if isinstance(repo_field, dict):
+        url_str = repo_field.get("url", "") or ""
+    else:
+        url_str = str(repo_field or "")
+    m = re.search(r"github\.com[:/]([^/]+)/([^/#?.]+)", url_str)
+    if m:
+        return m.group(1), m.group(2).rstrip(".git")
+    return None, None
+
+
+def _fetch_github_stars(repo_field) -> tuple:
+    """Fetch (log_stars, log_forks, has_data) from GitHub API.
+
+    Returns has_data=True only when the API call succeeded, so callers can
+    decide whether to compute the download/star anomaly signal.
+    Uses GITHUB_TOKEN if available; falls back to unauthenticated (60 req/hr).
+    """
+    owner, repo = _extract_github_owner_repo(repo_field)
+    if not owner:
+        return 0.0, 0.0, False
+    time.sleep(0.05)  # small delay to respect rate limits
+    gh = _get(f"https://api.github.com/repos/{owner}/{repo}", github_auth=True)
+    if not gh or "message" in gh:  # rate limit or not found
+        return 0.0, 0.0, False
+    stars = gh.get("stargazers_count") or 0
+    forks = gh.get("forks_count") or 0
+    return math.log1p(stars), math.log1p(forks), True
 
 
 def _parse_iso(s: str) -> Optional[datetime]:
@@ -342,13 +382,19 @@ def npm_features(name: str, label: int) -> Optional[dict]:
         prev = len((all_v[-2].get("dependencies") or {}))
         dep_delta = max(-50, min(50, cur - prev))
 
-    # Downloads (best-effort via downloads API)
-    dl_data  = _get(f"https://api.npmjs.org/downloads/point/last-month/{encoded}")
+    # Downloads (best-effort via npm downloads API)
+    dl_data   = _get(f"https://api.npmjs.org/downloads/point/last-month/{encoded}")
     downloads = (dl_data or {}).get("downloads", 0) or 0
 
-    # Anomaly: high downloads, zero community signals
+    # GitHub stars/forks — consistent with HasGitHubData flag in Go's ExtractFeatures.
+    # Only compute anomaly when we actually have GitHub data (avoids train/serve skew).
+    repo_field = meta.get("repository")
+    log_stars, log_forks, has_github_data = _fetch_github_stars(repo_field)
+
+    # Anomaly: confirmed high-download package with zero GitHub community signals.
+    # Matches Go ExtractFeatures logic: only fires when HasGitHubData==true.
     anomaly = 0.0
-    if downloads > 10000 and not meta.get("repository"):
+    if has_github_data and log_stars == 0.0 and log_forks == 0.0 and downloads > 10000:
         anomaly = min(1.0, math.log1p(downloads) / 10.0)
 
     return {
@@ -373,8 +419,8 @@ def npm_features(name: str, label: int) -> Optional[dict]:
         "dependency_delta":       float(dep_delta),
         "log_version_count":      math.log1p(n_versions),
         "days_between_versions":  days_between,
-        "log_stars":              0.0,
-        "log_forks":              0.0,
+        "log_stars":              log_stars,
+        "log_forks":              log_forks,
         "namespace_age_days":     age_days,
         "download_star_anomaly":  anomaly,
         "label":                  float(label),
@@ -421,27 +467,39 @@ def pypi_features(name: str, label: int) -> Optional[dict]:
     author_email     = info.get("author_email") or ""
     maintainer_count = max(1, len([e for e in author_email.split(",") if e.strip()]))
 
-    # GitHub stars (optional, skip if slow)
-    log_stars, log_forks = 0.0, 0.0
+    # GitHub stars/forks — use _fetch_github_stars for consistent anomaly logic.
     project_urls = info.get("project_urls") or {}
-    gh_url = project_urls.get("Source", "") or project_urls.get("Homepage", "") or ""
-    if "github.com" in gh_url:
-        m = re.search(r"github\.com/([^/]+)/([^/#?]+)", gh_url)
-        if m:
-            gh = _get(f"https://api.github.com/repos/{m.group(1)}/{m.group(2)}")
-            if gh:
-                log_stars = math.log1p(gh.get("stargazers_count") or 0)
-                log_forks = math.log1p(gh.get("forks_count") or 0)
+    gh_url = (project_urls.get("Source", "") or project_urls.get("Homepage", "") or
+              info.get("home_page", "") or "")
+    log_stars, log_forks, has_github_data = _fetch_github_stars(gh_url)
+
+    # PyPI download count via pypistats (public, no auth, fast)
+    downloads = 0
+    dl = _get(f"https://pypistats.org/api/packages/{encoded}/recent")
+    if dl and isinstance(dl.get("data"), dict):
+        downloads = int(dl["data"].get("last_month", 0) or 0)
+
+    # Anomaly: consistent with Go HasGitHubData logic (only when stars confirmed zero)
+    anomaly = 0.0
+    if has_github_data and log_stars == 0.0 and log_forks == 0.0 and downloads > 10000:
+        anomaly = min(1.0, math.log1p(downloads) / 10.0)
+
+    # has_install_script: true when any release ships a setup.py (PEP 517 old-style)
+    # or when project uses a build backend with install hooks
+    has_setup = 1.0 if any(
+        isinstance(f, dict) and f.get("filename", "").endswith(".tar.gz")
+        for vf in releases.values() for f in (vf or [])
+    ) else 0.0
 
     return {
-        "log_downloads":          0.0,      # PyPI stats API is rate-limited; skip
+        "log_downloads":          math.log1p(downloads),
         "maintainer_count":       float(maintainer_count),
         "age_days":               age_days,
         "days_since_update":      days_since_update,
         "vuln_count":             0.0,
         "malware_reports":        1.0 if label == 1 else 0.0,
         "verified_flags":         0.0,
-        "has_install_script":     1.0 if any("setup.py" in v for vf in releases.values() for v in (vf or [])) else 0.0,
+        "has_install_script":     has_setup,
         "install_script_kb":      0.0,
         "has_preinstall":         0.0,
         "has_postinstall":        0.0,
@@ -458,7 +516,7 @@ def pypi_features(name: str, label: int) -> Optional[dict]:
         "log_stars":              log_stars,
         "log_forks":              log_forks,
         "namespace_age_days":     age_days,
-        "download_star_anomaly":  0.0,
+        "download_star_anomaly":  anomaly,
         "label":                  float(label),
     }
 

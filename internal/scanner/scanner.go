@@ -40,7 +40,8 @@ type Scanner struct {
 	metadataEnricher *MetadataEnricher
 	lastProjectPath  string
 	policyEngine     *policy.Engine
-	enhancedDetector *detector.EnhancedTyposquattingDetector
+	enhancedDetector      *detector.EnhancedTyposquattingDetector
+	slopsquattingDetector *detector.SlopsquattingDetector
 	ignorePatterns   []string
 	ignorePatternsMu sync.RWMutex
 }
@@ -102,7 +103,8 @@ func New(cfg *config.Config) (*Scanner, error) {
 		analyzers:        make(map[string]DependencyAnalyzer),
 		analyzerRegistry: NewAnalyzerRegistry(cfg),
 		metadataEnricher: NewMetadataEnricher(),
-		enhancedDetector: detector.NewEnhancedTyposquattingDetector(),
+		enhancedDetector:      detector.NewEnhancedTyposquattingDetector(),
+		slopsquattingDetector: detector.NewSlopsquattingDetector(),
 	}
 
 	// Initialize logger
@@ -505,6 +507,8 @@ func (s *Scanner) analyzePackageThreats(pkg *types.Package) ([]*types.Threat, er
 	// Basic rule-based threat detection
 	typoThreats := s.detectTyposquatting(pkg)
 	threats = append(threats, typoThreats...)
+	// Slopsquatting: AI-hallucinated package name detection
+	threats = append(threats, s.detectSlopsquatting(pkg)...)
 	threats = append(threats, s.detectSuspiciousPatterns(pkg)...)
 	threats = append(threats, s.detectMaliciousIndicators(pkg)...)
 	threats = append(threats, s.detectVersionAnomalies(pkg)...)
@@ -1027,7 +1031,7 @@ func (s *Scanner) watchWithFileEvents(projectPath string) error {
 		return err
 	}
 
-	logrus.Info("Starting file system event watching")
+	logrus.Debug("Starting file system event watching")
 
 	for {
 		select {
@@ -1393,6 +1397,40 @@ func (s *Scanner) detectTyposquatting(pkg *types.Package) []*types.Threat {
 		}
 	}
 
+	return threats
+}
+
+// detectSlopsquatting detects AI hallucination-based package name attacks (slopsquatting).
+// Slopsquatting exploits LLM code assistants hallucinating plausible-sounding package
+// names (e.g. "requests-extended", "flask-sqlalchemy-utils") that attackers register
+// with malicious payloads. Unlike typosquatting (character-level confusion), slopsquatting
+// produces semantically coherent names assembled from real package components.
+func (s *Scanner) detectSlopsquatting(pkg *types.Package) []*types.Threat {
+	if s.slopsquattingDetector == nil {
+		return nil
+	}
+
+	popular := s.getPopularPackages(pkg.Registry)
+
+	dep := types.Dependency{
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Registry: pkg.Registry,
+	}
+	if pkg.Metadata != nil {
+		dep.Metadata = *pkg.Metadata
+	}
+
+	results := s.slopsquattingDetector.Detect(dep, popular)
+
+	threats := make([]*types.Threat, 0, len(results))
+	for i := range results {
+		t := results[i]
+		if t.ID == "" {
+			t.ID = fmt.Sprintf("slop_%s", uuid.New().String())
+		}
+		threats = append(threats, &t)
+	}
 	return threats
 }
 

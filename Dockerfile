@@ -1,7 +1,10 @@
 # Multi-stage build for Falcn Production
 
 # Build stage
-FROM golang:1.24-alpine AS go-builder
+FROM golang:1.25-alpine AS go-builder
+
+# Install build dependencies for CGO (required by go-sqlite3)
+RUN apk --no-cache add gcc musl-dev
 
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -9,17 +12,18 @@ RUN go mod download
 
 COPY . .
 # Build API server and CLI binary
-RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags='-w -s' \
-    -a -installsuffix cgo \
+# CGO_ENABLED=1 is required for github.com/mattn/go-sqlite3
+RUN CGO_ENABLED=1 GOOS=linux go build \
+    -ldflags='-w -s -linkmode external -extldflags "-static"' \
+    -a \
     -o falcn-api ./api/main.go && \
-    CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags='-w -s' \
-    -a -installsuffix cgo \
+    CGO_ENABLED=1 GOOS=linux go build \
+    -ldflags='-w -s -linkmode external -extldflags "-static"' \
+    -a \
     -o falcn ./main.go
 
 # Stage 2: Final runtime image
-FROM alpine:latest
+FROM alpine:3.19
 
 # Install runtime dependencies
 RUN apk --no-cache add \
@@ -51,4 +55,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Default command - start the API server
 CMD ["./falcn-api"]
-

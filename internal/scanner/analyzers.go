@@ -840,6 +840,41 @@ func (a *PythonAnalyzer) parseSetupPy(projectInfo *ProjectInfo) ([]*types.Packag
 		}
 	}
 
+	// Phase 4: Detect cmdclass overrides (setup.py install-time code execution)
+	// Attackers override install/develop/build commands to run arbitrary code.
+	cmdclassRegex := regexp.MustCompile(`cmdclass\s*=\s*\{([^}]+)\}`)
+	if cmdclassMatch := cmdclassRegex.FindStringSubmatch(content); len(cmdclassMatch) > 1 {
+		dangerousCmds := []string{"install", "develop", "build_ext", "build_py", "egg_info", "sdist", "bdist_wheel"}
+		var overridden []string
+		for _, cmd := range dangerousCmds {
+			if strings.Contains(cmdclassMatch[1], fmt.Sprintf(`"%s"`, cmd)) || strings.Contains(cmdclassMatch[1], fmt.Sprintf(`'%s'`, cmd)) {
+				overridden = append(overridden, cmd)
+			}
+		}
+		if len(overridden) > 0 {
+			// Create a synthetic package to carry the threat
+			threatPkg := &types.Package{
+				Name:     filepath.Base(projectInfo.Path) + "/setup.py",
+				Registry: "pypi",
+				Type:     "infrastructure",
+				Threats: []types.Threat{{
+					Type:            types.ThreatTypePythonInstallHook,
+					Severity:        types.SeverityHigh,
+					Confidence:      0.85,
+					Description:     fmt.Sprintf("setup.py overrides cmdclass commands: %s — these execute arbitrary code during pip install", strings.Join(overridden, ", ")),
+					DetectionMethod: "python_cmdclass_analysis",
+					Recommendation:  "Review the custom command classes in setup.py. Overriding 'install' or 'develop' commands allows execution of arbitrary code during package installation.",
+					Evidence: []types.Evidence{
+						{Type: "cmdclass_overrides", Description: "Overridden setup commands", Value: strings.Join(overridden, "; ")},
+					},
+					Metadata:   map[string]interface{}{"overridden_commands": overridden, "file": "setup.py"},
+					DetectedAt: time.Now(),
+				}},
+			}
+			packages = append(packages, threatPkg)
+		}
+	}
+
 	return packages, nil
 }
 

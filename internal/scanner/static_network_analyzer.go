@@ -12,6 +12,50 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Pre-compiled regexes for detectExfiltrationPatterns
+var (
+	reGitHubAPI    = regexp.MustCompile(`https?://api\.github\.com`)
+	reGitLabAPI    = regexp.MustCompile(`https?://gitlab\.com/api`)
+	reJSEnvPost    = regexp.MustCompile(`(fetch|axios|request)\s*\([^)]*method\s*:\s*['"]POST['"]`)
+	rePyPost       = regexp.MustCompile(`requests\.(post|put)\s*\(`)
+	rePyUrllib     = regexp.MustCompile(`urllib\.request\.(urlopen|Request)\s*\(`)
+	rePyHTTP       = regexp.MustCompile(`http\.client\.HTTP(S)?Connection`)
+	reJSEnvData    = regexp.MustCompile(`process\.env`)
+	rePyEnvData    = regexp.MustCompile(`os\.(environ|getenv)`)
+	reCredPath     = regexp.MustCompile(`(?i)(\.ssh|\.aws|\.kube|\.npmrc|\.pypirc|\.gnupg|\.netrc)`)
+	reShellCurlExfil   = regexp.MustCompile(`(?i)curl\s+[^\n]{0,200}(-d|--data|--data-binary|--data-urlencode|-F)\s`)
+	reShellWgetPost    = regexp.MustCompile(`(?i)wget\s+[^\n]{0,200}--post-(data|file)`)
+	reShellEnvDump     = regexp.MustCompile(`(?i)(printenv|env\b|set\b|\$[A-Z_]+)`)
+	reShellPipe        = regexp.MustCompile(`(?i)(curl|wget)\s+[^\n]{0,200}\|\s*(sh|bash|python|node|perl)`)
+	reShellBase64Pipe  = regexp.MustCompile(`(?i)(base64\s+-d|base64\s+--decode)\s*\|\s*(sh|bash)`)
+	reShellNc          = regexp.MustCompile(`(?i)\bnc\b[^\n]{0,200}-e\s+/(bin/)?(sh|bash)`)
+	reShellDevTcp      = regexp.MustCompile(`/dev/tcp/`)
+	reRubyNetHTTP      = regexp.MustCompile(`Net::HTTP\.(post|start|new)`)
+	reRubyOpenURI      = regexp.MustCompile(`(open-uri|URI\.open|Net::HTTP\.get)`)
+	reRubyEnvAccess    = regexp.MustCompile(`ENV\[`)
+)
+
+// Pre-compiled regexes for detectEnvironmentAwareness
+var (
+	reEnvCICheck         = regexp.MustCompile(`process\.env\.CI`)
+	reEnvGitHubActions   = regexp.MustCompile(`process\.env\.GITHUB_ACTIONS`)
+	reEnvGitLabCI        = regexp.MustCompile(`process\.env\.GITLAB_CI`)
+	reEnvJenkins         = regexp.MustCompile(`process\.env\.JENKINS_URL`)
+	reEnvTravis          = regexp.MustCompile(`process\.env\.TRAVIS`)
+	reEnvConditional     = regexp.MustCompile(`if\s*\(\s*process\.env\.(CI|GITHUB_ACTIONS|GITLAB_CI)`)
+	rePyCIEnvCheck       = regexp.MustCompile(`os\.(environ|getenv)\s*[\[(]\s*['"]?(CI|GITHUB_ACTIONS|GITLAB_CI|JENKINS_URL|TRAVIS)['"]?`)
+	rePyConditionalCI    = regexp.MustCompile(`if\s+os\.(environ|getenv)\s*[\[(]\s*['"]?(CI|GITHUB_ACTIONS)['"]?`)
+)
+
+// Pre-compiled regexes for detectBeaconPatterns
+var (
+	reSNASetInterval = regexp.MustCompile(`setInterval\s*\(`)
+	reSNANetworkCall = regexp.MustCompile(`(fetch|axios|http\.request|https\.request|XMLHttpRequest)`)
+)
+
+// Pre-compiled regex for extractSuspiciousDomains
+var reURLDomain = regexp.MustCompile(`https?://([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})`)
+
 // StaticNetworkAnalyzer analyzes code for network patterns without runtime execution
 type StaticNetworkAnalyzer struct {
 	projectPath string
@@ -47,9 +91,16 @@ func (sna *StaticNetworkAnalyzer) AnalyzeProject(files []string) ([]types.Threat
 	var threats []types.Threat
 
 	for _, file := range files {
-		// Only analyze JavaScript/Python files
+		// Analyze JS, Python, TypeScript, Shell, Ruby, and Go files
 		ext := strings.ToLower(filepath.Ext(file))
-		if ext != ".js" && ext != ".py" && ext != ".ts" {
+		supportedExts := map[string]bool{
+			".js": true, ".ts": true, ".mjs": true, ".cjs": true,
+			".py": true,
+			".sh": true, ".bash": true,
+			".rb": true,
+			".go": true,
+		}
+		if !supportedExts[ext] {
 			continue
 		}
 
@@ -75,33 +126,62 @@ func (sna *StaticNetworkAnalyzer) AnalyzeProject(files []string) ([]types.Threat
 		}
 	}
 
-	logrus.Infof("[StaticNetworkAnalyzer] Found %d runtime behavior threats", len(threats))
+	logrus.Debugf("[StaticNetworkAnalyzer] Found %d runtime behavior threats", len(threats))
 	return threats, nil
 }
 
 // detectExfiltrationPatterns detects data exfiltration to external services
 func (sna *StaticNetworkAnalyzer) detectExfiltrationPatterns(content, filePath string) *types.Threat {
-	// Pattern 1: GitHub/GitLab API calls (Shai-Hulud pattern)
-	githubAPIPattern := regexp.MustCompile(`https?://api\.github\.com`)
-	gitlabAPIPattern := regexp.MustCompile(`https?://gitlab\.com/api`)
-
-	// Pattern 2: POST requests with environment data
-	envPostPattern := regexp.MustCompile(`(fetch|axios|request)\s*\([^)]*method\s*:\s*['"]POST['"]`)
-	envDataPattern := regexp.MustCompile(`process\.env`)
-
 	var indicators []string
 
-	if githubAPIPattern.MatchString(content) {
+	// Pattern 1: GitHub/GitLab API calls (Shai-Hulud pattern)
+	if reGitHubAPI.MatchString(content) {
 		indicators = append(indicators, "GitHub API calls detected")
 	}
 
-	if gitlabAPIPattern.MatchString(content) {
+	if reGitLabAPI.MatchString(content) {
 		indicators = append(indicators, "GitLab API calls detected")
 	}
 
-	// Check for POST + environment data combination
-	if envPostPattern.MatchString(content) && envDataPattern.MatchString(content) {
+	// Pattern 2: POST requests with environment data (JS)
+	if reJSEnvPost.MatchString(content) && reJSEnvData.MatchString(content) {
 		indicators = append(indicators, "POST requests with environment data")
+	}
+	// Python exfiltration: POST/urllib + os.environ/getenv
+	if (rePyPost.MatchString(content) || rePyUrllib.MatchString(content) || rePyHTTP.MatchString(content)) && rePyEnvData.MatchString(content) {
+		indicators = append(indicators, "Python HTTP requests with environment data access")
+	}
+	// Python credential harvesting + network (reads credential files then exfiltrates)
+	if reCredPath.MatchString(content) && (rePyPost.MatchString(content) || rePyUrllib.MatchString(content) || rePyHTTP.MatchString(content)) {
+		indicators = append(indicators, "Python credential path access combined with network calls (exfiltration)")
+	}
+
+	// Shell script exfiltration patterns (the #1 npm install hook attack vector)
+	if reShellCurlExfil.MatchString(content) && reShellEnvDump.MatchString(content) {
+		indicators = append(indicators, "Shell script sends data via curl with environment access")
+	}
+	if reShellWgetPost.MatchString(content) && reShellEnvDump.MatchString(content) {
+		indicators = append(indicators, "Shell script sends data via wget POST with environment access")
+	}
+	if reShellPipe.MatchString(content) {
+		indicators = append(indicators, "Shell script pipes download directly to interpreter (curl|sh pattern)")
+	}
+	if reShellBase64Pipe.MatchString(content) {
+		indicators = append(indicators, "Shell script decodes base64 and pipes to shell")
+	}
+	if reShellNc.MatchString(content) || reShellDevTcp.MatchString(content) {
+		indicators = append(indicators, "Shell reverse shell pattern detected (netcat -e or /dev/tcp)")
+	}
+	if reCredPath.MatchString(content) && (reShellCurlExfil.MatchString(content) || reShellWgetPost.MatchString(content)) {
+		indicators = append(indicators, "Shell script accesses credential paths and sends data externally")
+	}
+
+	// Ruby exfiltration patterns
+	if reRubyNetHTTP.MatchString(content) && reRubyEnvAccess.MatchString(content) {
+		indicators = append(indicators, "Ruby Net::HTTP POST with environment variable access")
+	}
+	if reRubyOpenURI.MatchString(content) && reCredPath.MatchString(content) {
+		indicators = append(indicators, "Ruby network calls with credential path access")
 	}
 
 	// Pattern 3: External domain connections
@@ -143,14 +223,16 @@ func (sna *StaticNetworkAnalyzer) detectExfiltrationPatterns(content, filePath s
 
 // detectEnvironmentAwareness detects CI/environment-aware behavior
 func (sna *StaticNetworkAnalyzer) detectEnvironmentAwareness(content, filePath string) *types.Threat {
-	// Patterns for CI environment checks
+	// Patterns for CI environment checks (JS + Python)
 	patterns := map[string]*regexp.Regexp{
-		"CI environment check":          regexp.MustCompile(`process\.env\.CI`),
-		"GitHub Actions check":          regexp.MustCompile(`process\.env\.GITHUB_ACTIONS`),
-		"GitLab CI check":               regexp.MustCompile(`process\.env\.GITLAB_CI`),
-		"Jenkins check":                 regexp.MustCompile(`process\.env\.JENKINS_URL`),
-		"Travis CI check":               regexp.MustCompile(`process\.env\.TRAVIS`),
-		"Environment-based conditional": regexp.MustCompile(`if\s*\(\s*process\.env\.(CI|GITHUB_ACTIONS|GITLAB_CI)`),
+		"CI environment check":          reEnvCICheck,
+		"GitHub Actions check":          reEnvGitHubActions,
+		"GitLab CI check":               reEnvGitLabCI,
+		"Jenkins check":                 reEnvJenkins,
+		"Travis CI check":               reEnvTravis,
+		"Environment-based conditional": reEnvConditional,
+		"Python CI env check":           rePyCIEnvCheck,
+		"Python conditional CI check":   rePyConditionalCI,
 	}
 
 	var detectedPatterns []string
@@ -194,12 +276,8 @@ func (sna *StaticNetworkAnalyzer) detectEnvironmentAwareness(content, filePath s
 
 // detectBeaconPatterns detects periodic network activity (C2 beacons)
 func (sna *StaticNetworkAnalyzer) detectBeaconPatterns(content, filePath string) *types.Threat {
-	// Pattern: setInterval with network calls
-	intervalPattern := regexp.MustCompile(`setInterval\s*\(`)
-	networkCallPattern := regexp.MustCompile(`(fetch|axios|http\.request|https\.request|XMLHttpRequest)`)
-
 	// Must have both interval and network call
-	if !intervalPattern.MatchString(content) || !networkCallPattern.MatchString(content) {
+	if !reSNASetInterval.MatchString(content) || !reSNANetworkCall.MatchString(content) {
 		return nil
 	}
 
@@ -232,8 +310,7 @@ func (sna *StaticNetworkAnalyzer) detectBeaconPatterns(content, filePath string)
 // extractSuspiciousDomains extracts external domains from HTTP calls
 func (sna *StaticNetworkAnalyzer) extractSuspiciousDomains(content string) []string {
 	// Extract URLs from fetch/axios calls
-	urlPattern := regexp.MustCompile(`https?://([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})`)
-	matches := urlPattern.FindAllStringSubmatch(content, -1)
+	matches := reURLDomain.FindAllStringSubmatch(content, -1)
 
 	// Whitelist known-good domains
 	whitelist := map[string]bool{
@@ -266,8 +343,51 @@ func (sna *StaticNetworkAnalyzer) extractSuspiciousDomains(content string) []str
 			continue
 		}
 
-		// Any other external domain is suspicious
-		suspicious = append(suspicious, domain)
+		// Check for brand impersonation (known vendor names in non-standard TLDs)
+		flagged := false
+		brandNames := []string{"checkmarx", "snyk", "sonarqube", "github", "gitlab", "npmjs", "pypi", "litellm", "anthropic", "openai"}
+		trustedTLDs := map[string]bool{".com": true, ".io": true, ".org": true, ".dev": true, ".net": true, ".co": true}
+		domainLower := strings.ToLower(domain)
+		for _, brand := range brandNames {
+			if strings.Contains(domainLower, brand) {
+				// Extract TLD
+				lastDot := strings.LastIndex(domain, ".")
+				if lastDot >= 0 {
+					tld := domain[lastDot:]
+					if !trustedTLDs[tld] {
+						suspicious = append(suspicious, domain+" (brand impersonation: "+brand+" with non-standard TLD)")
+						flagged = true
+						break
+					}
+				}
+			}
+		}
+
+		// Check for high-consonant random domains (catches C2 like sfrclak.com)
+		if !flagged {
+			parts := strings.Split(domain, ".")
+			if len(parts) >= 2 {
+				sld := strings.ToLower(parts[len(parts)-2]) // second-level domain
+				if len(sld) >= 4 {
+					vowels := 0
+					for _, ch := range sld {
+						if ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u' {
+							vowels++
+						}
+					}
+					consonantRatio := float64(len(sld)-vowels) / float64(len(sld))
+					if consonantRatio >= 0.80 && vowels <= 1 {
+						suspicious = append(suspicious, domain+" (random-looking domain name)")
+						flagged = true
+					}
+				}
+			}
+		}
+
+		// Any other external domain that wasn't already flagged by specific checks
+		if !flagged {
+			suspicious = append(suspicious, domain)
+		}
 	}
 
 	return suspicious

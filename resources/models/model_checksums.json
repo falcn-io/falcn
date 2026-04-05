@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "files": {
+    "tree_params.json": "4bf0382603092028535e051d38ea926fc4b17bddeeaf5b80d8f7526a48aea379",
+    "scaler_stats.json": "acc9faacb9a2eea81933852f61a1a3f417eedd8610399a7140914a1d2c319a72",
+    "model_threshold.json": "9951bffd850bb34c603122d7e78228dd28ec6c559653b23ae28ad643248f4573",
+    "reputation_model.onnx": "726c0f367f5f796ebafbde7b9117a7b5c7c89d62cc4e1e4613b8d605ed20d655",
+    "shap_importances.json": "31678df86ea85aca3018389988079261c97aa468c468d7c5d84a9ac3a7093bbe",
+    "model_metrics.json": "3bd9ea0c1911dae31bd5d3c55d585bfd722dfd471ad8b1c61fb474b6aa86861e"
+  }
+}

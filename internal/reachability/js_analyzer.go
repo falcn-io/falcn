@@ -64,6 +64,53 @@ func (a *jsAnalyzer) Analyse(packageName string) (imports []ImportRef, callSites
 	return
 }
 
+// jsCallRe matches function calls like foo(), bar.baz(), obj.method()
+var jsCallRe = regexp.MustCompile(`\b(\w+(?:\.\w+)?)\s*\(`)
+
+// extractJSFunctionCalls parses a JS/TS file and returns a map of
+// callerFunc → []calleeFunc for building the project-wide call graph.
+func extractJSFunctionCalls(path string) map[string][]string {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	graph := make(map[string][]string)
+	currentFunc := "<module>"
+
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		line := sc.Text()
+
+		// Track enclosing function
+		if m := jsFuncRe.FindStringSubmatch(line); m != nil {
+			if m[1] != "" {
+				currentFunc = m[1] + "()"
+			} else if m[2] != "" {
+				currentFunc = m[2] + "()"
+			}
+		}
+
+		// Find all function calls on this line
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "*") {
+			continue
+		}
+		for _, m := range jsCallRe.FindAllStringSubmatch(trimmed, -1) {
+			callee := m[1] + "()"
+			// Skip common JS keywords/builtins
+			base := strings.Split(m[1], ".")[0]
+			switch base {
+			case "if", "for", "while", "return", "require", "import", "export", "function", "class", "new", "typeof", "instanceof", "switch", "catch":
+				continue
+			}
+			graph[currentFunc] = append(graph[currentFunc], callee)
+		}
+	}
+	return graph
+}
+
 func (a *jsAnalyzer) analyseFile(path, targetPkg string) ([]ImportRef, []CallSite) {
 	rel, _ := filepath.Rel(a.projectRoot, path)
 

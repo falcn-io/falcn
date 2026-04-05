@@ -22,14 +22,18 @@ type Options struct {
 }
 
 type Engine struct {
-	enhancedDetector *EnhancedTyposquattingDetector
-	popularCache     *PopularCache
-	maxPopular       int
+	enhancedDetector      *EnhancedTyposquattingDetector
+	slopsquattingDetector *SlopsquattingDetector
+	popularCache          *PopularCache
+	maxPopular            int
 }
 
 func New(cfg *config.Config) *Engine {
 	ttl := time.Duration(0)
-	max := 25
+	max := 500
+	if cfgMax := viper.GetInt("detector.max_popular"); cfgMax > 0 {
+		max = cfgMax
+	}
 	if cfg != nil && cfg.TypoDetection != nil {
 		if cfg.Cache != nil && cfg.Cache.TTL > 0 {
 			ttl = cfg.Cache.TTL
@@ -67,9 +71,10 @@ func New(cfg *config.Config) *Engine {
 	}
 	cache.SetNPMWeights(viper.GetFloat64("detector.npm_quality_weight"), viper.GetFloat64("detector.npm_popularity_weight"), viper.GetFloat64("detector.npm_maintenance_weight"))
 	return &Engine{
-		enhancedDetector: NewEnhancedTyposquattingDetector(),
-		popularCache:     cache,
-		maxPopular:       max,
+		enhancedDetector:      NewEnhancedTyposquattingDetector(),
+		slopsquattingDetector: NewSlopsquattingDetector(),
+		popularCache:          cache,
+		maxPopular:            max,
 	}
 }
 
@@ -289,6 +294,13 @@ func (e *Engine) AnalyzeDependency(dep types.Dependency, popularPackages []strin
 	}
 
 	threats := e.enhancedDetector.DetectEnhanced(dep, popularPackages, threshold)
+
+	// Slopsquatting detection: AI-hallucinated package names.
+	// Runs independently of typosquatting so that both signal types are visible.
+	if e.slopsquattingDetector != nil {
+		slopThreats := e.slopsquattingDetector.Detect(dep, popularPackages)
+		threats = append(threats, slopThreats...)
+	}
 
 	return threats, []types.Warning{}
 }

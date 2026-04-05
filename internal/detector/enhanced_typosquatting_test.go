@@ -409,15 +409,13 @@ func TestEnhancedTyposquattingDetector_AnalyzeTyposquattingType(t *testing.T) {
 		s2       string
 		expected string
 	}{
-		{"express", "expresss", "unknown"},
-		{"expresss", "express", "unknown"},
-		{"express", "exprwss", "unknown"},
-		{"express", "expr3ss", "unknown"},
-		{"express", "epxress", "unknown"},
-		{"express", "express", "unknown"},
+		{"express", "expresss", "missing/extra character"},
+		{"expresss", "express", "missing/extra character"},
+		{"express", "exprwss", "single character substitution"},
+		{"express", "expr3ss", "single character substitution"},
+		{"express", "epxress", "character transposition"},
+		{"express", "express", "exact match"},
 	}
-
-	// NOTE: Updated expected values to "unknown" because analyzeTyposquattingType is currently a placeholder returning "unknown"
 
 	for _, tt := range tests {
 		t.Run(tt.s1+"_"+tt.s2, func(t *testing.T) {

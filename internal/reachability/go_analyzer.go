@@ -154,6 +154,63 @@ func enclosingFunc(f *ast.File, pos token.Pos, fset *token.FileSet) string {
 	return "<top-level>"
 }
 
+// extractFunctionCalls parses a Go file and returns a map of
+// callerFunc → []calleeFunc for all function-to-function calls in the file.
+// This is used to build the project-wide call graph.
+func (a *goAnalyzer) extractFunctionCalls(path string) map[string][]string {
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	f, err := parser.ParseFile(a.fset, path, src, 0)
+	if err != nil {
+		return nil
+	}
+
+	graph := make(map[string][]string)
+
+	for _, decl := range f.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Body == nil {
+			continue
+		}
+
+		var callerName string
+		if fn.Recv != nil && len(fn.Recv.List) > 0 {
+			recv := exprString(fn.Recv.List[0].Type)
+			callerName = recv + "." + fn.Name.Name + "()"
+		} else {
+			callerName = fn.Name.Name + "()"
+		}
+
+		// Walk the function body to find all call expressions.
+		ast.Inspect(fn.Body, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+
+			var calleeName string
+			switch fun := call.Fun.(type) {
+			case *ast.Ident:
+				// Direct function call: foo()
+				calleeName = fun.Name + "()"
+			case *ast.SelectorExpr:
+				// Method or package call: pkg.Foo() or obj.Method()
+				if ident, ok := fun.X.(*ast.Ident); ok {
+					calleeName = ident.Name + "." + fun.Sel.Name + "()"
+				}
+			}
+
+			if calleeName != "" {
+				graph[callerName] = append(graph[callerName], calleeName)
+			}
+			return true
+		})
+	}
+	return graph
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 // lastSegment returns the last slash-separated component of a package path.

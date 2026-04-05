@@ -2,103 +2,103 @@
   "features": [
     {
       "name": "dependency_delta",
-      "importance": 0.06571949700969623
+      "importance": 0.06829791549989012
     },
     {
       "name": "executable_binary_count",
-      "importance": 0.05735002015440199
+      "importance": 0.05828696895487609
     },
     {
       "name": "maintainer_velocity",
-      "importance": 0.05168875351573157
-    },
-    {
-      "name": "days_since_update",
-      "importance": 0.041024669120011514
-    },
-    {
-      "name": "entropy_max_file",
-      "importance": 0.037975687183066036
+      "importance": 0.050919073299299684
     },
     {
       "name": "days_between_versions",
-      "importance": 0.0372054740885436
+      "importance": 0.03962500075791981
+    },
+    {
+      "name": "days_since_update",
+      "importance": 0.039517966533022496
+    },
+    {
+      "name": "entropy_max_file",
+      "importance": 0.03630554272684476
     },
     {
       "name": "domain_age_days",
-      "importance": 0.03424582981313457
+      "importance": 0.03259095217588336
     },
     {
       "name": "malware_reports",
-      "importance": 0.016394691216836507
+      "importance": 0.01663489073796902
     },
     {
       "name": "maintainer_count",
-      "importance": 0.013981481989305761
+      "importance": 0.013479440686425022
     },
     {
       "name": "install_script_kb",
-      "importance": 0.011637831533772727
+      "importance": 0.012075927120935559
     },
     {
       "name": "age_days",
-      "importance": 0.010708207986185022
+      "importance": 0.0102870437462412
     },
     {
       "name": "namespace_age_days",
-      "importance": 0.009349579718168662
+      "importance": 0.009386017174773626
     },
     {
       "name": "log_version_count",
-      "importance": 0.008872275122243586
+      "importance": 0.00788792366829168
     },
     {
       "name": "log_downloads",
-      "importance": 0.006074313113172103
+      "importance": 0.005209927761751975
     },
     {
       "name": "download_star_anomaly",
-      "importance": 0.005199684433443344
+      "importance": 0.0051326732829605135
     },
     {
       "name": "maintainer_change_count",
-      "importance": 0.004749284100198089
+      "importance": 0.004918447603896644
     },
     {
       "name": "network_code_files",
-      "importance": 0.004393191237326101
-    },
-    {
-      "name": "verified_flags",
-      "importance": 0.003167847936934729
-    },
-    {
-      "name": "log_forks",
-      "importance": 0.0031345822652303896
+      "importance": 0.004100669603555245
     },
     {
       "name": "log_total_files",
-      "importance": 0.0031129713733033817
+      "importance": 0.0032292783992614654
+    },
+    {
+      "name": "log_forks",
+      "importance": 0.003011969786871649
     },
     {
       "name": "log_stars",
-      "importance": 0.002704161948193895
+      "importance": 0.002647996595480526
     },
     {
-      "name": "has_install_script",
-      "importance": 0.0011797685638579901
+      "name": "verified_flags",
+      "importance": 0.0025845250770894484
     },
     {
       "name": "has_preinstall",
-      "importance": 0.0011453175414010868
+      "importance": 0.0011247826990683197
+    },
+    {
+      "name": "has_install_script",
+      "importance": 0.0010459854964447797
     },
     {
       "name": "vuln_count",
-      "importance": 0.0008672627727917062
+      "importance": 0.0008806717136386942
     },
     {
       "name": "has_postinstall",
-      "importance": 0.0007459370113682523
+      "importance": 0.0007227272571110105
     }
   ]
 }
